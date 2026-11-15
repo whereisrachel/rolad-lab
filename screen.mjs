@@ -2,6 +2,7 @@
 // Screens many single-card swaps. Each hand is FORCED to contain the swapped card (plus 4 random cards), so the effect of drawing it is measured.
 import fs from 'fs'; import path from 'path'; import os from 'os';
 import { Worker } from 'worker_threads'; import { fileURLToPath } from 'url';
+import { slim, health } from './src/health.mjs';
 import { parseYdk, findCard, name, ROOT } from './src/cards.mjs';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
 const deckPath = f('deck', 'decks/ROLAD-L2.ydk'), slotName = f('slot', 'Small World'), N = +f('n', 20), scns = f('scn', 'none,ash').split(','), PAS = +f('passes', 1), MAC = +f('macros', 200), T = +f('threads', Math.max(1, os.cpus().length - 2));
@@ -22,14 +23,14 @@ const chunks = Array.from({ length: T }, () => []); myTasks.forEach((t, i) => ch
 const res = {}; let done = 0; const t0 = Date.now(); const file = fileURLToPath(new URL('./src/rt-worker.mjs', import.meta.url));
 const m = (v) => v.reduce((s, y) => s + y, 0) / (v.length || 1); const se = (v) => v.length < 2 ? 0 : Math.sqrt(v.reduce((s, y) => s + (y - m(v)) ** 2, 0) / (v.length - 1) / v.length);
 function report() {
-  let o = `# Screen: each card replaces ${slotName}; every hand contains the card + 4 random; ${N} hands, scenarios ${scns.join(',')}, ${PAS} pass, ${MAC} steps. ${done}/${tasks.length} searches done\nDiff = card minus ${slotName} on the same 4 other cards. Needs |diff| > ~0.5 and > 2 SE to mean anything. Scorer: src/disrupt.mjs.\n\n| card | ${scns.map(s => s + ' diff ± SE').join(' | ')} | mean diff |\n|---|${scns.map(() => '---|').join('')}---|\n`;
+  let o = `# Screen: each card replaces ${slotName}; every hand contains the card + 4 random; ${N} hands, scenarios ${scns.join(',')}, ${PAS} pass, ${MAC} steps. ${done}/${tasks.length} searches done\nDiff = card minus ${slotName} on the same 4 other cards. Needs |diff| > ~0.5 and > 2 SE to mean anything. Scorer: src/disrupt.mjs.\n\n| card | ${scns.map(s => s + ' diff ± SE').join(' | ')} | mean diff | played |\n|---|---|${scns.map(() => '---|').join('')}---|\n`;
   const rows = [];
   for (let di = 1; di < decks.length; di++) {
     const per = scns.map(sc => { const d = []; for (let hi = 0; hi < N; hi++) { const ra = Object.keys(meta).find(k => meta[k].di === 0 && meta[k].hi === hi && meta[k].sc === sc), rb = Object.keys(meta).find(k => meta[k].di === di && meta[k].hi === hi && meta[k].sc === sc); if (res[ra] && res[rb]) d.push(res[rb].v - res[ra].v); } return d; });
-    if (per.every(p => !p.length)) continue; rows.push({ label: decks[di].label, per, mean: m(per.flatMap(p => p)) });
+    if (per.every(p => !p.length)) continue; const mine = Object.keys(meta).filter(k => meta[k].di === di && res[k]); const pl = mine.filter(k => (res[k].played || []).includes(decks[di].label)).length; rows.push({ label: decks[di].label, per, mean: m(per.flatMap(p => p)), played: mine.length ? pl / mine.length : 0 });
   }
   rows.sort((p, q) => q.mean - p.mean);
-  for (const r of rows) o += `| ${r.label} | ${r.per.map(p => p.length ? m(p).toFixed(2) + ' ± ' + se(p).toFixed(2) + ' (' + p.length + ')' : '-').join(' | ')} | ${r.mean.toFixed(2)} |\n`;
+  for (const r of rows) o += `| ${r.label} | ${r.per.map(p => p.length ? m(p).toFixed(2) + ' ± ' + se(p).toFixed(2) + ' (' + p.length + ')' : '-').join(' | ')} | ${r.mean.toFixed(2)} | ${ED ? '-' : (100 * r.played).toFixed(0) + '%' + (r.played < 0.5 ? ' NOT PLAYED: result unreliable' : '')} |\n`;
   fs.mkdirSync('results', { recursive: true }); fs.writeFileSync('results/screen.md', o); return o;
 }
 const SURV = f('survivors', null); // threshold: keep cards with mean + 1.5*SE > thr (stage-1 funnel filter)
@@ -44,5 +45,5 @@ function survivors(thr) {
 if (MERGE) { for (const fn of fs.readdirSync(MERGE).filter(x => /^shard-.*\.json$/.test(x))) { const j = JSON.parse(fs.readFileSync(path.join(MERGE, fn), 'utf8')); for (const [k, v] of Object.entries(j)) { res[k] = v; done++; } } if (SURV !== null) { report(); console.log(survivors(+SURV).join('\n')); process.exit(0); }
 console.log(report()); process.exit(0); }
 if (!MERGE) await Promise.all(chunks.filter(c => c.length).map(c => new Promise((ok) => { const w = new Worker(file, { workerData: { tasks: c } }); w.on('message', mm => { if (mm.done) { ok(); return; } res[mm.id] = mm; done++; if (done % 20 === 0) { report(); console.log(done + '/' + tasks.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); } }); w.on('error', e => { console.log('worker error', e.message); ok(); }); })));
-if (SH !== null) { fs.mkdirSync('results', { recursive: true }); fs.writeFileSync('results/shard-' + SH + '.json', JSON.stringify(Object.fromEntries(Object.entries(res).map(([k, v]) => [k, { id: v.id, v: v.v, err: v.err }])))); console.log('shard', SH, 'done', done, 'of', myTasks.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); process.exit(0); }
-console.log(report()); console.log('time', ((Date.now() - t0) / 1000).toFixed(0) + 's');
+if (SH !== null) { fs.mkdirSync('results', { recursive: true }); fs.writeFileSync('results/shard-' + SH + '.json', JSON.stringify(Object.fromEntries(Object.entries(res).map(([k, v]) => [k, slim(v)])))); console.log('shard', SH, 'done', done, 'of', myTasks.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); process.exit(0); }
+const H = health(res, tasks.length); const R = report().replace('\n\n', '\n\n' + H.md); fs.writeFileSync('results/screen.md', R); console.log(R); console.log('time', ((Date.now() - t0) / 1000).toFixed(0) + 's');

@@ -26,10 +26,14 @@ async function job(t) {
     if (t.seeds) for (const sc of lineScripts(hand.map(c => name(c)))) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc });
     if (t.seeds && hand.some(c => name(c) === 'Medius the Pure')) for (const sc of [CORE_MEDIUS, CORE_PREFIX]) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc });
     if (t.seeds) { const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const seen = new Set(); for (const c of hand) { const n = name(c); if (seen.has(n) || /Ash Blossom|Droll|Nibiru|Ghost|Infinite Impermanence|Small World/.test(n)) continue; seen.add(n); for (const pre of ['Normal Summon.*', 'Activate.*']) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: [pre + esc(n)] }); } }
-    for (const c of cfgs) { const r = await searchT1({ ...g, responses: [] }, { ms: 90000, maxMacros: c.mac, patience: c.pat || t.patience || 60, guideW: c.gw, altCap: c.alt, maxMacro: c.mm, frontierCap: 400, script: c.script || null, evalFn: (S, s) => disruption(S, s) }); if ((r.score || 0) > best.score) best = r; }
-    let best0 = best;
-    return { id: t.id, v: best.score || 0, line: best.line, board: best.board, hand: hand.map(c => name(c)), err: best.error };
-  } catch (e) { return { id: t.id, v: 0, err: String(e.message).slice(0, 120) }; }
+    const errs = []; let ok = 0;
+    for (const c of cfgs) { let r; try { r = await searchT1({ ...g, responses: [] }, { ms: 90000, maxMacros: c.mac, patience: c.pat || t.patience || 60, guideW: c.gw, altCap: c.alt, maxMacro: c.mm, frontierCap: 400, script: c.script || null, evalFn: (S, s) => disruption(S, s) }); } catch (e) { errs.push(String(e.message).slice(0, 100)); continue; }
+      if (r.error) { errs.push(String(r.error).slice(0, 100)); continue; } ok++; if ((r.score || 0) > (best.score || 0)) best = r; }
+    // which hand cards were used: count names still in the final hand
+    const left = {}; const hl = (String(best.board || '').match(/\n\s*Hand: ([^\n]*)/g) || []).pop() || ''; for (const n of hl.replace(/^\s*Hand: /, '').split(', ').map(x => x.trim()).filter(Boolean)) left[n] = (left[n] || 0) + 1;
+    const played = []; const seenP = {}; for (const c of hand) { const n = name(c); seenP[n] = (seenP[n] || 0) + 1; if (seenP[n] > (left[n] || 0)) played.push(n); }
+    return { id: t.id, v: best.score || 0, line: best.line, board: best.board, hand: hand.map(c => name(c)), played, crash: ok === 0, errs: errs.length, err: errs[0] || best.error };
+  } catch (e) { return { id: t.id, v: 0, crash: true, errs: 1, err: String(e.message).slice(0, 120) }; }
 }
 for (const t of workerData.tasks) parentPort.postMessage(await job(t));
 parentPort.postMessage({ done: true });

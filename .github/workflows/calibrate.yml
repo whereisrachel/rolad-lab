@@ -1,0 +1,41 @@
+name: calibrate
+# Re-checks lab accuracy against the guide's own tested end boards whenever the lab code changes.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['src/**', 'guidecheck.mjs', 'data/guide_tests.json']
+concurrency: { group: calibrate, cancel-in-progress: true }
+permissions:
+  contents: write
+jobs:
+  hand:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        id: [e3, tm3, mtm2, tre_tm, c2, n2, bc3, inf3, mst, m3, cit3, purif3, ter3, tre3, sw3, t, lac, lur, tract, vid, e_tre_cit, tre_finmel]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: ONLY=${{ matrix.id }} MAC=800 PAT=400 JSONOUT=out-${{ matrix.id }}.jsonl node --no-warnings guidecheck.mjs decks/ROLAD-L2.ydk 22; touch out-${{ matrix.id }}.jsonl
+      - uses: actions/upload-artifact@v4
+        with: { name: "cal-${{ matrix.id }}", path: "out-${{ matrix.id }}.jsonl" }
+  merge:
+    needs: hand
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/download-artifact@v4
+        with: { pattern: "cal-*", path: cal, merge-multiple: true }
+      - name: write calibration
+        run: |
+          node calib.mjs merge cal | tee -a "$GITHUB_STEP_SUMMARY"
+          git config user.name "farm"; git config user.email "farm@users.noreply.github.com"
+          git add reports/calibration.json reports/calibration.md; git commit -m "calibration $(node calib.mjs hash)"
+          for i in 1 2 3 4 5 6; do git pull --rebase --autostash -q origin main && git push -q origin HEAD:main && break; sleep $((RANDOM % 8 + 2)); done

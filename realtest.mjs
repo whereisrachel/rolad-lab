@@ -2,6 +2,7 @@
 // Scores real-engine first-turn boards by DISRUPTION (src/disrupt.mjs) under hand-trap scenarios (opponent actually holds Ash/Imperm/Droll).
 import fs from 'fs'; import path from 'path'; import os from 'os';
 import { Worker } from 'worker_threads'; import { fileURLToPath } from 'url';
+import { slim, health } from './src/health.mjs';
 import { parseYdk, findCard, name, ROOT } from './src/cards.mjs';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
 const dA = a[0], dB = a[1]; const A = parseYdk(fs.readFileSync(dA, 'utf8')), B = parseYdk(fs.readFileSync(dB, 'utf8'));
@@ -48,7 +49,7 @@ function partial() {
 const res = {}; let done = 0; const t0 = Date.now(); const file = fileURLToPath(new URL('./src/rt-worker.mjs', import.meta.url));
 if (MERGE) { for (const fn of fs.readdirSync(MERGE).filter(x => /^shard-.*\.json$/.test(x))) { const j = JSON.parse(fs.readFileSync(path.join(MERGE, fn), 'utf8')); for (const [k, v] of Object.entries(j)) { res[k] = v; done++; } } }
 if (!MERGE) await Promise.all(chunks.filter(c => c.length).map(c => new Promise((ok) => { const w = new Worker(file, { workerData: { tasks: c } }); w.on('message', m => { if (m.done) { ok(); return; } res[m.id] = m; done++; if (done % 10 === 0) { partial(); console.log(done + '/' + tasks.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); } }); w.on('error', e => { console.log('worker error', e.message); ok(); }); })));
-if (SH !== null) { fs.mkdirSync('results', { recursive: true }); fs.writeFileSync('results/shard-' + SH + '.json', JSON.stringify(Object.fromEntries(Object.entries(res).map(([k, v]) => [k, { id: v.id, v: v.v, err: v.err, hand: v.hand, board: typeof v.board === 'string' ? (v.board.match(/Monsters:[^\\n]*/g) || []).slice(1, 2).join(' ') + ' ' + (v.board.match(/Spell\/Trap:[^\\n]*/g) || []).slice(1, 2).join(' ') : '' }])))); console.log('shard', SH, 'done', done, 'of', myTasks.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); process.exit(0); }
+if (SH !== null) { fs.mkdirSync('results', { recursive: true }); fs.writeFileSync('results/shard-' + SH + '.json', JSON.stringify(Object.fromEntries(Object.entries(res).map(([k, v]) => [k, slim(v)])))); console.log('shard', SH, 'done', done, 'of', myTasks.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); process.exit(0); }
 const mean = (v) => v.reduce((s, y) => s + y, 0) / (v.length || 1); const se = (v) => { if (v.length < 2) return 0; const m = mean(v); return Math.sqrt(v.reduce((s, y) => s + (y - m) ** 2, 0) / (v.length - 1) / v.length); };
 function build(final) {
 let o = `# Real-engine disruption test: ${path.basename(dA)} (A) vs ${path.basename(dB)} (B)\nmode ${mode}, ${MAC} search steps, scenarios ${scns.join(',')} (opponent really holds those hand traps and uses them), going first, ${new Date().toISOString().slice(0, 10)}\nScore = interruptions the end board can use on their turn (+0.5 per distinct layer, +0.15 per spare hand card, +1 per hand trap kept). 6+ is a strong board.\n\n`;
@@ -63,4 +64,4 @@ for (const sc of scns) {
 }
 return o; }
 
-const out = f('out', 'results/rt.md'); fs.mkdirSync('results', { recursive: true }); const o = build(true); fs.writeFileSync(out, o); console.log(o); console.log('time', ((Date.now() - t0) / 1000).toFixed(0) + 's', 'threads', T);
+const out = f('out', 'results/rt.md'); fs.mkdirSync('results', { recursive: true }); const H = health(res, tasks.length); const o = build(true).replace('\n\n', '\n\n' + H.md); fs.writeFileSync(out, o); console.log(o); console.log('time', ((Date.now() - t0) / 1000).toFixed(0) + 's', 'threads', T);

@@ -77,10 +77,12 @@ jobs:
           else
             node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --merge merged --out report.md > /dev/null
           fi
+          { node calib.mjs status; cat report.md; } > report2.md && mv report2.md report.md
           cat report.md >> "$GITHUB_STEP_SUMMARY"
           cat report.md
           mkdir -p reports; cp report.md reports/${{ inputs.kind }}-${{ github.run_id }}.md
           git config user.name "farm"; git config user.email "farm@users.noreply.github.com"
           git add reports; git commit -m "report ${{ github.run_id }}"; for i in 1 2 3 4 5 6; do git pull --rebase --autostash -q origin main && git push -q origin HEAD:main && break; sleep $((RANDOM % 8 + 2)); done
+          if [ -f results/INVALID ]; then echo "::error::Run INVALID (crashes or missing results): see report"; exit 1; fi
       - uses: actions/upload-artifact@v4
         with: { name: report, path: report.md }

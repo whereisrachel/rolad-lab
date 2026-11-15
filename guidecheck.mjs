@@ -4,7 +4,7 @@ import { parseYdk, findCard, name, ROOT } from './src/cards.mjs'; import { searc
 setHT(0);
 const deckPath = process.argv[2] || 'decks/ROLAD-L2.ydk', MAXH = +(process.argv[3] || 12);
 const deck = parseYdk(fs.readFileSync(deckPath, 'utf8')); const OPP = parseYdk(fs.readFileSync(path.join(ROOT, 'decks', 'oppHT.ydk'), 'utf8')); const names = deck.main.map(c => name(c));
-const T = JSON.parse(fs.readFileSync('/tmp/guide_tests.json', 'utf8'));
+const T = JSON.parse(fs.readFileSync('data/guide_tests.json', 'utf8'));
 const alias = { Engraver: 'Fiendsmith Engraver', Medius: 'Medius the Pure', Tract: "Fiendsmith's Tract", Citrinitas: 'Ars Magna - "Citrinitas"', Terminus: 'Prohibited Power Patron Portal - Terminus', 'Corruption and Purification': 'Ars Magna of Purification and Corruption', Vidolia: 'Plundered Power Patron Plane - Vidolia', Lacrima: 'Lacrima the Crimson Tears', 'Finite and Infinite': 'Ars Magna of Infinity and Finity', Nervedo: 'Nervedo the Shadebeast Power Patron', 'Ash Blossom': 'Ash Blossom & Joyous Spring', 'Theorealized Medius': 'Theorealize Medius', 'Ghost Ogre': 'Small World' };
 // the guide's board scored with the same weights as src/disrupt.mjs (board only)
 function guideScore(b) {
@@ -31,6 +31,6 @@ for (const t of T) {
   const un = Math.max(await run(hand, null)); let sd = un; for (const c of new Set(hand)) { if (/Ash Blossom|Droll|Small World/.test(c)) continue; { if (!/Ash|Droll|Ghost/.test('')) for (const c2 of new Set(hand)) { if (!/Ash Blossom|Droll|Ghost|Medius the Pure/.test(c2)) sd = Math.max(sd, await run(hand, viaStarter(c2))); }
   for (const sc of lineScripts(hand)) sd = Math.max(sd, await run(hand, sc));
   if (hand.includes('Medius the Pure')) for (const sc of [CORE_MEDIUS, CORE_PREFIX]) sd = Math.max(sd, await run(hand, sc)); for (const pre of ['Normal Summon.*','Activate.*']) sd = Math.max(sd, await run(hand, [pre + esc(c)])); } }
-  const gs = guideScore(t.board); rows.push({ id: t.id, hand: t.hand[0], guide: gs, free: un, seeded: sd }); console.log(t.id.padEnd(8), (t.hand[0] + '').padEnd(24), 'guide', gs.toFixed(2), '| lab free', un.toFixed(2), '| lab seeded', sd.toFixed(2));
+  const gs = guideScore(t.board); rows.push({ id: t.id, hand: t.hand[0], guide: gs, free: un, seeded: sd }); if (process.env.JSONOUT) fs.appendFileSync(process.env.JSONOUT, JSON.stringify({ id: t.id, hand: t.hand, guide: gs, free: un, lab: sd }) + '\n'); console.log(t.id.padEnd(8), (t.hand[0] + '').padEnd(24), 'guide', gs.toFixed(2), '| lab free', un.toFixed(2), '| lab seeded', sd.toFixed(2));
 }
 const m = (k) => (rows.reduce((a, r) => a + r[k], 0) / rows.length).toFixed(2); console.log('MEAN guide', m('guide'), 'free', m('free'), 'seeded', m('seeded'), 'n', rows.length);
