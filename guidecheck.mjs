@@ -17,12 +17,18 @@ function guideScore(b) {
   layers.delete('handtrap'); return v + 0.5 * layers.size;
 }
 const GS = 13039848;
+function mkGame(hand) {
+  const pool = deck.main.slice(); const h = hand.map(n => { const c = findCard(n); const i = pool.findIndex(k => name(k) === name(c)); return pool.splice(i, 1)[0]; });
+  const op = OPP.main.slice(), oh = []; while (oh.length < 5) oh.push(op.splice(op.indexOf(GS), 1)[0]);
+  return { id: 'gc', seed: '7', first: 0, lab: true, seats: { 0: { name: 'A', deck: { ...deck, main: [...h, ...pool] }, hand: h }, 1: { name: 'o', deck: { ...OPP, main: [...oh, ...op] }, hand: oh } }, responses: [], cursor: { 0: 0, 1: 0 }, goldfish: [1], bot: {}, script: { 1: [] }, stopAfterTurn: null };
+}
 async function run(hand, script) {
   const pool = deck.main.slice(); const h = hand.map(n => { const c = findCard(n); const i = pool.findIndex(k => name(k) === name(c)); return pool.splice(i, 1)[0]; });
   const op = OPP.main.slice(), oh = []; while (oh.length < 5) oh.push(op.splice(op.indexOf(GS), 1)[0]);
   const g = { id: 'gc', seed: '7', first: 0, lab: true, seats: { 0: { name: 'A', deck: { ...deck, main: [...h, ...pool] }, hand: h }, 1: { name: 'o', deck: { ...OPP, main: [...oh, ...op] }, hand: oh } }, responses: [], cursor: { 0: 0, 1: 0 }, goldfish: [1], bot: {}, script: { 1: [] }, stopAfterTurn: null };
   const r = await searchT1(g, { ms: 90000, maxMacros: +(process.env.MAC||150), patience: +(process.env.PAT||60), guideW: 0.3, altCap: 4, maxMacro: 25, frontierCap: 400, script, evalFn: (S, s) => disruption(S, s) }); return r.score || 0;
 }
+import { autoSearch } from './src/autoopen.mjs';
 import { CORE_MEDIUS, CORE_PREFIX, viaStarter, lineScripts } from './src/guide-core.mjs';
 const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); let n = 0; const rows = [];
 for (const t of T) {
@@ -31,6 +37,7 @@ for (const t of T) {
   const un = Math.max(await run(hand, null)); let sd = un; for (const c of new Set(hand)) { if (/Ash Blossom|Droll|Small World/.test(c)) continue; { if (!/Ash|Droll|Ghost/.test('')) for (const c2 of new Set(hand)) { if (!/Ash Blossom|Droll|Ghost|Medius the Pure/.test(c2)) sd = Math.max(sd, await run(hand, viaStarter(c2))); }
   for (const sc of lineScripts(hand)) sd = Math.max(sd, await run(hand, sc));
   if (hand.includes('Medius the Pure')) for (const sc of [CORE_MEDIUS, CORE_PREFIX]) sd = Math.max(sd, await run(hand, sc)); for (const pre of ['Normal Summon.*','Activate.*']) sd = Math.max(sd, await run(hand, [pre + esc(c)])); } }
+  { const g2 = mkGame(hand); const a = await autoSearch(g2, { macros: +(process.env.MAC||150), depth: 3, cap: 60, evalFn: (S, s) => disruption(S, s) }); sd = Math.max(sd, a.best.score || 0); }
   const gs = guideScore(t.board); rows.push({ id: t.id, hand: t.hand[0], guide: gs, free: un, seeded: sd }); if (process.env.JSONOUT) fs.appendFileSync(process.env.JSONOUT, JSON.stringify({ id: t.id, hand: t.hand, guide: gs, free: un, lab: sd }) + '\n'); console.log(t.id.padEnd(8), (t.hand[0] + '').padEnd(24), 'guide', gs.toFixed(2), '| lab free', un.toFixed(2), '| lab seeded', sd.toFixed(2));
 }
 const m = (k) => (rows.reduce((a, r) => a + r[k], 0) / rows.length).toFixed(2); console.log('MEAN guide', m('guide'), 'free', m('free'), 'seeded', m('seeded'), 'n', rows.length);

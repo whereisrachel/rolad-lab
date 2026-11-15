@@ -1,5 +1,6 @@
 import { CORE_MEDIUS, CORE_PREFIX, lineScripts } from './guide-core.mjs';
 import { seedsFor } from './library.mjs';
+import { autoSearch } from './autoopen.mjs';
 import { parentPort, workerData } from 'worker_threads';
 import fs from 'fs'; import path from 'path';
 import { parseYdk, findCard, name, ROOT } from './cards.mjs';
@@ -27,8 +28,9 @@ async function job(t) {
     if (t.seeds) for (const sc of seedsFor(hand.map(c => name(c)))) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc, lib: true }); // learned lines
     if (t.seeds) for (const sc of lineScripts(hand.map(c => name(c)))) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc });
     if (t.seeds && hand.some(c => name(c) === 'Medius the Pure')) for (const sc of [CORE_MEDIUS, CORE_PREFIX]) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc });
-    if (t.seeds) { const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const seen = new Set(); for (const c of hand) { const n = name(c); if (seen.has(n) || /Ash Blossom|Droll|Nibiru|Ghost|Infinite Impermanence|Small World/.test(n)) continue; seen.add(n); for (const pre of ['Normal Summon.*', 'Activate.*']) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: [pre + esc(n)] }); } }
+    // (single-card opener seeds replaced by automatic openers below)
     const errs = []; let ok = 0;
+    if (t.seeds) { try { const a = await autoSearch({ ...g, responses: [] }, { macros: t.macros, depth: 3, cap: 60, evalFn: (S, s) => disruption(S, s) }); if (a.best && !a.best.error) { ok++; if ((a.best.score || 0) > (best.score || 0)) best = a.best; } } catch (e) { errs.push('auto: ' + String(e.message).slice(0, 90)); } }
     for (const c of cfgs) { let r; try { r = await searchT1({ ...g, responses: [] }, { ms: 90000, maxMacros: c.mac, patience: c.pat || t.patience || 60, guideW: c.gw, altCap: c.alt, maxMacro: c.mm, frontierCap: 400, script: c.script || null, evalFn: (S, s) => disruption(S, s) }); } catch (e) { errs.push(String(e.message).slice(0, 100)); continue; }
       if (r.error) { errs.push(String(r.error).slice(0, 100)); continue; } ok++; if ((r.score || 0) > (best.score || 0)) best = r; }
     // which hand cards were used: count names still in the final hand
