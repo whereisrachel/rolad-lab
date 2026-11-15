@@ -1,0 +1,3 @@
+decks\ROLAD-L2.ydk decks\L2-sabotaged.ydk random
+decks\ROLAD-L2.ydk decks\L2-rod.ydk random
+decks\ROLAD-L2.ydk decks\L2-skilled.ydk random

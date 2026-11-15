@@ -1,0 +1,68 @@
+name: farm
+on:
+  workflow_dispatch:
+    inputs:
+      kind: { description: "screen or pair", default: screen, type: choice, options: [screen, pair] }
+      cands: { description: "screen: card names one per line (empty = cands.txt)", required: false, default: "", type: string }
+      slot: { description: "screen: card each candidate replaces", default: "Small World", type: string }
+      deckA: { description: "baseline deck", default: "decks/ROLAD-L2.ydk", type: string }
+      deckB: { description: "pair: variant deck", default: "decks/L2-rod.ydk", type: string }
+      n: { description: "hands per card/deck", default: "40", type: string }
+      scn: { description: "none,ash,imperm,droll,both,all", default: "none,ash", type: string }
+      passes: { default: "1", type: string }
+      macros: { default: "200", type: string }
+      shards: { description: "parallel machines (max 20)", default: "20", type: string }
+      threads: { default: "2", type: string }
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        run: python3 -c "import json;print('matrix='+json.dumps({'shard':list(range(int('${{ inputs.shards }}')))}))" >> "$GITHUB_OUTPUT"
+  run:
+    needs: plan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - name: shard
+        env: { CANDS: "${{ inputs.cands }}" }
+        run: |
+          CF=cands.txt; if [ -n "$CANDS" ]; then printf '%s\n' "$CANDS" > cands-run.txt; CF=cands-run.txt; fi
+          if [ "${{ inputs.kind }}" = "screen" ]; then
+            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --threads ${{ inputs.threads }} --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+          else
+            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --threads ${{ inputs.threads }} --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+          fi
+      - uses: actions/upload-artifact@v4
+        with: { name: "shard-${{ matrix.shard }}", path: "results/shard-${{ matrix.shard }}.json" }
+  merge:
+    needs: run
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { pattern: "shard-*", path: merged, merge-multiple: true }
+      - name: report
+        env: { CANDS: "${{ inputs.cands }}" }
+        run: |
+          CF=cands.txt; if [ -n "$CANDS" ]; then printf '%s\n' "$CANDS" > cands-run.txt; CF=cands-run.txt; fi
+          if [ "${{ inputs.kind }}" = "screen" ]; then
+            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --merge merged > report.md
+          else
+            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --merge merged --out report.md > /dev/null
+          fi
+          cat report.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with: { name: report, path: report.md }

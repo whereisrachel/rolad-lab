@@ -1,0 +1,31 @@
+REAL GAMES ON THE EDOPRO ENGINE (ygo.mjs)
+
+Games are saved in .\games. Every command prints the board and the next decision.
+
+START A GAME
+  Opponent plays its own turns (bot):
+    node ygo.mjs new g1 --p0 decks\o_despia.ydk --p1 decks\ROLAD-L2.ydk --first 0 --seed 6 --lab --bot0 despia
+  Opponent only holds hand traps (goldfish + script):
+    node ygo.mjs new g2 --p0 decks\ROLAD-L2.ydk --p1 decks\goldfish.ydk --first 0 --seed 153 --lab --goldfish 1 --script ash,droll,imperm
+  Bots: despia, ss (Sky Striker), any.  Hand traps: ash droll imperm nibiru fuwalos purulia belle ogre maxx veiler bandit
+  Force opening hands: --hand0 "Card A;Card B;..."   (same for --hand1)
+  Opponent decks included: o_despia, o_ss, o_blitz
+
+PLAY
+  node ygo.mjs view g1 1                 board + pending decision for seat 1
+  node ygo.mjs act g1 1 "~Normal Summon Medius; 3"   answer; ~text = option whose label contains text; numbers also work
+  P / PP at a chain window = keep passing until the opponent acts (don't use while holding a hand trap)
+  node ygo.mjs undo g1 3 / fork g1 g1b   (games made with --lab)
+
+AUTO FIRST TURN (seat that goes first, turn 1)
+  node ygo.mjs autot1 g2 0 8
+  Solves the opening hand (8 s), then plays the solver's line for you. It stops where the real game
+  differs from the solver's goldfish run (opponent chain, different deck order) and shows the board.
+  Seed 153 test: played 70 of 119 steps, built Black Chaos + Theorealize Medius + Non-Finito + Medius
+  + Purification Power Patron, then stopped at a zone choice.
+
+LIMITS (read these)
+  - Bots follow fixed priority lists. They play a weak, predictable line. A bot game is not a real opponent.
+  - Hand-trap script: first option, never targets smartly.
+  - Same seed + same decks = same hands, so compare lists on matching seeds.
+  - Your rule still stands: only real piloted games decide list changes.
