@@ -18,7 +18,7 @@ function handsFor(deck) { // returns list of {label, idx[]}
 // Paired: hand drawn by position in A; B uses the same positions (decks differ by few cards, same order) in random mode. onecard builds per deck.
 const hA = handsFor(A); const hB = mode === 'random' ? hA.map(h => ({ ...h })) : handsFor(B);
 const tasks = []; let id = 0; const meta = {};
-function add(deckName, deck, hs, side) { hs.forEach((h, hi) => scns.forEach(sc => { const tid = id++; meta[tid] = { side, hi, sc, label: h.label }; tasks.push({ id: tid, deck: deckName, hand: h.idx, scn: sc, macros: MAC, passes: PAS, seed: 1000 + hi }); })); }
+function add(deckName, deck, hs, side) { hs.forEach((h, hi) => scns.forEach(sc => { const tid = id++; meta[tid] = { side, hi, sc, label: h.label }; tasks.push({ id: tid, deck: deckName, hand: h.idx, scn: sc, macros: MAC, ht: +f('ht', 1), passes: PAS, seed: 1000 + hi }); })); }
 add(dA, A, hA, 'A'); add(dB, B, hB, 'B');
 const SH = f('shard', null), OF = +f('of', 1), MERGE = f('merge', null);
 const myTasks = SH !== null ? tasks.filter(t => t.id % OF === +SH) : tasks;

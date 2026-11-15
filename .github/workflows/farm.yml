@@ -9,6 +9,7 @@ on:
       deckB: { description: "pair: variant deck", default: "decks/L2-rod.ydk", type: string }
       n: { description: "hands per card/deck", default: "40", type: string }
       scn: { description: "none,ash,imperm,droll,both,all", default: "none,ash", type: string }
+      ht: { description: "hand-trap-in-hand credit: 1 = counts, 0 = board-only", default: "1", type: string }
       passes: { default: "1", type: string }
       macros: { default: "200", type: string }
       shards: { description: "parallel machines (max 20)", default: "20", type: string }
@@ -39,11 +40,11 @@ jobs:
         run: |
           CF=cands.txt; if [ -n "$CANDS" ]; then printf '%s\n' "$CANDS" > cands-run.txt; CF=cands-run.txt; fi
           if [ "${{ inputs.kind }}" = "loo" ]; then
-            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           elif [ "${{ inputs.kind }}" = "screen" ]; then
-            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           else
-            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           fi
       - uses: actions/upload-artifact@v4
         with: { name: "shard-${{ matrix.shard }}", path: "results/shard-${{ matrix.shard }}.json" }
@@ -63,11 +64,11 @@ jobs:
         run: |
           CF=cands.txt; if [ -n "$CANDS" ]; then printf '%s\n' "$CANDS" > cands-run.txt; CF=cands-run.txt; fi
           if [ "${{ inputs.kind }}" = "loo" ]; then
-            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --merge merged > report.md
+            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --merge merged > report.md
           elif [ "${{ inputs.kind }}" = "screen" ]; then
-            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --merge merged > report.md
+            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --merge merged > report.md
           else
-            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --merge merged --out report.md > /dev/null
+            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --merge merged --out report.md > /dev/null
           fi
           cat report.md >> "$GITHUB_STEP_SUMMARY"
           cat report.md

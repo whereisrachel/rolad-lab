@@ -3,6 +3,7 @@
 import { teamOf, L } from './engine.mjs';
 import { cardDB, name } from './cards.mjs';
 const LINK = 0x4000000;
+let HT = 1; export const setHT = (w) => { HT = w; }; // weight of a hand trap kept in hand (1 = counts as an interruption; 0 = board-only comparison)
 export function disruption(S, seat, detail = false) {
   const { lb, h } = S; const me = teamOf(S.game, seat); const D = cardDB().data;
   const q = (loc) => lb.duelQueryLocation(h, { flags: 0x1 | 0x2 | 0x200, controller: me, location: loc }).filter(c => c && c.code);
@@ -35,10 +36,10 @@ export function disruption(S, seat, detail = false) {
   }
   for (const c of hand) {
     const n = nm(c);
-    if (/Ash Blossom|Droll|Nibiru|Ghost/.test(n)) add('hand ' + n, 1, 'handtrap');
-    else if (/Infinite Impermanence/.test(n)) add('hand ' + n, 1, 'handtrap');
+    if (/Ash Blossom|Droll|Nibiru|Ghost/.test(n)) add('hand ' + n, HT, 'handtrap');
+    else if (/Infinite Impermanence/.test(n)) add('hand ' + n, HT, 'handtrap');
     else add('hand ' + n, 0.15);
   }
-  const lay = 0.5 * layers.size; v += lay;
+  if (HT === 0) layers.delete('handtrap'); const lay = 0.5 * layers.size; v += lay;
   return detail ? { v, parts, layers: [...layers] } : v;
 }

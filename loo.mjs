@@ -18,7 +18,7 @@ cards.forEach((c, ci) => {
   for (let hi = 0; hi < N; hi++) {
     const idx = BASE.main.map((_, k) => k).filter(k => k !== c.slot); for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; }
     const hand = [c.slot, ...idx.slice(0, 4)];
-    for (const sc of scns) for (const side of ['with', 'without']) { const tid = id++; meta[tid] = { ci, hi, sc, side }; tasks.push({ id: tid, deck: side === 'with' ? deckPath : c.file, hand, scn: sc, macros: MAC, passes: PAS, seed: 2000 + hi }); }
+    for (const sc of scns) for (const side of ['with', 'without']) { const tid = id++; meta[tid] = { ci, hi, sc, side }; tasks.push({ id: tid, deck: side === 'with' ? deckPath : c.file, hand, scn: sc, macros: MAC, ht: +f('ht', 1), passes: PAS, seed: 2000 + hi }); }
   }
 });
 const SH = f('shard', null), OF = +f('of', 1), MERGE = f('merge', null);

@@ -15,7 +15,7 @@ fs.mkdirSync('decks/cand', { recursive: true });
 for (const nm of names) { let c; try { c = findCard(nm); } catch { c = null; } if (!c) { console.log('skip (not found):', nm); continue; } const main = BASE.main.slice(); main[slot] = c; const file = 'decks/cand/' + nm.replace(/[^A-Za-z0-9]+/g, '_').slice(0, 40) + '.ydk'; fs.writeFileSync(file, '#main\n' + main.join('\n') + '\n#extra\n' + BASE.extra.join('\n') + '\n!side\n' + (BASE.side || []).join('\n') + '\n'); decks.push({ label: name(c), file }); }
 const SH = f('shard', null), OF = +f('of', 1), MERGE = f('merge', null);
 const tasks = []; const meta = {}; let id = 0;
-decks.forEach((d, di) => hands.forEach((h, hi) => scns.forEach(sc => { const tid = id++; meta[tid] = { di, hi, sc }; tasks.push({ id: tid, deck: d.file, hand: h, scn: sc, macros: MAC, passes: PAS, seed: 1000 + hi }); })));
+decks.forEach((d, di) => hands.forEach((h, hi) => scns.forEach(sc => { const tid = id++; meta[tid] = { di, hi, sc }; tasks.push({ id: tid, deck: d.file, hand: h, scn: sc, macros: MAC, ht: +f('ht', 1), passes: PAS, seed: 1000 + hi }); })));
 const myTasks = SH !== null ? tasks.filter(t => t.id % OF === +SH) : tasks;
 const chunks = Array.from({ length: T }, () => []); myTasks.forEach((t, i) => chunks[i % T].push(t));
 const res = {}; let done = 0; const t0 = Date.now(); const file = fileURLToPath(new URL('./src/rt-worker.mjs', import.meta.url));
