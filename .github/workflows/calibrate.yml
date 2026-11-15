@@ -35,7 +35,11 @@ jobs:
         with: { pattern: "cal-*", path: cal, merge-multiple: true }
       - name: write calibration
         run: |
-          node calib.mjs merge cal | tee -a "$GITHUB_STEP_SUMMARY"
           git config user.name "farm"; git config user.email "farm@users.noreply.github.com"
-          git add reports/calibration.json reports/calibration.md; git commit -m "calibration $(node calib.mjs hash)"
-          for i in 1 2 3 4 5 6; do git pull --rebase --autostash -q origin main && git push -q origin HEAD:main && break; sleep $((RANDOM % 8 + 2)); done
+          for i in 1 2 3 4 5 6; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            node calib.mjs merge cal > cal.md
+            git add reports/calibration.json reports/calibration.md && git commit -q -m "calibration $(node calib.mjs hash)" && git push -q origin HEAD:main && break
+            sleep $((RANDOM % 8 + 2))
+          done
+          cat cal.md >> "$GITHUB_STEP_SUMMARY"
