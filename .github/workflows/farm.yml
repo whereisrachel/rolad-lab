@@ -1,4 +1,5 @@
 name: farm
+run-name: "${{ inputs.kind }} | ${{ inputs.deckA }}${{ inputs.kind == 'pair' && format(' vs {0}', inputs.deckB) || format(' | slot {0}', inputs.slot) }} | ${{ inputs.n }} hands"
 on:
   workflow_dispatch:
     inputs:
@@ -40,18 +41,20 @@ jobs:
       - name: banlist preflight (blocks banned/unknown cards and illegal decks)
         env: { CANDS: "${{ inputs.cands }}" }
         run: |
+          DA=$(node --no-warnings resolve-deck.mjs "${{ inputs.deckA }}"); DB=""; if [ "${{ inputs.kind }}" = "pair" ]; then DB=$(node --no-warnings resolve-deck.mjs "${{ inputs.deckB }}"); fi
           node --no-warnings preflight.mjs ${{ inputs.kind == 'screen' && (inputs.cands == '' && 'cands.txt' || '/dev/null') || '/dev/null' }}
-          node --no-warnings deckcheck.mjs "${{ inputs.deckA }}" ${{ inputs.kind == 'pair' && inputs.deckB || '' }}
+          node --no-warnings deckcheck.mjs "$DA" $DB
       - name: shard
         env: { CANDS: "${{ inputs.cands }}" }
         run: |
+          DA=$(node --no-warnings resolve-deck.mjs "${{ inputs.deckA }}"); DB=""; if [ "${{ inputs.kind }}" = "pair" ]; then DB=$(node --no-warnings resolve-deck.mjs "${{ inputs.deckB }}"); fi
           CF=cands.txt; if [ -n "$CANDS" ]; then printf '%s\n' "$CANDS" > cands-run.txt; CF=cands-run.txt; fi
           if [ "${{ inputs.kind }}" = "loo" ]; then
-            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --tutor "${{ inputs.tutor }}" --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings loo.mjs --deck "$DA" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --tutor "${{ inputs.tutor }}" --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           elif [ "${{ inputs.kind }}" = "screen" ]; then
-            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings screen.mjs --deck "$DA" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           else
-            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings realtest.mjs "$DA" "$DB" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           fi
       - uses: actions/upload-artifact@v4
         with: { name: "shard-${{ matrix.shard }}", path: "results/shard-${{ matrix.shard }}.json" }
@@ -69,13 +72,14 @@ jobs:
       - name: report
         env: { CANDS: "${{ inputs.cands }}" }
         run: |
+          DA=$(node --no-warnings resolve-deck.mjs "${{ inputs.deckA }}"); DB=""; if [ "${{ inputs.kind }}" = "pair" ]; then DB=$(node --no-warnings resolve-deck.mjs "${{ inputs.deckB }}"); fi
           CF=cands.txt; if [ -n "$CANDS" ]; then printf '%s\n' "$CANDS" > cands-run.txt; CF=cands-run.txt; fi
           if [ "${{ inputs.kind }}" = "loo" ]; then
-            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --tutor "${{ inputs.tutor }}" --merge merged > report.md
+            node --no-warnings loo.mjs --deck "$DA" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --tutor "${{ inputs.tutor }}" --merge merged > report.md
           elif [ "${{ inputs.kind }}" = "screen" ]; then
-            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --merge merged > report.md
+            node --no-warnings screen.mjs --deck "$DA" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --merge merged > report.md
           else
-            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --merge merged --out report.md > /dev/null
+            node --no-warnings realtest.mjs "$DA" "$DB" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --merge merged --out report.md > /dev/null
           fi
           { node calib.mjs status; cat report.md; } > report2.md && mv report2.md report.md
           cat report.md >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,11 @@
+// node mkcards.mjs -> docs/cards.json: every legal TCG/OCG card (name, type line, stats, limit, text) for the app's card search
+import fs from 'fs'; import { cardDB, banlist } from './src/cards.mjs';
+const { data, text } = cardDB(); const lim = banlist();
+const T = (t) => { const k = []; if (t & 1) { k.push('Monster'); if (t & 0x40) k.push('Fusion'); if (t & 0x2000) k.push('Synchro'); if (t & 0x800000) k.push('Xyz'); if (t & 0x4000000) k.push('Link'); if (t & 0x80) k.push('Ritual'); if (t & 0x1000000) k.push('Pendulum'); if (t & 0x1000) k.push('Tuner'); } else if (t & 2) { k.push('Spell'); if (t & 0x10000) k.push('Quick-Play'); if (t & 0x20000) k.push('Continuous'); if (t & 0x80000) k.push('Field'); if (t & 0x40000) k.push('Equip'); if (t & 0x80) k.push('Ritual'); } else if (t & 4) { k.push('Trap'); if (t & 0x20000) k.push('Continuous'); if (t & 0x100000) k.push('Counter'); } return k.join(' '); };
+const R = { 1: 'Warrior', 2: 'Spellcaster', 4: 'Fairy', 8: 'Fiend', 16: 'Zombie', 32: 'Machine', 64: 'Aqua', 128: 'Pyro', 256: 'Rock', 512: 'Winged Beast', 1024: 'Plant', 2048: 'Insect', 4096: 'Thunder', 8192: 'Dragon', 16384: 'Beast', 32768: 'Beast-Warrior', 65536: 'Dinosaur', 131072: 'Fish', 262144: 'Sea Serpent', 524288: 'Reptile', 1048576: 'Psychic', 2097152: 'Divine-Beast', 4194304: 'Creator God', 8388608: 'Wyrm', 16777216: 'Cyberse', 33554432: 'Illusion' };
+const A = { 1: 'EARTH', 2: 'WATER', 4: 'FIRE', 8: 'WIND', 16: 'LIGHT', 32: 'DARK', 64: 'DIVINE' };
+const out = [];
+for (const [id, t] of text) { const d = data.get(id); if (!d || d.alias || (d.type & 0x4000)) continue; if (d.ot && (d.ot & 3) === 0) continue;
+  const l = lim.has(id) ? lim.get(id) : 3; const mon = d.type & 1;
+  out.push([t.name, T(d.type), mon ? `${A[d.attribute] || ''} ${R[d.race] || ''} ${d.type & 0x4000000 ? 'Link-' + (d.level & 0xff) : (d.type & 0x800000 ? 'Rank ' : 'Lv') + (d.level & 0xff)} ${d.atk}/${d.type & 0x4000000 ? '-' : d.def}` : '', l, t.desc.replace(/\r/g, '')]); }
+out.sort((a, b) => a[0].localeCompare(b[0])); fs.mkdirSync('docs', { recursive: true }); fs.writeFileSync('docs/cards.json', JSON.stringify(out)); console.log(out.length, 'cards', (fs.statSync('docs/cards.json').size / 1e6).toFixed(1) + 'MB');
