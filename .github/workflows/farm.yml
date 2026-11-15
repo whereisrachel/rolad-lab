@@ -36,6 +36,11 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
       - run: npm ci
+      - name: banlist preflight (blocks banned/unknown cards and illegal decks)
+        env: { CANDS: "${{ inputs.cands }}" }
+        run: |
+          node --no-warnings preflight.mjs ${{ inputs.kind == 'screen' && (inputs.cands == '' && 'cands.txt' || '/dev/null') || '/dev/null' }}
+          node --no-warnings deckcheck.mjs "${{ inputs.deckA }}" ${{ inputs.kind == 'pair' && inputs.deckB || '' }}
       - name: shard
         env: { CANDS: "${{ inputs.cands }}" }
         run: |
