@@ -7,3 +7,6 @@ const GS=13039848,op=OPP.main.slice(),oh=[];while(oh.length<5)oh.push(op.splice(
 const g={id:'s',seed:'7',first:0,lab:true,seats:{0:{name:'A',deck:{...deck,main:[...h,...pool]},hand:h},1:{name:'o',deck:{...OPP,main:[...oh,...op]},hand:oh}},responses:[],cursor:{0:0,1:0},goldfish:[1],bot:{},script:{1:[]},stopAfterTurn:null};
 const r=await searchT1(g,{ms:90000,maxMacros:+(process.argv[3]||400),guideW:0.3,altCap:+(process.env.ALT||4),maxMacro:+(process.env.MM||25),frontierCap:400,patience:Infinity,script:process.env.SCRIPT?JSON.parse(fs.readFileSync(process.env.SCRIPT,"utf8")):null,evalFn:(S,s)=>disruption(S,s)});
 console.log('SCORE',r.score.toFixed(2),'macros',r.macros);console.log('LINE:\n'+(r.line||[]).map((x,i)=>(i+1)+'. '+x).join('\n'));console.log('BOARD:',JSON.stringify(r.board,null,1));
+
+if(process.env.EVLOG&&r.raw){const {simulate}=await import('./src/engine.mjs');const S=await simulate(Object.assign(g,{responses:r.raw,cursor:{0:0,1:0}}));console.log('ENGINE LOG:');console.log(S.events.map(e=>e.s[0]).filter(x=>x!=null).join('\n'));}
+if(process.env.DBGRAW&&r.raw){console.log('RAW',r.raw.length,JSON.stringify(r.raw.slice(0,4),(k,v)=>typeof v==='bigint'?String(v):v).slice(0,400));}

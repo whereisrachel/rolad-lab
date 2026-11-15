@@ -118,7 +118,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const d = decision(S, seat); if (!d) return;
     const sig = sigOf(d); if (seen.has(sig)) return; seen.add(sig);
     const v = (evalFn || evalBoard)(S, seat); nodes++;
-    if (v > best.v) lastImp = macros, best = { v, rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) };
+    if (v > best.v) lastImp = macros, best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) };
     const gv = guideW ? guideW * evalBoard(S, seat) : 0;
     const pri = v + gv + 0.15 * depth + (nodes % 7) * 0.001;
     if (frontier.length >= frontierCap && pri <= minPri) return; // would be pruned at once: skip the snapshot and the sort
@@ -174,5 +174,5 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
       macro(node.depth, null, i);
     }
   }
-  return { score: best.v, line: best.rs, board: best.board, nodes, macros, ms: Date.now() - t0, prof: PROF };
+  return { score: best.v, raw: best.raw, line: best.rs, board: best.board, nodes, macros, ms: Date.now() - t0, prof: PROF };
 }
