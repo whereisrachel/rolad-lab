@@ -39,6 +39,7 @@
   <h1>ROLAD Lab</h1>
   <nav>
     <button data-t="run" class="on">Run a test</button>
+    <button data-t="explorer">Explorer</button>
     <button data-t="runs">Running</button>
     <button data-t="results">Results</button>
     <button data-t="cards">Card search</button>
@@ -101,6 +102,16 @@
   </div>
 </section>
 
+<section id="explorer">
+  <div class="card">
+    <b>The explorer runs by itself every night (about 1:15 am).</b> It plays fresh hands with your list, finds the ones that fail, works out what they were missing (no starter, too few bodies, dead cards, no trigger for Theorealize Medius), searches every legal card for ones that supply it, replays the failing hands with each, and learns which kinds of cards actually help. The best finds go to full tests automatically.
+    <label>Baseline list</label><select id="exDeck"></select>
+    <button class="btn" id="exGo">Run the explorer now</button> <span id="exMsg" class="small"></span>
+  </div>
+  <div class="card" id="exLearn">Loading what it has learned…</div>
+  <div class="card md" id="exLast">Loading the latest explorer report…</div>
+</section>
+
 <section id="runs"><div class="card"><div id="runsList">Loading…</div><button class="btn sec" id="refreshRuns">Refresh</button></div></section>
 
 <section id="results">
@@ -149,7 +160,7 @@ const raw = async (p) => { const r = await fetch('https://raw.githubusercontent.
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // tabs
-document.querySelectorAll('nav button').forEach(b => b.onclick = () => { document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === b.dataset.t)); if (b.dataset.t === 'runs') loadRuns(); if (b.dataset.t === 'results') loadReports(); if (b.dataset.t === 'cards') loadCards(); if (b.dataset.t === 'lines') loadLines(); });
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => { document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === b.dataset.t)); if (b.dataset.t === 'runs') loadRuns(); if (b.dataset.t === 'results') loadReports(); if (b.dataset.t === 'cards') loadCards(); if (b.dataset.t === 'lines') loadLines(); if (b.dataset.t === 'explorer') loadExplorer(); });
 
 // calibration badge
 (async () => { try { const c = JSON.parse(await raw('reports/calibration.json')); const el = $('cal'); el.textContent = `Calibration ${c.pass ? 'PASS' : 'FAIL'}: matches the guide on ${c.matched}/${c.n} hands (${c.date.slice(0, 10)})`; el.className = c.pass ? 'good' : 'bad'; } catch { $('cal').textContent = 'Calibration: not run yet'; } })();
@@ -195,7 +206,7 @@ $('refreshRuns').onclick = loadRuns;
 
 // reports
 async function loadReports() {
-  try { const t = await gh('/git/trees/main?recursive=1'); const reps = t.tree.map(x => x.path).filter(p => /^reports\/(pair|screen|loo)-\d+\.md$/.test(p)).sort((a, b) => +b.match(/\d+/)[0] - +a.match(/\d+/)[0]);
+  try { const t = await gh('/git/trees/main?recursive=1'); const reps = t.tree.map(x => x.path).filter(p => /^reports\/(pair|screen|loo|explore)-\d+\.md$/.test(p)).sort((a, b) => +b.match(/\d+/)[0] - +a.match(/\d+/)[0]);
     const extra = ['reports/calibration.md', 'reports/edscan.md', 'reports/mainscan.md'];
     $('repList').innerHTML = reps.slice(0, 80).map(p => `<a href="#" data-p="${p}">${p.replace('reports/', '')}</a>`).join('') + '<div class="mute small" style="margin-top:10px">Reference</div>' + extra.map(p => `<a href="#" data-p="${p}">${p.replace('reports/', '')}</a>`).join('');
     $('repList').querySelectorAll('a').forEach(a => a.onclick = async (e) => { e.preventDefault(); showReport(a.dataset.p); });
@@ -256,6 +267,19 @@ async function loadLines() {
     $('linesView').innerHTML = `<p class="small mute">${cards.length} starting cards with saved lines. Each line is replayed as an opening in later runs whenever the hand holds that card.</p>` + cards.map(c => { const ls = Object.values(by[c]).sort((a, b) => b.v - a.v).slice(0, 3); return `<details><summary><b>${esc(c)}</b> <span class="mute small">best ${ls[0].v.toFixed(2)}, ${Object.keys(by[c]).length} lines</span></summary>${ls.map(l => `<div class="small" style="margin:6px 0 10px 12px">${l.v.toFixed(2)}: ${esc(l.s.map(x => x.replace(/^\^/, '').replace(/\\\(/g, '(').replace(/\\\)/g, ')').replace(/\\/g, '')).join(' → '))}</div>`).join('')}</details>`; }).join('');
   } catch (e) { $('linesView').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; }
 }
+
+// explorer
+async function loadExplorer() {
+  const sel = $('exDeck'); if (!sel.options.length) sel.innerHTML = DECKS.map(d => `<option ${d === 'decks/L2-vand3.ydk' ? 'selected' : ''}>${esc(d)}</option>`).join('');
+  try { const L = JSON.parse(await raw('data/learned.json')); const tw = Object.entries(L.tagW).sort((a, b) => b[1] - a[1]); const tried = Object.entries(L.cards).sort((a, b) => b[1].rescued - a[1].rescued);
+    $('exLearn').innerHTML = `<b>Learned from ${L.runs} run(s), ${tried.length} cards tried.</b><div class="small" style="margin-top:6px">Kinds of card that help most: ${tw.slice(0, 6).map(([t, w]) => `${esc(t.replace(/_/g, ' '))} <span class="good">×${w.toFixed(2)}</span>`).join(', ')}<br>Help least: ${tw.slice(-4).map(([t, w]) => `${esc(t.replace(/_/g, ' '))} <span class="bad">×${w.toFixed(2)}</span>`).join(', ')}</div>` +
+      '<div class="small" style="margin-top:8px">Best cards so far (failing hands rescued / times tried): ' + tried.slice(0, 10).map(([n, h]) => `${esc(n)} ${h.rescued}/${h.tests}`).join(', ') + '</div>';
+  } catch { $('exLearn').innerHTML = '<span class="mute">Nothing learned yet: the first explorer run has not finished.</span>'; }
+  try { const t = await gh('/git/trees/main?recursive=1'); const ex = t.tree.map(x => x.path).filter(p => /^reports\/explore-\d+\.md$/.test(p)).sort((a, b) => +b.match(/\d+/)[0] - +a.match(/\d+/)[0]);
+    $('exLast').innerHTML = ex.length ? mdToHtml(await raw(ex[0])) : '<span class="mute">No explorer report yet.</span>'; } catch (e) { $('exLast').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; }
+}
+$('exGo').onclick = async () => { if (!tok()) { $('exMsg').innerHTML = '<span class="bad">Add your token in Setup.</span>'; return; }
+  try { await gh('/actions/workflows/explore.yml/dispatches', { method: 'POST', body: JSON.stringify({ ref: 'main', inputs: { deck: $('exDeck').value } }) }); $('exMsg').innerHTML = '<span class="good">Started. About 1.5 to 2 hours; watch it under Running.</span>'; } catch (e) { $('exMsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } };
 
 // setup
 $('tok').value = tok() ? '••••••••' : ''; $('saveTok').onclick = async () => { const v = $('tok').value.trim(); if (!v || v.startsWith('•')) return; localStorage.setItem('rolad_tok', v); try { await gh(''); $('tokMsg').innerHTML = '<span class="good">Saved and working.</span>'; loadDecks(); } catch (e) { $('tokMsg').innerHTML = '<span class="bad">Token did not work: ' + esc(e.message) + '</span>'; } };

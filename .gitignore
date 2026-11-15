@@ -1,7 +1,7 @@
-node_modules/
-results/
-decks/cand/
 *.log
-results/
+decks/_built/
+decks/_explore/
 decks/cand/
+decks/crashtest.ydk
 node_modules/
+results/

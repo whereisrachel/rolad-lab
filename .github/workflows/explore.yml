@@ -1,0 +1,112 @@
+name: explore
+run-name: "explore | ${{ inputs.deck || 'decks/L2-vand3.ydk' }} | nightly missing-piece search"
+# Every night: play fresh hands, find the failures, work out what they were missing, search ALL legal cards for
+# cards that supply it (weighted by what earlier runs learned), replay the failing hands with each, learn from the
+# results, and send the best finds to full farm tests. No one has to start it.
+on:
+  schedule:
+    - cron: '17 8 * * *'   # 01:17 Calgary time
+  workflow_dispatch:
+    inputs:
+      deck: { description: "baseline list", default: "decks/L2-vand3.ydk", type: string }
+      hands: { description: "fresh hands to look for failures", default: "200", type: string }
+      fails: { description: "failing hands to dig on", default: "30", type: string }
+      poolmain: { description: "main-deck cards per run", default: "160", type: string }
+      pooled: { description: "Extra Deck cards per run", default: "40", type: string }
+      macros: { default: "150", type: string }
+      confirm: { description: "best finds sent to full tests", default: "3", type: string }
+concurrency: { group: explore, cancel-in-progress: false }
+permissions:
+  contents: write
+  actions: write
+env:
+  DECK: ${{ inputs.deck || 'decks/L2-vand3.ydk' }}
+  HANDS: ${{ inputs.hands || '200' }}
+  FAILS: ${{ inputs.fails || '30' }}
+  POOLMAIN: ${{ inputs.poolmain || '160' }}
+  POOLED: ${{ inputs.pooled || '40' }}
+  MACROS: ${{ inputs.macros || '150' }}
+  CONFIRM: ${{ inputs.confirm || '3' }}
+  SEED: ${{ github.run_id }}
+jobs:
+  base:
+    runs-on: ubuntu-latest
+    strategy: { fail-fast: false, matrix: { shard: [0,1,2,3,4,5,6,7,8,9] } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: |
+          DA=$(node --no-warnings resolve-deck.mjs "$DECK")
+          node --no-warnings explore.mjs base --deck "$DA" --n $HANDS --seed $((SEED % 100000)) --macros $MACROS --shard ${{ matrix.shard }} --of 10 --threads $(nproc)
+      - uses: actions/upload-artifact@v4
+        with: { name: "base-${{ matrix.shard }}", path: "results/base-${{ matrix.shard }}.json" }
+  plan:
+    needs: base
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { pattern: "base-*", path: merged, merge-multiple: true }
+      - run: |
+          DA=$(node --no-warnings resolve-deck.mjs "$DECK")
+          node --no-warnings explore.mjs fails --deck "$DA" --n $HANDS --seed $((SEED % 100000)) --merge merged --fails $FAILS
+          node --no-warnings explore.mjs pool --deck "$DA" --seed $((SEED % 100000)) --poolmain $POOLMAIN --pooled $POOLED
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plan
+          path: |
+            data/explore-fails.json
+            data/pool.json
+  rescue:
+    needs: plan
+    runs-on: ubuntu-latest
+    strategy: { fail-fast: false, matrix: { shard: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19] } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { name: plan, path: data }
+      - run: |
+          DA=$(node --no-warnings resolve-deck.mjs "$DECK")
+          node --no-warnings explore.mjs rescue --deck "$DA" --n $HANDS --seed $((SEED % 100000)) --macros $MACROS --shard ${{ matrix.shard }} --of 20 --threads $(nproc)
+      - uses: actions/upload-artifact@v4
+        with: { name: "res-${{ matrix.shard }}", path: "results/res-${{ matrix.shard }}.json" }
+  rank:
+    needs: rescue
+    if: always() && needs.rescue.result != 'skipped'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { pattern: "res-*", path: merged, merge-multiple: true }
+      - uses: actions/download-artifact@v4
+        with: { name: plan, path: plan }
+      - name: rank, learn, save
+        run: |
+          git config user.name "farm"; git config user.email "farm@users.noreply.github.com"
+          for i in 1 2 3 4 5 6; do
+            git fetch -q origin main && git reset -q --hard origin/main
+            cp plan/* data/
+            DA=$(node --no-warnings resolve-deck.mjs "$DECK")
+            node --no-warnings explore.mjs rank --deck "$DA" --n $HANDS --seed $((SEED % 100000)) --merge merged --confirm $CONFIRM > rank.log
+            git add reports/explore-*.md data/learned.json lines decks/explore 2>/dev/null; git commit -q -m "explore ${{ github.run_id }}" && git push -q origin HEAD:main && break
+            sleep $((RANDOM % 8 + 2))
+          done
+          cat reports/explore-${{ github.run_id }}.md >> "$GITHUB_STEP_SUMMARY"
+      - name: send best finds to full tests
+        env: { GH_TOKEN: "${{ github.token }}" }
+        run: |
+          DA=$(node --no-warnings resolve-deck.mjs "$DECK")
+          for B in $(cat data/explore-confirm.txt 2>/dev/null); do
+            gh workflow run farm.yml --ref main -f kind=pair -f deckA="$DECK" -f deckB="$B" -f n=300 -f scn=none,ash,imperm -f ht=0 -f seeds=1 -f macros=300 -f shards=20 && echo "sent $B"
+          done
