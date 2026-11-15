@@ -1,0 +1,102 @@
+{
+ "hash": "f8ccd61d6d1c",
+ "date": "2026-11-15T22:17:26.308Z",
+ "n": 7,
+ "matched": 7,
+ "guideMean": 5.84,
+ "labMean": 7.66,
+ "pass": false,
+ "rows": [
+  {
+   "id": "e3",
+   "hand": [
+    "Engraver",
+    "Medius",
+    "Ash Blossom",
+    "Droll & Lock Bird",
+    "Ghost Ogre"
+   ],
+   "guide": 7.9,
+   "free": 5.050000000000001,
+   "lab": 10.1
+  },
+  {
+   "id": "lac",
+   "hand": [
+    "Lacrima",
+    "Ash Blossom",
+    "Ash Blossom",
+    "Droll & Lock Bird",
+    "Ghost Ogre"
+   ],
+   "guide": 1.7,
+   "free": 4.65,
+   "lab": 5
+  },
+  {
+   "id": "purif3",
+   "hand": [
+    "Corruption and Purification",
+    "Ash Blossom",
+    "Ash Blossom",
+    "Droll & Lock Bird",
+    "Ghost Ogre"
+   ],
+   "guide": 6.8,
+   "free": 4.5,
+   "lab": 11.15
+  },
+  {
+   "id": "sw3",
+   "hand": [
+    "Small World",
+    "Ash Blossom",
+    "Ash Blossom",
+    "Droll & Lock Bird",
+    "Ghost Ogre"
+   ],
+   "guide": 6.5,
+   "free": 6.000000000000001,
+   "lab": 6.000000000000001
+  },
+  {
+   "id": "tm3",
+   "hand": [
+    "Tract",
+    "Medius",
+    "Ash Blossom",
+    "Droll & Lock Bird",
+    "Ghost Ogre"
+   ],
+   "guide": 7.7,
+   "free": 4.9,
+   "lab": 8.8
+  },
+  {
+   "id": "tre_finmel",
+   "hand": [
+    "Pendulum Treasure",
+    "Ash Blossom",
+    "Ash Blossom",
+    "Droll & Lock Bird",
+    "Ghost Ogre"
+   ],
+   "guide": 3.8,
+   "free": 3.5999999999999996,
+   "lab": 6.300000000000001
+  },
+  {
+   "id": "tre3",
+   "hand": [
+    "Pendulum Treasure",
+    "Ash Blossom",
+    "Ash Blossom",
+    "Droll & Lock Bird",
+    "Ghost Ogre"
+   ],
+   "guide": 6.5,
+   "free": 3.5999999999999996,
+   "lab": 6.300000000000001
+  }
+ ]
+}
