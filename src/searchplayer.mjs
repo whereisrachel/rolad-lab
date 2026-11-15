@@ -155,7 +155,9 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
       autoAdvance(S); if (!S.pending || S.ended || dseat() !== seat) break;
       const d1 = decision(S, seat); if (!d1) break;
       let hit = -1; if (k < res.length && d1.options) hit = d1.options.findIndex(o => res[k].test(o.label));
+      if (process.env.DBG3) console.log('SCR', k, d1.kind, String(d1.msg||d1.prompt||'').slice(0,60), '|', d1.options.slice(0,6).map(o=>o.label.slice(0,35)).join(' ; '));
       if (hit >= 0 && (d1.kind === 'pick' || d1.kind === 'unselect')) { const o1 = d1.options[hit]; if (!push(S, { seat, resp: o1.resp, label: o1.label })) break; k++; continue; }
+      if (k < res.length && (d1.kind === 'multi' || d1.kind === 'sum')) { const mi = d1.options.map((o, i) => res[k].test(o.label) ? i + 1 : 0).filter(Boolean); if (mi.length) { const mx = d1.max || 1; const r2 = answer(S, seat, mi.slice(0, Math.max(mx, 1)).join(' ')); if (r2 && !r2.error && r2.resps && r2.resps.every(r => push(S, { seat, resp: r.resp, label: r.label }))) { k++; continue; } } }
       if (isIdle()) { if (k >= res.length) break; console.log('SCRIPT STUCK at', k, script[k], '| idle options:', d1.options.map(o => o.label).join(' ; ')); break; }
       const c1 = cands(d1); if (!c1.length || !apply(d1, c1[0])) break;
     }
