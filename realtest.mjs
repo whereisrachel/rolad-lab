@@ -16,7 +16,20 @@ function handsFor(deck) { // returns list of {label, idx[]}
   return out;
 }
 // Paired: hand drawn by position in A; B uses the same positions (decks differ by few cards, same order) in random mode. onecard builds per deck.
-const hA = handsFor(A); const hB = mode === 'random' ? hA.map(h => ({ ...h })) : handsFor(B);
+const hA = handsFor(A); // Pairing. Same-size decks that differ by swaps keep the same positions. If deck sizes differ (card added / cut) the hands are COUPLED by card name:
+// cards in both decks stay in the hand; a hand card that was cut is replaced by a random card of B; each added card enters the hand with the exact probability a fresh draw from B would give it.
+function coupleHands(hs) {
+  const used = new Set(), mapA = new Array(A.main.length).fill(-1);
+  A.main.forEach((c, i) => { const j = B.main.findIndex((d, k) => !used.has(k) && name(d) === name(c)); if (j >= 0) { used.add(j); mapA[i] = j; } });
+  const added = B.main.map((_, k) => k).filter(k => !used.has(k));
+  return hs.map(h => {
+    let idx = h.idx.map(i => mapA[i]); const taken = () => new Set(idx.filter(k => k >= 0));
+    idx = idx.map(k => { if (k >= 0) return k; const t = taken(); let r; do { r = Math.floor(rnd() * B.main.length); } while (t.has(r) || added.includes(r)); return r; });
+    let m = B.main.length - added.length; for (const k of added) { m++; if (rnd() < 5 / m) { const slots = idx.map((v, q) => q).filter(q => !added.includes(idx[q])); idx[slots[Math.floor(rnd() * slots.length)]] = k; } }
+    return { ...h, idx };
+  });
+}
+const hB = mode === 'random' ? (A.main.length === B.main.length ? hA.map(h => ({ ...h })) : coupleHands(hA)) : handsFor(B);
 const tasks = []; let id = 0; const meta = {};
 function add(deckName, deck, hs, side) { hs.forEach((h, hi) => scns.forEach(sc => { const tid = id++; meta[tid] = { side, hi, sc, label: h.label }; tasks.push({ id: tid, deck: deckName, hand: h.idx, scn: sc, macros: MAC, ht: +f('ht', 1), passes: PAS, seed: 1000 + hi }); })); }
 add(dA, A, hA, 'A'); add(dB, B, hB, 'B');
