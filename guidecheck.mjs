@@ -23,12 +23,14 @@ async function run(hand, script) {
   const g = { id: 'gc', seed: '7', first: 0, lab: true, seats: { 0: { name: 'A', deck: { ...deck, main: [...h, ...pool] }, hand: h }, 1: { name: 'o', deck: { ...OPP, main: [...oh, ...op] }, hand: oh } }, responses: [], cursor: { 0: 0, 1: 0 }, goldfish: [1], bot: {}, script: { 1: [] }, stopAfterTurn: null };
   const r = await searchT1(g, { ms: 90000, maxMacros: +(process.env.MAC||150), patience: +(process.env.PAT||60), guideW: 0.3, altCap: 4, maxMacro: 25, frontierCap: 400, script, evalFn: (S, s) => disruption(S, s) }); return r.score || 0;
 }
-import { CORE_MEDIUS, CORE_PREFIX } from './src/guide-core.mjs';
+import { CORE_MEDIUS, CORE_PREFIX, viaStarter, lineScripts } from './src/guide-core.mjs';
 const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); let n = 0; const rows = [];
 for (const t of T) {
-  if (n >= MAXH) break; const hand = t.hand.map(h => alias[h] || h); if (hand.some(h => !names.includes(h))) continue; n++;
+  if (n >= MAXH) break; if (process.env.ONLY && !process.env.ONLY.split(',').includes(t.id)) continue; const hand = t.hand.map(h => alias[h] || h); if (hand.some(h => !names.includes(h))) continue; n++;
   // keep the dup-Ash hands legal: deck has 3 Ash
-  const un = Math.max(await run(hand, null)); let sd = un; for (const c of new Set(hand)) { if (/Ash Blossom|Droll|Small World/.test(c)) continue; { if (hand.includes('Medius the Pure')) for (const sc of [CORE_MEDIUS, CORE_PREFIX]) sd = Math.max(sd, await run(hand, sc)); for (const pre of ['Normal Summon.*','Activate.*']) sd = Math.max(sd, await run(hand, [pre + esc(c)])); } }
+  const un = Math.max(await run(hand, null)); let sd = un; for (const c of new Set(hand)) { if (/Ash Blossom|Droll|Small World/.test(c)) continue; { if (!/Ash|Droll|Ghost/.test('')) for (const c2 of new Set(hand)) { if (!/Ash Blossom|Droll|Ghost|Medius the Pure/.test(c2)) sd = Math.max(sd, await run(hand, viaStarter(c2))); }
+  for (const sc of lineScripts(hand)) sd = Math.max(sd, await run(hand, sc));
+  if (hand.includes('Medius the Pure')) for (const sc of [CORE_MEDIUS, CORE_PREFIX]) sd = Math.max(sd, await run(hand, sc)); for (const pre of ['Normal Summon.*','Activate.*']) sd = Math.max(sd, await run(hand, [pre + esc(c)])); } }
   const gs = guideScore(t.board); rows.push({ id: t.id, hand: t.hand[0], guide: gs, free: un, seeded: sd }); console.log(t.id.padEnd(8), (t.hand[0] + '').padEnd(24), 'guide', gs.toFixed(2), '| lab free', un.toFixed(2), '| lab seeded', sd.toFixed(2));
 }
 const m = (k) => (rows.reduce((a, r) => a + r[k], 0) / rows.length).toFixed(2); console.log('MEAN guide', m('guide'), 'free', m('free'), 'seeded', m('seeded'), 'n', rows.length);
