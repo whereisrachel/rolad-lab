@@ -1,4 +1,5 @@
 import { CORE_MEDIUS, CORE_PREFIX, lineScripts } from './guide-core.mjs';
+import { seedsFor } from './library.mjs';
 import { parentPort, workerData } from 'worker_threads';
 import fs from 'fs'; import path from 'path';
 import { parseYdk, findCard, name, ROOT } from './cards.mjs';
@@ -23,6 +24,7 @@ async function job(t) {
     const cfgs = [{ gw: 0.3, alt: 4, mm: 25, mac: t.macros }, { gw: 0.6, alt: 4, mm: 25, mac: t.macros }].slice(0, t.passes || 2);
     if (ritual) cfgs.push({ gw: 0.3, alt: 8, mm: 80, mac: t.macros * 4, pat: 150 }); // Ritual-wing hands need wider sub-decision branching (Skull/LADR/Magician chains)
     // Seeded passes: free search gets stuck on a shallow line (it never found the guide's Medius/Nervedo line). Replay one opener per distinct hand card first, then search on from there; keep the best board.
+    if (t.seeds) for (const sc of seedsFor(hand.map(c => name(c)))) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc, lib: true }); // learned lines
     if (t.seeds) for (const sc of lineScripts(hand.map(c => name(c)))) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc });
     if (t.seeds && hand.some(c => name(c) === 'Medius the Pure')) for (const sc of [CORE_MEDIUS, CORE_PREFIX]) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc });
     if (t.seeds) { const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const seen = new Set(); for (const c of hand) { const n = name(c); if (seen.has(n) || /Ash Blossom|Droll|Nibiru|Ghost|Infinite Impermanence|Small World/.test(n)) continue; seen.add(n); for (const pre of ['Normal Summon.*', 'Activate.*']) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: [pre + esc(n)] }); } }

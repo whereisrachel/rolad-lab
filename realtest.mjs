@@ -3,6 +3,7 @@
 import fs from 'fs'; import path from 'path'; import os from 'os';
 import { Worker } from 'worker_threads'; import { fileURLToPath } from 'url';
 import { slim, health } from './src/health.mjs';
+import { update as libUpdate } from './src/library.mjs';
 import { parseYdk, findCard, name, ROOT } from './src/cards.mjs';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
 const dA = a[0], dB = a[1]; const A = parseYdk(fs.readFileSync(dA, 'utf8')), B = parseYdk(fs.readFileSync(dB, 'utf8'));
@@ -64,4 +65,4 @@ for (const sc of scns) {
 }
 return o; }
 
-const out = f('out', 'results/rt.md'); fs.mkdirSync('results', { recursive: true }); const H = health(res, tasks.length); const o = build(true).replace('\n\n', '\n\n' + H.md); fs.writeFileSync(out, o); console.log(o); console.log('time', ((Date.now() - t0) / 1000).toFixed(0) + 's', 'threads', T);
+const out = f('out', 'results/rt.md'); fs.mkdirSync('results', { recursive: true }); const H = health(res, tasks.length); if (MERGE) H.md += `- line library: ${libUpdate(Object.values(res))} new lines saved\n`; const o = build(true).replace('\n\n', '\n\n' + H.md); fs.writeFileSync(out, o); console.log(o); console.log('time', ((Date.now() - t0) / 1000).toFixed(0) + 's', 'threads', T);

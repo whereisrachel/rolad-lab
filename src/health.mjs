@@ -1,6 +1,6 @@
 // Self-checks shared by realtest / screen / loo: slim shard records, run health, invalid-run marker.
 import fs from 'fs';
-export const slim = (v) => ({ id: v.id, v: v.v, err: v.err, crash: !!v.crash, errs: v.errs || 0, played: v.played, hand: v.hand,
+export const slim = (v) => ({ id: v.id, v: v.v, line: (v.v || 0) >= 6 ? v.line : undefined, err: v.err, crash: !!v.crash, errs: v.errs || 0, played: v.played, hand: v.hand,
   board: typeof v.board === 'string' ? ((v.board.match(/Monsters:[^\n]*/g) || []).slice(1, 2).join(' ') + ' ' + (v.board.match(/Spell\/Trap:[^\n]*/g) || []).slice(1, 2).join(' ')) : (v.board || '') });
 // res: {taskId: record}; total: number of tasks expected
 export function health(res, total) {

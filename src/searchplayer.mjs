@@ -45,7 +45,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const pages = { runs, data };
     PROF.pages += pages.data.length / PAGE;
     const st = {}; for (const k of FIELDS) st[k] = structuredClone(S[k]);
-    return { pages, st, n: game.responses.length };
+    return { pages, st, n: game.responses.length, rsp: game.responses.map(r => ({ seat: r.seat, label: r.label, auto: r.auto, resp: r.resp })) };
   }
   function restore(s) {
     const _t = process.hrtime.bigint(); try { return restore0(s); } finally { PROF.rest += Number(process.hrtime.bigint() - _t) / 1e6; PROF.nr++; }
@@ -54,7 +54,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const cur = heap(); cur.set(base.subarray(0, Math.min(base.length, cur.length, LIM)));
     { const r = s.pages.runs, d = s.pages.data; let w = 0; for (let i = 0; i < r.length; i += 2) { d.copy(cur, r[i], w, w + r[i + 1]); w += r[i + 1]; } }
     for (const k of FIELDS) S[k] = structuredClone(s.st[k]);
-    game.responses.length = s.n;
+    game.responses.length = 0; for (const r of s.rsp) game.responses.push({ ...r });
   }
   const dseat = () => (S.pending ? seatOf(game, S.pending.player) : null);
   function cands(d) {

@@ -3,6 +3,7 @@
 import fs from 'fs'; import path from 'path'; import os from 'os';
 import { Worker } from 'worker_threads'; import { fileURLToPath } from 'url';
 import { slim, health } from './src/health.mjs';
+import { update as libUpdate } from './src/library.mjs';
 import { parseYdk, findCard, name, ROOT } from './src/cards.mjs';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
 const deckPath = f('deck', 'decks/ROLAD-L2.ydk'), slotName = f('slot', 'Small World'), N = +f('n', 20), scns = f('scn', 'none,ash').split(','), PAS = +f('passes', 1), MAC = +f('macros', 200), T = +f('threads', Math.max(1, os.cpus().length - 2));
@@ -46,4 +47,4 @@ if (MERGE) { for (const fn of fs.readdirSync(MERGE).filter(x => /^shard-.*\.json
 console.log(report()); process.exit(0); }
 if (!MERGE) await Promise.all(chunks.filter(c => c.length).map(c => new Promise((ok) => { const w = new Worker(file, { workerData: { tasks: c } }); w.on('message', mm => { if (mm.done) { ok(); return; } res[mm.id] = mm; done++; if (done % 20 === 0) { report(); console.log(done + '/' + tasks.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); } }); w.on('error', e => { console.log('worker error', e.message); ok(); }); })));
 if (SH !== null) { fs.mkdirSync('results', { recursive: true }); fs.writeFileSync('results/shard-' + SH + '.json', JSON.stringify(Object.fromEntries(Object.entries(res).map(([k, v]) => [k, slim(v)])))); console.log('shard', SH, 'done', done, 'of', myTasks.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); process.exit(0); }
-const H = health(res, tasks.length); const R = report().replace('\n\n', '\n\n' + H.md); fs.writeFileSync('results/screen.md', R); console.log(R); console.log('time', ((Date.now() - t0) / 1000).toFixed(0) + 's');
+const H = health(res, tasks.length); if (MERGE) H.md += `- line library: ${libUpdate(Object.values(res))} new lines saved\n`; const R = report().replace('\n\n', '\n\n' + H.md); fs.writeFileSync('results/screen.md', R); console.log(R); console.log('time', ((Date.now() - t0) / 1000).toFixed(0) + 's');

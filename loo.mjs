@@ -4,6 +4,7 @@
 import fs from 'fs'; import path from 'path'; import os from 'os';
 import { Worker } from 'worker_threads'; import { fileURLToPath } from 'url';
 import { slim, health } from './src/health.mjs';
+import { update as libUpdate } from './src/library.mjs';
 import { parseYdk, name } from './src/cards.mjs';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
 const deckPath = f('deck', 'decks/ROLAD-L2.ydk'), N = +f('n', 30), scns = f('scn', 'none,ash').split(','), PAS = +f('passes', 1), MAC = +f('macros', 200), T = +f('threads', Math.max(1, os.cpus().length - 2));
@@ -38,4 +39,4 @@ function report() {
 if (MERGE) { for (const fn of fs.readdirSync(MERGE).filter(x => /^shard-.*\.json$/.test(x))) { const j = JSON.parse(fs.readFileSync(path.join(MERGE, fn), 'utf8')); for (const [k, v] of Object.entries(j)) { res[k] = v; done++; } } console.log(report()); process.exit(0); }
 await Promise.all(chunks.filter(c => c.length).map(c => new Promise((ok) => { const w = new Worker(wfile, { workerData: { tasks: c } }); w.on('message', mm => { if (mm.done) { ok(); return; } res[mm.id] = mm; done++; if (done % 20 === 0) console.log(done + '/' + tasks.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); }); w.on('error', e => { console.log('worker error', e.message); ok(); }); })));
 if (SH !== null) { fs.mkdirSync('results', { recursive: true }); fs.writeFileSync('results/shard-' + SH + '.json', JSON.stringify(Object.fromEntries(Object.entries(res).map(([k, v]) => [k, slim(v)])))); console.log('shard', SH, 'done', done, 'of', myTasks.length); process.exit(0); }
-{ const H = health(res, tasks.length); console.log(report().replace('\n\n', '\n\n' + H.md)); }
+{ const H = health(res, tasks.length); if (MERGE) H.md += `- line library: ${libUpdate(Object.values(res))} new lines saved\n`; console.log(report().replace('\n\n', '\n\n' + H.md)); }
