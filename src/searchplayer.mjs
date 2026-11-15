@@ -112,7 +112,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   }
   const isIdle = () => S.pending && S.pending.type === M.SELECT_IDLECMD && dseat() === seat && S.turn === 1;
   const sigOf = (d) => boardView(S, seat) + '|' + d.options.map(o => o.label).join(';');
-  const seen = new Set(); const frontier = []; let best = { v: -1 }; let macros = 0, nodes = 0;
+  const seen = new Set(); const frontier = []; let best = { v: -1 }; let macros = 0, nodes = 0; let minPri = -Infinity;
   const t0 = Date.now(); let lastImp = 0; const timeUp = () => Date.now() - t0 > ms || macros >= maxMacros || macros - lastImp >= patience;
   function consider(depth) {
     const d = decision(S, seat); if (!d) return;
@@ -120,8 +120,11 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const v = (evalFn || evalBoard)(S, seat); nodes++;
     if (v > best.v) lastImp = macros, best = { v, rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) };
     const gv = guideW ? guideW * evalBoard(S, seat) : 0;
-    frontier.push({ snap: snapshot(), v, depth, pri: v + gv + 0.15 * depth + (nodes % 7) * 0.001 });
+    const pri = v + gv + 0.15 * depth + (nodes % 7) * 0.001;
+    if (frontier.length >= frontierCap && pri <= minPri) return; // would be pruned at once: skip the snapshot and the sort
+    frontier.push({ snap: snapshot(), v, depth, pri });
     if (frontier.length > frontierCap) { frontier.sort((a, b) => b.pri - a.pri); frontier.length = frontierCap; }
+    if (frontier.length >= frontierCap) { let mn = Infinity; for (const x of frontier) if (x.pri < mn) mn = x.pri; minPri = mn; }
   }
   // run from the current live state to the next idle decision(s); alternatives for sub-decisions are explored from stacked snapshots
   function macro(depth, startSnap, firstIdx) {

@@ -31,7 +31,17 @@ function report() {
   for (const r of rows) o += `| ${r.label} | ${r.per.map(p => p.length ? m(p).toFixed(2) + ' ± ' + se(p).toFixed(2) + ' (' + p.length + ')' : '-').join(' | ')} | ${r.mean.toFixed(2)} |\n`;
   fs.mkdirSync('results', { recursive: true }); fs.writeFileSync('results/screen.md', o); return o;
 }
-if (MERGE) { for (const fn of fs.readdirSync(MERGE).filter(x => /^shard-.*\.json$/.test(x))) { const j = JSON.parse(fs.readFileSync(path.join(MERGE, fn), 'utf8')); for (const [k, v] of Object.entries(j)) { res[k] = v; done++; } } console.log(report()); process.exit(0); }
+const SURV = f('survivors', null); // threshold: keep cards with mean + 1.5*SE > thr (stage-1 funnel filter)
+function survivors(thr) {
+  const out = [];
+  for (let di = 1; di < decks.length; di++) {
+    const all = []; for (const sc of scns) for (let hi = 0; hi < N; hi++) { const ra = Object.keys(meta).find(k => meta[k].di === 0 && meta[k].hi === hi && meta[k].sc === sc), rb = Object.keys(meta).find(k => meta[k].di === di && meta[k].hi === hi && meta[k].sc === sc); if (res[ra] && res[rb]) all.push(res[rb].v - res[ra].v); }
+    if (all.length && m(all) + 1.5 * se(all) > thr) out.push(decks[di].label);
+  }
+  return out;
+}
+if (MERGE) { for (const fn of fs.readdirSync(MERGE).filter(x => /^shard-.*\.json$/.test(x))) { const j = JSON.parse(fs.readFileSync(path.join(MERGE, fn), 'utf8')); for (const [k, v] of Object.entries(j)) { res[k] = v; done++; } } if (SURV !== null) { report(); console.log(survivors(+SURV).join('\n')); process.exit(0); }
+console.log(report()); process.exit(0); }
 if (!MERGE) await Promise.all(chunks.filter(c => c.length).map(c => new Promise((ok) => { const w = new Worker(file, { workerData: { tasks: c } }); w.on('message', mm => { if (mm.done) { ok(); return; } res[mm.id] = mm; done++; if (done % 20 === 0) { report(); console.log(done + '/' + tasks.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); } }); w.on('error', e => { console.log('worker error', e.message); ok(); }); })));
 if (SH !== null) { fs.mkdirSync('results', { recursive: true }); fs.writeFileSync('results/shard-' + SH + '.json', JSON.stringify(Object.fromEntries(Object.entries(res).map(([k, v]) => [k, { id: v.id, v: v.v, err: v.err }])))); console.log('shard', SH, 'done', done, 'of', myTasks.length, ((Date.now() - t0) / 1000).toFixed(0) + 's'); process.exit(0); }
 console.log(report()); console.log('time', ((Date.now() - t0) / 1000).toFixed(0) + 's');

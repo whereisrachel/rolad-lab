@@ -1,0 +1,94 @@
+name: funnel
+# Two-stage screen: stage 1 = cheap pass on all candidates (1 scenario, few hands); stage 2 = full test only on survivors. ~2-3x less compute.
+permissions:
+  contents: write
+on:
+  workflow_dispatch:
+    inputs:
+      slot: { description: "card each candidate replaces", default: "Apprentice Illusion Magician", type: string }
+      cands: { description: "card names one per line (empty = cands-ladr.txt)", required: false, default: "", type: string }
+      deckA: { default: "decks/ROLAD-L2.ydk", type: string }
+      n1: { description: "stage-1 hands", default: "20", type: string }
+      n2: { description: "stage-2 hands", default: "80", type: string }
+      thr: { description: "stage-1 keep if mean+1.5SE > thr", default: "0.0", type: string }
+      ht: { default: "0", type: string }
+      shards: { default: "12", type: string }
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        run: python3 -c "import json;print('matrix='+json.dumps({'shard':list(range(int('${{ inputs.shards }}')))}))" >> "$GITHUB_OUTPUT"
+  s1:
+    needs: plan
+    runs-on: ubuntu-latest
+    strategy: { fail-fast: false, matrix: "${{ fromJson(needs.plan.outputs.matrix) }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - env: { CANDS: "${{ inputs.cands }}" }
+        run: |
+          CF=cands-ladr.txt; if [ -n "$CANDS" ]; then printf '%s\n' "$CANDS" > c.txt; CF=c.txt; fi
+          node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n1 }} --scn none --passes 1 --macros 150 --ht ${{ inputs.ht }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+      - uses: actions/upload-artifact@v4
+        with: { name: "s1-${{ matrix.shard }}", path: "results/shard-${{ matrix.shard }}.json" }
+  m1:
+    needs: s1
+    runs-on: ubuntu-latest
+    outputs:
+      cands: ${{ steps.sv.outputs.cands }}
+      count: ${{ steps.sv.outputs.count }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { pattern: "s1-*", path: merged, merge-multiple: true }
+      - id: sv
+        env: { CANDS: "${{ inputs.cands }}" }
+        run: |
+          CF=cands-ladr.txt; if [ -n "$CANDS" ]; then printf '%s\n' "$CANDS" > c.txt; CF=c.txt; fi
+          node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n1 }} --scn none --passes 1 --macros 150 --merge merged --survivors ${{ inputs.thr }} > surv.txt
+          cp results/screen.md stage1.md; cat stage1.md >> "$GITHUB_STEP_SUMMARY"
+          { echo 'cands<<EOF'; cat surv.txt; echo EOF; echo "count=$(grep -c . surv.txt)"; } >> "$GITHUB_OUTPUT"
+          mkdir -p reports; cp stage1.md reports/funnel1-${{ github.run_id }}.md
+          git config user.name farm; git config user.email farm@users.noreply.github.com; git add reports; git commit -qm "funnel stage1 ${{ github.run_id }}"; git pull -q --rebase origin main; git push -q origin HEAD:main
+  s2:
+    needs: [plan, m1]
+    if: needs.m1.outputs.count != '0'
+    runs-on: ubuntu-latest
+    strategy: { fail-fast: false, matrix: "${{ fromJson(needs.plan.outputs.matrix) }}" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - env: { SURV: "${{ needs.m1.outputs.cands }}" }
+        run: |
+          printf '%s\n' "$SURV" > c.txt
+          node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands c.txt --n ${{ inputs.n2 }} --scn none,ash,imperm --passes 1 --macros 200 --ht ${{ inputs.ht }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+      - uses: actions/upload-artifact@v4
+        with: { name: "s2-${{ matrix.shard }}", path: "results/shard-${{ matrix.shard }}.json" }
+  m2:
+    needs: [m1, s2]
+    if: needs.m1.outputs.count != '0'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { pattern: "s2-*", path: merged, merge-multiple: true }
+      - env: { SURV: "${{ needs.m1.outputs.cands }}" }
+        run: |
+          printf '%s\n' "$SURV" > c.txt
+          node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands c.txt --n ${{ inputs.n2 }} --scn none,ash,imperm --passes 1 --macros 200 --merge merged > report.md
+          cat report.md >> "$GITHUB_STEP_SUMMARY"; cat report.md
+          mkdir -p reports; cp report.md reports/funnel2-${{ github.run_id }}.md
+          git config user.name farm; git config user.email farm@users.noreply.github.com; git add reports; git commit -qm "funnel stage2 ${{ github.run_id }}"; git pull -q --rebase origin main; git push -q origin HEAD:main
