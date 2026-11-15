@@ -28,7 +28,7 @@ async function job(t) {
     if (t.seeds) { const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); const seen = new Set(); for (const c of hand) { const n = name(c); if (seen.has(n) || /Ash Blossom|Droll|Nibiru|Ghost|Infinite Impermanence|Small World/.test(n)) continue; seen.add(n); for (const pre of ['Normal Summon.*', 'Activate.*']) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: [pre + esc(n)] }); } }
     for (const c of cfgs) { const r = await searchT1({ ...g, responses: [] }, { ms: 90000, maxMacros: c.mac, patience: c.pat || t.patience || 60, guideW: c.gw, altCap: c.alt, maxMacro: c.mm, frontierCap: 400, script: c.script || null, evalFn: (S, s) => disruption(S, s) }); if ((r.score || 0) > best.score) best = r; }
     let best0 = best;
-    return { id: t.id, v: best.score || 0, line: best.line, board: best.board, err: best.error };
+    return { id: t.id, v: best.score || 0, line: best.line, board: best.board, hand: hand.map(c => name(c)), err: best.error };
   } catch (e) { return { id: t.id, v: 0, err: String(e.message).slice(0, 120) }; }
 }
 for (const t of workerData.tasks) parentPort.postMessage(await job(t));
