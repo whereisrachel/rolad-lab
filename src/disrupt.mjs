@@ -4,6 +4,7 @@ import { teamOf, L } from './engine.mjs';
 import { cardDB, name } from './cards.mjs';
 const LINK = 0x4000000;
 let HT = 1; export const setHT = (w) => { HT = w; }; // weight of a hand trap kept in hand (1 = counts as an interruption; 0 = board-only comparison)
+let PROG = 0; export const setProgress = (w) => { PROG = w; }; // search-guidance credit for Ritual-wing progress (not part of the reported board value when 0)
 export function disruption(S, seat, detail = false) {
   const { lb, h } = S; const me = teamOf(S.game, seat); const D = cardDB().data;
   const q = (loc) => lb.duelQueryLocation(h, { flags: 0x1 | 0x2 | 0x200, controller: me, location: loc }).filter(c => c && c.code);
@@ -24,6 +25,14 @@ export function disruption(S, seat, detail = false) {
     else if (/S:P Little Knight/.test(n)) add(n, 1, 'banish-monster');
     else if (/Nerva/.test(n)) add(n, 1, 'wipe');
     else if (/Non-Finito/.test(n)) add(n, 0.5, 'negate');
+    // Ritual wing: MoDC = body unaffected by their activated effects + protects our S/T from destroy/banish; BLS/Black Chaos = unaffected bodies (their banish happens on our turn / on summon)
+    else if (/Magician of Dark Chaos/.test(n)) add(n, 1, 'protect');
+    else if (/Black Luster Soldier/.test(n)) add(n, 0.5, 'protect');
+    else if (/^Black Chaos$/.test(n)) add(n, 0.5, 'protect');
+  }
+  // Mind Shuffle on their turn: return a Lv7+ body, Special Summon a LADR monster from hand -> its summon effect banishes (BLS: banish 1; MoDC: banish 1 face-down). Needs MS on field + a Lv7+ body + the monster in hand.
+  if (st.some(c => /Mind Shuffle/.test(nm(c))) && mons.some(c => (info(c).level || 0) >= 7)) {
+    const hb = hand.filter(c => /Black Luster Soldier|Magician of Dark Chaos/.test(nm(c))); if (hb.length) add('MS swap -> ' + nm(hb[0]) + ' banish', 1, 'banish-monster');
   }
   for (const c of st) {
     const n = nm(c);

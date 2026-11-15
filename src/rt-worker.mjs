@@ -17,7 +17,12 @@ async function job(t) {
   setHT(t.ht ?? 1);
   try {
     let best = { score: 0 };
-    for (const gw of [0.3, 0.6].slice(0, t.passes || 2)) { const r = await searchT1({ ...g, responses: [] }, { ms: 90000, maxMacros: t.macros, patience: t.patience || 60, guideW: gw, altCap: 4, maxMacro: 25, frontierCap: 400, evalFn: (S, s) => disruption(S, s) }); if ((r.score || 0) > best.score) best = r; }
+    const RIT = /Griffoh|Black Chaos|Mind Shuffle|Skull Archfiend|Light and Darkness Ritual|Magician of Dark Chaos|Black Luster/;
+    const ritual = hand.some(c => RIT.test(name(c)));
+    const cfgs = [{ gw: 0.3, alt: 4, mm: 25, mac: t.macros }, { gw: 0.6, alt: 4, mm: 25, mac: t.macros }].slice(0, t.passes || 2);
+    if (ritual) cfgs.push({ gw: 0.3, alt: 8, mm: 80, mac: t.macros * 4, pat: 150 }); // Ritual-wing hands need wider sub-decision branching (Skull/LADR/Magician chains)
+    for (const c of cfgs) { const r = await searchT1({ ...g, responses: [] }, { ms: 90000, maxMacros: c.mac, patience: c.pat || t.patience || 60, guideW: c.gw, altCap: c.alt, maxMacro: c.mm, frontierCap: 400, evalFn: (S, s) => disruption(S, s) }); if ((r.score || 0) > best.score) best = r; }
+    let best0 = best;
     return { id: t.id, v: best.score || 0, line: best.line, board: best.board, err: best.error };
   } catch (e) { return { id: t.id, v: 0, err: String(e.message).slice(0, 120) }; }
 }

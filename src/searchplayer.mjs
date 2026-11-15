@@ -66,7 +66,18 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
         if (d.type === M.SELECT_EFFECTYN || d.type === M.SELECT_YESNO) idx = [0, 1];
         for (const i of idx) out.push({ kind: 'pick', i });
         break; }
-      case 'multi': case 'sum': {
+      case 'sum': { // value-aware: enumerate small subsets whose values reach the target (Ritual Tributes etc.)
+        const pr = String(d.prompt || d.msg || ''); const am = /(reach at least|sum exactly to) (\d+)/.exec(pr); const exact = am && am[1] === 'sum exactly to'; let need = am ? +am[2] : 0;
+        const inc = /already included: (.*)$/.exec(pr); if (inc) for (const m2 of inc[1].matchAll(/\((\d+)\)/g)) need -= +m2[1];
+        const vals = o.map(x => { const m2 = /value (\d+)(?: or (\d+))?/.exec(x.label); return m2 ? [+m2[1], m2[2] ? +m2[2] : +m2[1]] : [0, 0]; });
+        const N = Math.min(o.length, 16), res = []; const maxK = Math.min(d.max || 4, 4);
+        const rec = (start, pick, sum) => { if (pick.length && (exact ? (sum === need) : sum >= need)) { res.push(pick.slice()); return; } if (pick.length >= maxK) return; for (let i = start; i < N; i++) { pick.push(i); rec(i + 1, pick, sum + Math.max(...vals[i])); pick.pop(); } };
+        if (need > 0) rec(0, [], 0);
+        res.sort((a, b) => a.length - b.length); const seenK = new Set();
+        for (const r of res) { const k = r.map(i => o[i].label.replace(/ value.*/, '')).sort().join('|'); if (seenK.has(k)) continue; seenK.add(k); out.push({ kind: 'text', t: r.map(i => i + 1).join(' ') }); if (out.length >= 8) break; }
+        if (!out.length) { const n = Math.max(d.min, 1); out.push({ kind: 'text', t: [...Array(Math.min(n, o.length)).keys()].map(x => x + 1).join(' ') }); }
+        break; }
+      case 'multi': {
         const n = Math.max(d.min, 1), L2 = o.filter(x => !x.cancel).length; const nums = (a) => a.map(x => x + 1).join(' ');
         out.push({ kind: 'text', t: nums([...Array(Math.min(n, L2)).keys()]) });
         if (n === 1) for (let i = 1; i < Math.min(L2, 6); i++) out.push({ kind: 'text', t: String(i + 1) });
@@ -123,6 +134,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
         if (dseat() !== seat) { DEAD['otherseat:' + S.pending.type] = (DEAD['otherseat:' + S.pending.type] || 0) + 1; return; }
         if (isIdle()) { consider(depth + 1); return; }
         const d = decision(S, seat); if (!d) return;
+        if (process.env.DBG2) console.log('SUB', d.kind, String(d.msg||'').slice(0,60), '|', d.options.slice(0,14).map(o=>o.label.slice(0,40)).join(' ; '));
         const cs = cands(d); if (!cs.length) { DEAD[d.kind + ':' + (d.msg || '').slice(0, 50)] = (DEAD[d.kind + ':' + (d.msg || '').slice(0, 50)] || 0) + 1; return; }
         if (cs.length > 1 && variants < maxMacro) { const sn = snapshot(); for (let k = 1; k < Math.min(cs.length, altCap + 1); k++) { if (variants >= maxMacro) break; variants++; stack.push({ sn, d, c: cs[k] }); } }
         if (!apply(d, cs[0])) { DEAD['applyfail:' + d.kind] = (DEAD['applyfail:' + d.kind] || 0) + 1; return; }
