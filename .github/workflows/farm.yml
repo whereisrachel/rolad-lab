@@ -13,6 +13,8 @@ on:
       macros: { default: "200", type: string }
       shards: { description: "parallel machines (max 20)", default: "20", type: string }
       threads: { default: "2", type: string }
+permissions:
+  contents: write
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -64,5 +66,9 @@ jobs:
             node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --merge merged --out report.md > /dev/null
           fi
           cat report.md >> "$GITHUB_STEP_SUMMARY"
+          cat report.md
+          mkdir -p reports; cp report.md reports/${{ inputs.kind }}-${{ github.run_id }}.md
+          git config user.name "farm"; git config user.email "farm@users.noreply.github.com"
+          git add reports; git commit -m "report ${{ github.run_id }}"; git pull --rebase -q origin main; git push -q origin HEAD:main
       - uses: actions/upload-artifact@v4
         with: { name: report, path: report.md }
