@@ -1,102 +1,182 @@
 {
- "hash": "f8ccd61d6d1c",
- "date": "2026-11-15T22:17:26.308Z",
- "n": 7,
- "matched": 7,
- "guideMean": 5.84,
- "labMean": 7.66,
- "pass": false,
+ "hash": "2b995cd2911a",
+ "date": "2026-11-15T22:39:52.570Z",
+ "n": 19,
+ "matched": 18,
+ "guideMean": 5.75,
+ "labMean": 8.78,
+ "pass": true,
  "rows": [
+  {
+   "id": "bc3",
+   "hand": [
+    "Black Chaos"
+   ],
+   "guide": 6.7,
+   "free": 0,
+   "lab": 9.8
+  },
+  {
+   "id": "c2",
+   "hand": [
+    "Medius"
+   ],
+   "guide": 6.8,
+   "free": 0,
+   "lab": 11.4
+  },
+  {
+   "id": "cit3",
+   "hand": [
+    "Citrinitas"
+   ],
+   "guide": 6.8,
+   "free": 0,
+   "lab": 5.8
+  },
+  {
+   "id": "e_tre_cit",
+   "hand": [
+    "Engraver"
+   ],
+   "guide": 6.2,
+   "free": 0,
+   "lab": 8.8
+  },
   {
    "id": "e3",
    "hand": [
-    "Engraver",
-    "Medius",
-    "Ash Blossom",
-    "Droll & Lock Bird",
-    "Ghost Ogre"
+    "Engraver"
    ],
    "guide": 7.9,
-   "free": 5.050000000000001,
+   "free": 0,
    "lab": 10.1
+  },
+  {
+   "id": "inf3",
+   "hand": [
+    "Finite and Infinite"
+   ],
+   "guide": 6.8,
+   "free": 0,
+   "lab": 10.3
   },
   {
    "id": "lac",
    "hand": [
-    "Lacrima",
-    "Ash Blossom",
-    "Ash Blossom",
-    "Droll & Lock Bird",
-    "Ghost Ogre"
+    "Lacrima"
    ],
    "guide": 1.7,
-   "free": 4.65,
-   "lab": 5
+   "free": 0,
+   "lab": 5.3
+  },
+  {
+   "id": "m3",
+   "hand": [
+    "Medius"
+   ],
+   "guide": 6.5,
+   "free": 0,
+   "lab": 7.65
+  },
+  {
+   "id": "mtm2",
+   "hand": [
+    "Medius"
+   ],
+   "guide": 6.5,
+   "free": 0,
+   "lab": 9.8
   },
   {
    "id": "purif3",
    "hand": [
-    "Corruption and Purification",
-    "Ash Blossom",
-    "Ash Blossom",
-    "Droll & Lock Bird",
-    "Ghost Ogre"
+    "Corruption and Purification"
    ],
    "guide": 6.8,
-   "free": 4.5,
+   "free": 0,
    "lab": 11.15
   },
   {
    "id": "sw3",
    "hand": [
-    "Small World",
-    "Ash Blossom",
-    "Ash Blossom",
-    "Droll & Lock Bird",
-    "Ghost Ogre"
+    "Small World"
    ],
    "guide": 6.5,
-   "free": 6.000000000000001,
-   "lab": 6.000000000000001
+   "free": 0,
+   "lab": 8.45
+  },
+  {
+   "id": "t",
+   "hand": [
+    "Pendulum Treasure"
+   ],
+   "guide": 5.5,
+   "free": 0,
+   "lab": 8.4
+  },
+  {
+   "id": "ter3",
+   "hand": [
+    "Terminus"
+   ],
+   "guide": 6.5,
+   "free": 0,
+   "lab": 10.5
   },
   {
    "id": "tm3",
    "hand": [
-    "Tract",
-    "Medius",
-    "Ash Blossom",
-    "Droll & Lock Bird",
-    "Ghost Ogre"
+    "Tract"
    ],
    "guide": 7.7,
-   "free": 4.9,
+   "free": 0,
    "lab": 8.8
+  },
+  {
+   "id": "tract",
+   "hand": [
+    "Tract"
+   ],
+   "guide": 1.7,
+   "free": 0,
+   "lab": 4.9
   },
   {
    "id": "tre_finmel",
    "hand": [
-    "Pendulum Treasure",
-    "Ash Blossom",
-    "Ash Blossom",
-    "Droll & Lock Bird",
-    "Ghost Ogre"
+    "Pendulum Treasure"
    ],
    "guide": 3.8,
-   "free": 3.5999999999999996,
-   "lab": 6.300000000000001
+   "free": 0,
+   "lab": 9.6
+  },
+  {
+   "id": "tre_tm",
+   "hand": [
+    "Pendulum Treasure"
+   ],
+   "guide": 6.5,
+   "free": 0,
+   "lab": 8.4
   },
   {
    "id": "tre3",
    "hand": [
-    "Pendulum Treasure",
-    "Ash Blossom",
-    "Ash Blossom",
-    "Droll & Lock Bird",
-    "Ghost Ogre"
+    "Pendulum Treasure"
    ],
    "guide": 6.5,
-   "free": 3.5999999999999996,
-   "lab": 6.300000000000001
+   "free": 0,
+   "lab": 9.6
+  },
+  {
+   "id": "vid",
+   "hand": [
+    "Vidolia"
+   ],
+   "guide": 1.85,
+   "free": 0,
+   "lab": 8
   }
  ]
 }
