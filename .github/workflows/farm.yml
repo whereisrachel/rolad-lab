@@ -75,6 +75,6 @@ jobs:
           cat report.md
           mkdir -p reports; cp report.md reports/${{ inputs.kind }}-${{ github.run_id }}.md
           git config user.name "farm"; git config user.email "farm@users.noreply.github.com"
-          git add reports; git commit -m "report ${{ github.run_id }}"; git pull --rebase -q origin main; git push -q origin HEAD:main
+          git add reports; git commit -m "report ${{ github.run_id }}"; git stash -q 2>/dev/null || true; git pull --rebase -q origin main; git push -q origin HEAD:main
       - uses: actions/upload-artifact@v4
         with: { name: report, path: report.md }

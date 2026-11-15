@@ -2,3 +2,6 @@ node_modules/
 results/
 decks/cand/
 *.log
+results/
+decks/cand/
+node_modules/
