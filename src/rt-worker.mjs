@@ -16,7 +16,7 @@ async function job(t) {
   const g = { id: 'rt', seed: String(t.seed), first: 0, lab: true, seats: { 0: { name: 'A', deck: { ...deck, main: [...hand, ...rest] }, hand }, 1: { name: 'o', deck: { ...OPP, main: [...oh, ...op] }, hand: oh } }, responses: [], cursor: { 0: 0, 1: 0 }, goldfish: [1], bot: {}, script: { 1: need.map(n => /Ash/.test(n) ? 'ash' : /Imperm/.test(n) ? 'imperm' : 'droll') }, stopAfterTurn: null };
   try {
     let best = { score: 0 };
-    for (const gw of [0.3, 0.6].slice(0, t.passes || 2)) { const r = await searchT1({ ...g, responses: [] }, { ms: 90000, maxMacros: t.macros, guideW: gw, altCap: 4, maxMacro: 25, frontierCap: 400, evalFn: (S, s) => disruption(S, s) }); if ((r.score || 0) > best.score) best = r; }
+    for (const gw of [0.3, 0.6].slice(0, t.passes || 2)) { const r = await searchT1({ ...g, responses: [] }, { ms: 90000, maxMacros: t.macros, patience: t.patience || 60, guideW: gw, altCap: 4, maxMacro: 25, frontierCap: 400, evalFn: (S, s) => disruption(S, s) }); if ((r.score || 0) > best.score) best = r; }
     return { id: t.id, v: best.score || 0, line: best.line, board: best.board, err: best.error };
   } catch (e) { return { id: t.id, v: 0, err: String(e.message).slice(0, 120) }; }
 }

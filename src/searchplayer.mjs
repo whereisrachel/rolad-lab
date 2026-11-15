@@ -22,7 +22,7 @@ export function evalBoard(S, seat) {
   return v;
 }
 
-export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0 } = {}) {
+export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity } = {}) {
   resetLib(); const S = autoAdvance(await simulate(game));
   S.ev = function () {}; S.events.length = 0; // no event log during search
   const mod = S.lb[OcgCoreInternal].module; const me = teamOf(game, seat);
@@ -102,12 +102,12 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   const isIdle = () => S.pending && S.pending.type === M.SELECT_IDLECMD && dseat() === seat && S.turn === 1;
   const sigOf = (d) => boardView(S, seat) + '|' + d.options.map(o => o.label).join(';');
   const seen = new Set(); const frontier = []; let best = { v: -1 }; let macros = 0, nodes = 0;
-  const t0 = Date.now(); const timeUp = () => Date.now() - t0 > ms || macros >= maxMacros;
+  const t0 = Date.now(); let lastImp = 0; const timeUp = () => Date.now() - t0 > ms || macros >= maxMacros || macros - lastImp >= patience;
   function consider(depth) {
     const d = decision(S, seat); if (!d) return;
     const sig = sigOf(d); if (seen.has(sig)) return; seen.add(sig);
     const v = (evalFn || evalBoard)(S, seat); nodes++;
-    if (v > best.v) best = { v, rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) };
+    if (v > best.v) lastImp = macros, best = { v, rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) };
     const gv = guideW ? guideW * evalBoard(S, seat) : 0;
     frontier.push({ snap: snapshot(), v, depth, pri: v + gv + 0.15 * depth + (nodes % 7) * 0.001 });
     if (frontier.length > frontierCap) { frontier.sort((a, b) => b.pri - a.pri); frontier.length = frontierCap; }

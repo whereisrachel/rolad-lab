@@ -39,11 +39,11 @@ jobs:
         run: |
           CF=cands.txt; if [ -n "$CANDS" ]; then printf '%s\n' "$CANDS" > cands-run.txt; CF=cands-run.txt; fi
           if [ "${{ inputs.kind }}" = "loo" ]; then
-            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --threads ${{ inputs.threads }} --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           elif [ "${{ inputs.kind }}" = "screen" ]; then
-            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --threads ${{ inputs.threads }} --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           else
-            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --threads ${{ inputs.threads }} --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           fi
       - uses: actions/upload-artifact@v4
         with: { name: "shard-${{ matrix.shard }}", path: "results/shard-${{ matrix.shard }}.json" }
