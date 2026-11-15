@@ -36,11 +36,14 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   function snapshot0() {
     const cur = heap();
     if (cur.length > base.length) { const nb = Buffer.alloc(cur.length); base.copy(nb); base = nb; }
-    const pages = [];
     const lim0 = Math.min(cur.length, LIM); const full = (PROF.ns % 40 === 0);
-    if (full) { for (let o = lim0; o < cur.length; o += PAGE) { const e = Math.min(o + PAGE, cur.length); if (Buffer.compare(cur.subarray(o, e), base.subarray(o, e)) !== 0) throw new Error('engine memory used beyond scan limit at ' + o + '; raise LIM'); } }
-    for (let o = 0; o < lim0; o += PAGE) { const e = Math.min(o + PAGE, lim0); if (Buffer.compare(cur.subarray(o, e), base.subarray(o, e)) !== 0) { pages.push([o, Buffer.from(new Uint8Array(cur.subarray(o, e)))]); if (o > PROF.maxo) PROF.maxo = o; }; }
-    PROF.pages += pages.length;
+    if (full) { for (let o = lim0; o < cur.length; o += PAGE) { const e = Math.min(o + PAGE, cur.length); if (cur.compare(base, o, e, o, e) !== 0) throw new Error('engine memory used beyond scan limit at ' + o + '; raise LIM'); } }
+    // dirty pages -> merged runs, copied into ONE buffer (few allocations)
+    const runs = []; let tot = 0;
+    for (let o = 0; o < lim0; o += PAGE) { const e = Math.min(o + PAGE, lim0); if (cur.compare(base, o, e, o, e) !== 0) { const L = runs.length; if (L && runs[L - 2] + runs[L - 1] === o) runs[L - 1] += e - o; else runs.push(o, e - o); tot += e - o; if (o > PROF.maxo) PROF.maxo = o; } }
+    const data = Buffer.allocUnsafe(tot); let w = 0; for (let i = 0; i < runs.length; i += 2) { cur.copy(data, w, runs[i], runs[i] + runs[i + 1]); w += runs[i + 1]; }
+    const pages = { runs, data };
+    PROF.pages += pages.data.length / PAGE;
     const st = {}; for (const k of FIELDS) st[k] = structuredClone(S[k]);
     return { pages, st, n: game.responses.length };
   }
@@ -49,7 +52,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   }
   function restore0(s) {
     const cur = heap(); cur.set(base.subarray(0, Math.min(base.length, cur.length, LIM)));
-    for (const [o, b] of s.pages) cur.set(b, o);
+    { const r = s.pages.runs, d = s.pages.data; let w = 0; for (let i = 0; i < r.length; i += 2) { d.copy(cur, r[i], w, w + r[i + 1]); w += r[i + 1]; } }
     for (const k of FIELDS) S[k] = structuredClone(s.st[k]);
     game.responses.length = s.n;
   }
