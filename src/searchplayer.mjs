@@ -66,6 +66,10 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
         if (d.type === M.SELECT_EFFECTYN || d.type === M.SELECT_YESNO) idx = [0, 1];
         for (const i of idx) out.push({ kind: 'pick', i });
         break; }
+      case 'announce': { // declare a card name (Acropolis etc.): try every distinct card in my deck, keep the legal ones
+        const pool = [...new Set([...(game.seats[seat].deck.main || []), ...(game.seats[seat].deck.extra || [])].map(c => name(c)))];
+        for (const n of pool) { const r = answer(S, seat, n); if (r && !r.error) out.push({ kind: 'text', t: n }); if (out.length >= 6) break; }
+        break; }
       case 'sum': { // value-aware: enumerate small subsets whose values reach the target (Ritual Tributes etc.)
         const pr = String(d.prompt || d.msg || ''); const am = /(reach at least|sum exactly to) (\d+)/.exec(pr); const exact = am && am[1] === 'sum exactly to'; let need = am ? +am[2] : 0;
         const inc = /already included: (.*)$/.exec(pr); if (inc) for (const m2 of inc[1].matchAll(/\((\d+)\)/g)) need -= +m2[1];
@@ -138,7 +142,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
         if (isIdle()) { consider(depth + 1); return; }
         const d = decision(S, seat); if (!d) return;
         if (process.env.DBG2) console.log('SUB', d.kind, String(d.msg||'').slice(0,60), '|', d.options.slice(0,14).map(o=>o.label.slice(0,40)).join(' ; '));
-        const cs = cands(d); if (!cs.length) { DEAD[d.kind + ':' + (d.msg || '').slice(0, 50)] = (DEAD[d.kind + ':' + (d.msg || '').slice(0, 50)] || 0) + 1; return; }
+        const cs = cands(d); if (!cs.length) { { const dk = d.kind + ':' + String(d.prompt || '').slice(0, 50); DEAD[dk] = (DEAD[dk] || 0) + 1; } return; }
         if (cs.length > 1 && variants < maxMacro) { const sn = snapshot(); for (let k = 1; k < Math.min(cs.length, altCap + 1); k++) { if (variants >= maxMacro) break; variants++; stack.push({ sn, d, c: cs[k] }); } }
         if (!apply(d, cs[0])) { DEAD['applyfail:' + d.kind] = (DEAD['applyfail:' + d.kind] || 0) + 1; return; }
       }
