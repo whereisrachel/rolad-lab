@@ -2,6 +2,7 @@
 // plus layers (different kinds of answer) and cards still in hand. Hand traps in hand count as one each.
 import { teamOf, L } from './engine.mjs';
 import { cardDB, name } from './cards.mjs';
+import { genericCredit } from './generic.mjs';
 const LINK = 0x4000000;
 let HT = 1; export const setHT = (w) => { HT = w; }; // weight of a hand trap kept in hand (1 = counts as an interruption; 0 = board-only comparison)
 let PROG = 0; export const setProgress = (w) => { PROG = w; }; // search-guidance credit for Ritual-wing progress (not part of the reported board value when 0)
@@ -29,6 +30,7 @@ export function disruption(S, seat, detail = false) {
     else if (/Magician of Dark Chaos/.test(n)) add(n, 1, 'protect');
     else if (/Black Luster Soldier/.test(n)) add(n, 0.5, 'protect');
     else if (/^Black Chaos$/.test(n)) add(n, 0.5, 'protect');
+    else { const g = genericCredit(c.code, 'mon'); if (g) add(n + ' (text)', g[0], g[1]); }
   }
   // Mind Shuffle on their turn: return a Lv7+ body, Special Summon a LADR monster from hand -> its summon effect banishes (BLS: banish 1; MoDC: banish 1 face-down). Needs MS on field + a Lv7+ body + the monster in hand.
   if (st.some(c => /Mind Shuffle/.test(nm(c))) && mons.some(c => (info(c).level || 0) >= 7)) {
@@ -41,7 +43,7 @@ export function disruption(S, seat, detail = false) {
     else if (/Mind Shuffle/.test(n)) add(n, 1, 'protect');
     else if (/Theorealize Liberation/.test(n)) add(n, 0.5, 'protect');
     else if (/Citrinitas/.test(n)) add(n, 0.3);
-    else if (!(info(c).type & 0x1000000)) add('set ' + n, 0.2); // unknown backrow (not pendulum scale)
+    else if (!(info(c).type & 0x1000000)) { const g = genericCredit(c.code, 'st'); add('set ' + n + (g ? ' (text)' : ''), g ? g[0] : 0.2, g ? g[1] : undefined); } // unknown backrow (not pendulum scale)
   }
   for (const c of hand) {
     const n = nm(c);

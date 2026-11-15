@@ -49,7 +49,7 @@ jobs:
           if [ "${{ inputs.kind }}" = "loo" ]; then
             node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --tutor "${{ inputs.tutor }}" --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           elif [ "${{ inputs.kind }}" = "screen" ]; then
-            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           else
             node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           fi
@@ -73,7 +73,7 @@ jobs:
           if [ "${{ inputs.kind }}" = "loo" ]; then
             node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --tutor "${{ inputs.tutor }}" --merge merged > report.md
           elif [ "${{ inputs.kind }}" = "screen" ]; then
-            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --merge merged > report.md
+            node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --merge merged > report.md
           else
             node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --merge merged --out report.md > /dev/null
           fi

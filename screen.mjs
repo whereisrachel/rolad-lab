@@ -6,16 +6,17 @@ import { parseYdk, findCard, name, ROOT } from './src/cards.mjs';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
 const deckPath = f('deck', 'decks/ROLAD-L2.ydk'), slotName = f('slot', 'Small World'), N = +f('n', 20), scns = f('scn', 'none,ash').split(','), PAS = +f('passes', 1), MAC = +f('macros', 200), T = +f('threads', Math.max(1, os.cpus().length - 2));
 const BASE = parseYdk(fs.readFileSync(deckPath, 'utf8'));
-const slotCode = findCard(slotName); const slot = BASE.main.findIndex(c => name(c) === name(slotCode)); if (slot < 0) throw new Error('slot card not in deck');
+const ED = slotName.startsWith('ED:'); const slotNm = ED ? slotName.slice(3) : slotName; // ED:<card> = Extra Deck swap, hands are random (not forced)
+const slotCode = findCard(slotNm); const slot = (ED ? BASE.extra : BASE.main).findIndex(c => name(c) === name(slotCode)); if (slot < 0) throw new Error('slot card not in deck');
 const names = fs.readFileSync(f('cands', 'cands.txt'), 'utf8').split(/\r?\n/).map(s => s.trim()).filter(s => s && !s.startsWith('#'));
 let x = 11; const rnd = () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296;
-const hands = []; for (let i = 0; i < N; i++) { const idx = BASE.main.map((_, k) => k).filter(k => k !== slot); for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; } hands.push([slot, ...idx.slice(0, 4)]); }
+const hands = []; for (let i = 0; i < N; i++) { const idx = BASE.main.map((_, k) => k).filter(k => ED || k !== slot); for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; } hands.push(ED ? idx.slice(0, 5) : [slot, ...idx.slice(0, 4)]); }
 const decks = [{ label: '(baseline: ' + slotName + ')', file: deckPath }];
 fs.mkdirSync('decks/cand', { recursive: true });
-for (const nm of names) { let c; try { c = findCard(nm); } catch { c = null; } if (!c) { console.log('skip (not found):', nm); continue; } const main = BASE.main.slice(); main[slot] = c; const file = 'decks/cand/' + nm.replace(/[^A-Za-z0-9]+/g, '_').slice(0, 40) + '.ydk'; fs.writeFileSync(file, '#main\n' + main.join('\n') + '\n#extra\n' + BASE.extra.join('\n') + '\n!side\n' + (BASE.side || []).join('\n') + '\n'); decks.push({ label: name(c), file }); }
+for (const nm of names) { let c; try { c = findCard(nm); } catch { c = null; } if (!c) { console.log('skip (not found):', nm); continue; } const main = BASE.main.slice(); const extra = BASE.extra.slice(); if (ED) extra[slot] = c; else main[slot] = c; const file = 'decks/cand/' + nm.replace(/[^A-Za-z0-9]+/g, '_').slice(0, 40) + '.ydk'; fs.writeFileSync(file, '#main\n' + main.join('\n') + '\n#extra\n' + extra.join('\n') + '\n!side\n' + (BASE.side || []).join('\n') + '\n'); decks.push({ label: name(c), file }); }
 const SH = f('shard', null), OF = +f('of', 1), MERGE = f('merge', null);
 const tasks = []; const meta = {}; let id = 0;
-decks.forEach((d, di) => hands.forEach((h, hi) => scns.forEach(sc => { const tid = id++; meta[tid] = { di, hi, sc }; tasks.push({ id: tid, deck: d.file, hand: h, scn: sc, macros: MAC, ht: +f('ht', 1), passes: PAS, seed: 1000 + hi }); })));
+decks.forEach((d, di) => hands.forEach((h, hi) => scns.forEach(sc => { const tid = id++; meta[tid] = { di, hi, sc }; tasks.push({ id: tid, deck: d.file, hand: h, scn: sc, macros: MAC, ht: +f('ht', 1), seeds: +f('seeds', 0), passes: PAS, seed: 1000 + hi }); })));
 const myTasks = SH !== null ? tasks.filter(t => t.id % OF === +SH) : tasks;
 const chunks = Array.from({ length: T }, () => []); myTasks.forEach((t, i) => chunks[i % T].push(t));
 const res = {}; let done = 0; const t0 = Date.now(); const file = fileURLToPath(new URL('./src/rt-worker.mjs', import.meta.url));
