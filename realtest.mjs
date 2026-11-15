@@ -31,7 +31,7 @@ function coupleHands(hs) {
 }
 const hB = mode === 'random' ? (A.main.length === B.main.length ? hA.map(h => ({ ...h })) : coupleHands(hA)) : handsFor(B);
 const tasks = []; let id = 0; const meta = {};
-function add(deckName, deck, hs, side) { hs.forEach((h, hi) => scns.forEach(sc => { const tid = id++; meta[tid] = { side, hi, sc, label: h.label }; tasks.push({ id: tid, deck: deckName, hand: h.idx, scn: sc, macros: MAC, ht: +f('ht', 1), passes: PAS, seed: 1000 + hi }); })); }
+function add(deckName, deck, hs, side) { hs.forEach((h, hi) => scns.forEach(sc => { const tid = id++; meta[tid] = { side, hi, sc, label: h.label }; tasks.push({ id: tid, deck: deckName, hand: h.idx, scn: sc, macros: MAC, ht: +f('ht', 1), seeds: +f('seeds', 0), passes: PAS, seed: 1000 + hi }); })); }
 add(dA, A, hA, 'A'); add(dB, B, hB, 'B');
 const SH = f('shard', null), OF = +f('of', 1), MERGE = f('merge', null);
 const myTasks = SH !== null ? tasks.filter(t => t.id % OF === +SH) : tasks;

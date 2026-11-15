@@ -11,6 +11,7 @@ on:
       n: { description: "hands per card/deck", default: "40", type: string }
       scn: { description: "none,ash,imperm,droll,both,all", default: "none,ash", type: string }
       ht: { description: "hand-trap-in-hand credit: 1 = counts, 0 = board-only", default: "1", type: string }
+      seeds: { description: "pair: 1 = also search from one seeded opener per hand card (finds the deep Medius/Nervedo lines)", default: "0", type: string }
       passes: { default: "1", type: string }
       macros: { default: "200", type: string }
       shards: { description: "parallel machines (max 20)", default: "20", type: string }
@@ -50,7 +51,7 @@ jobs:
           elif [ "${{ inputs.kind }}" = "screen" ]; then
             node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           else
-            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           fi
       - uses: actions/upload-artifact@v4
         with: { name: "shard-${{ matrix.shard }}", path: "results/shard-${{ matrix.shard }}.json" }
@@ -74,7 +75,7 @@ jobs:
           elif [ "${{ inputs.kind }}" = "screen" ]; then
             node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --merge merged > report.md
           else
-            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --merge merged --out report.md > /dev/null
+            node --no-warnings realtest.mjs "${{ inputs.deckA }}" "${{ inputs.deckB }}" --mode random --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --seeds ${{ inputs.seeds }} --merge merged --out report.md > /dev/null
           fi
           cat report.md >> "$GITHUB_STEP_SUMMARY"
           cat report.md
