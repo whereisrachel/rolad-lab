@@ -22,7 +22,7 @@ export function evalBoard(S, seat) {
   return v;
 }
 
-export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity } = {}) {
+export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null } = {}) {
   resetLib(); const S = autoAdvance(await simulate(game));
   S.ev = function () {}; S.events.length = 0; // no event log during search
   const mod = S.lb[OcgCoreInternal].module; const me = teamOf(game, seat);
@@ -149,6 +149,18 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   }
   // root
   for (let g0 = 0; g0 < 20 && S.pending && !S.ended && dseat() === seat && !isIdle(); g0++) { const d0 = decision(S, seat); if (!d0) break; const c0 = cands(d0); if (!c0.length || !apply(d0, c0[0])) break; autoAdvance(S); }
+  if (script && script.length) { // replay a fixed opening line (regexes on option labels, in order), then search on from the resulting idle state
+    let k = 0; const res = script.map(x => new RegExp(x, 'i'));
+    for (let g1 = 0; g1 < 600 && S.pending && !S.ended && k <= res.length; g1++) {
+      autoAdvance(S); if (!S.pending || S.ended || dseat() !== seat) break;
+      const d1 = decision(S, seat); if (!d1) break;
+      let hit = -1; if (k < res.length && d1.options) hit = d1.options.findIndex(o => res[k].test(o.label));
+      if (hit >= 0 && (d1.kind === 'pick' || d1.kind === 'unselect')) { const o1 = d1.options[hit]; if (!push(S, { seat, resp: o1.resp, label: o1.label })) break; k++; continue; }
+      if (isIdle()) { if (k >= res.length) break; console.log('SCRIPT STUCK at', k, script[k], '| idle options:', d1.options.map(o => o.label).join(' ; ')); break; }
+      const c1 = cands(d1); if (!c1.length || !apply(d1, c1[0])) break;
+    }
+    if (k < res.length) console.log('SCRIPT ended early at', k, '/', res.length);
+  }
   const rd = decision(S, seat); if (!rd || !isIdle()) return { error: 'no first-turn idle decision, pending=' + (S.pending && S.pending.type) + ' turn=' + S.turn + ' seat=' + dseat(), score: 0 };
   consider(0); const rootSnap = frontier[0].snap;
   while (frontier.length && !timeUp()) {

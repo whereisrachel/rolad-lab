@@ -2,6 +2,7 @@ name: farm
 on:
   workflow_dispatch:
     inputs:
+      tutor: { description: "loo only: hand always holds this card (e.g. Griffoh) so tutored cards are measured", default: "" }
       kind: { description: "screen or pair", default: screen, type: choice, options: [screen, pair, loo] }
       cands: { description: "screen: card names one per line (empty = cands.txt)", required: false, default: "", type: string }
       slot: { description: "screen: card each candidate replaces", default: "Small World", type: string }
@@ -40,7 +41,7 @@ jobs:
         run: |
           CF=cands.txt; if [ -n "$CANDS" ]; then printf '%s\n' "$CANDS" > cands-run.txt; CF=cands-run.txt; fi
           if [ "${{ inputs.kind }}" = "loo" ]; then
-            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
+            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --tutor "${{ inputs.tutor }}" --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           elif [ "${{ inputs.kind }}" = "screen" ]; then
             node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --threads $(nproc) --shard ${{ matrix.shard }} --of ${{ inputs.shards }}
           else
@@ -64,7 +65,7 @@ jobs:
         run: |
           CF=cands.txt; if [ -n "$CANDS" ]; then printf '%s\n' "$CANDS" > cands-run.txt; CF=cands-run.txt; fi
           if [ "${{ inputs.kind }}" = "loo" ]; then
-            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --merge merged > report.md
+            node --no-warnings loo.mjs --deck "${{ inputs.deckA }}" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --tutor "${{ inputs.tutor }}" --merge merged > report.md
           elif [ "${{ inputs.kind }}" = "screen" ]; then
             node --no-warnings screen.mjs --deck "${{ inputs.deckA }}" --slot "${{ inputs.slot }}" --cands "$CF" --n ${{ inputs.n }} --scn ${{ inputs.scn }} --passes ${{ inputs.passes }} --macros ${{ inputs.macros }} --ht ${{ inputs.ht }} --merge merged > report.md
           else

@@ -6,7 +6,7 @@ import { Worker } from 'worker_threads'; import { fileURLToPath } from 'url';
 import { parseYdk, name } from './src/cards.mjs';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
 const deckPath = f('deck', 'decks/ROLAD-L2.ydk'), N = +f('n', 30), scns = f('scn', 'none,ash').split(','), PAS = +f('passes', 1), MAC = +f('macros', 200), T = +f('threads', Math.max(1, os.cpus().length - 2));
-const BLANK = 13039848;
+const BLANK = 13039848; const TUT = f('tutor', null);
 const BASE = parseYdk(fs.readFileSync(deckPath, 'utf8'));
 let x = 23; const rnd = () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296;
 const cards = []; const seen = new Set(); BASE.main.forEach((c, i) => { if (!seen.has(c)) { seen.add(c); cards.push({ code: c, slot: i, label: name(c), copies: BASE.main.filter(k => k === c).length }); } });
@@ -16,8 +16,8 @@ cards.forEach((c, ci) => {
   const main = BASE.main.slice(); main[c.slot] = BLANK; c.file = 'decks/cand/loo_' + ci + '.ydk';
   fs.writeFileSync(c.file, '#main\n' + main.join('\n') + '\n#extra\n' + BASE.extra.join('\n') + '\n!side\n' + (BASE.side || []).join('\n') + '\n');
   for (let hi = 0; hi < N; hi++) {
-    const idx = BASE.main.map((_, k) => k).filter(k => k !== c.slot); for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; }
-    const hand = [c.slot, ...idx.slice(0, 4)];
+    const TS = TUT ? BASE.main.findIndex(k => name(k) === TUT) : -1; if (TUT && (c.slot === TS)) continue; const idx = BASE.main.map((_, k) => k).filter(k => k !== c.slot && k !== TS); for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; }
+    const hand = TUT ? [TS, ...idx.slice(0, 4)] : [c.slot, ...idx.slice(0, 4)];
     for (const sc of scns) for (const side of ['with', 'without']) { const tid = id++; meta[tid] = { ci, hi, sc, side }; tasks.push({ id: tid, deck: side === 'with' ? deckPath : c.file, hand, scn: sc, macros: MAC, ht: +f('ht', 1), passes: PAS, seed: 2000 + hi }); }
   }
 });
