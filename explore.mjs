@@ -51,6 +51,7 @@ if (cmd === 'fails') {
   for (const z of fails) { const hand = (z.hand || []).filter(n => !HT.test(n)); const played = (z.played || []).filter(n => !HT.test(n)); const left = hand.length - played.length; z.needs = [];
     if (played.length <= 1 || (z.steps || 0) < 6) z.needs.push('no_starter'); if ((z.mon || 0) < 3) z.needs.push('few_bodies'); if (left >= 2) z.needs.push('dead_cards');
     if (hand.includes('Theorealize Medius') && !played.includes('Theorealize Medius')) z.needs.push('no_tm_trigger');
+    if ((z.mon || 0) >= 3) z.needs.push('no_interaction'); if (!z.needs.length) z.needs.push('general');
     for (const k of z.needs) needs[k] = (needs[k] || 0) + 1; }
   fs.mkdirSync('data', { recursive: true });
   fs.writeFileSync('data/explore-fails.json', JSON.stringify({ seed: SEED, deck: DECK, n: rows.length, failCount: rows.filter(z => z.v < 6).length, mean: rows.reduce((s, z) => s + z.v, 0) / (rows.length || 1), needs, fails, bricks }));
@@ -59,7 +60,7 @@ if (cmd === 'fails') {
 }
 if (cmd === 'pool') { // build this run's candidates from ALL legal cards: match what the failures need, weighted by what past runs learned, plus untried cards
   const F = JSON.parse(fs.readFileSync('data/explore-fails.json', 'utf8')); const L = learned(); const lim = banlist(); const { text } = cardDB();
-  const tot = Object.values(F.needs).reduce((x, y) => x + y, 0) || 1; const scored = []; let eligible = 0;
+  if (!Object.keys(F.needs).length) F.needs = { general: 1 }; const tot = Object.values(F.needs).reduce((x, y) => x + y, 0) || 1; const scored = []; let eligible = 0;
   for (const [id] of text) { const tg = tagCard(id, lim); if (!tg) continue; const have = D.main.filter(k => name(k) === tg.name).length; if (have >= (lim.has(id) ? lim.get(id) : 3)) continue; eligible++;
     let sc = 0; const why = new Set(); for (const [need, cnt] of Object.entries(F.needs)) for (const t of tg.tags) { const w = (NEED_TAGS[need] || {})[t]; if (w) { sc += (cnt / tot) * w * (L.tagW[t] ?? 1); why.add(need.replace('_', ' ') + ': ' + t.replace('_', ' ')); } }
     const h = L.cards[tg.name]; if (h) sc *= h.rescued > 0 ? 1 + h.rescued / h.tests : Math.pow(0.5, h.tests); else sc *= 1.2; // tried-and-failed cards fade, untried get a nudge

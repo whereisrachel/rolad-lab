@@ -44,4 +44,6 @@ export const NEED_TAGS = {
   dead_cards: { discard_cost: 2, hand_cost_ss: 1.5, draw: 1, banish_faceup: 0.7, gy_setup: 0.5 },
   no_tm_trigger: { banish_faceup: 2 },
   no_gy_fuel: { gy_setup: 2, discard_cost: 1 },
+  no_interaction: { quick_interact: 2, family: 1, search: 0.7, deck_ss: 0.5 }, // bodies on board but too few interruptions
+  general: { self_ss: 1, search: 1, deck_ss: 1, draw: 1, discard_cost: 1, banish_faceup: 1, family: 1.5, pendulum_ed: 1 },
 };

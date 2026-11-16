@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ROLAD Lab</title>
+<style>
+  :root { --bg:#0f1115; --panel:#171a21; --line:#2a2f3a; --text:#e7e9ee; --mute:#9aa3b2; --good:#3fb950; --bad:#f85149; --warn:#d29922; --acc:#7aa2f7; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  header { display:flex; flex-wrap:wrap; gap:12px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line); background:var(--panel); position:sticky; top:0; z-index:5; }
+  header h1 { font-size:18px; margin:0 12px 0 0; }
+  nav button { background:none; border:1px solid transparent; color:var(--mute); padding:6px 12px; border-radius:6px; cursor:pointer; font:inherit; }
+  nav button.on { color:var(--text); border-color:var(--line); background:var(--bg); }
+  #cal { margin-left:auto; font-size:13px; padding:4px 10px; border-radius:20px; border:1px solid var(--line); }
+  main { max-width:1100px; margin:0 auto; padding:18px; }
+  section { display:none; } section.on { display:block; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  label { display:block; font-size:13px; color:var(--mute); margin:10px 0 4px; }
+  input, select, textarea { width:100%; background:var(--bg); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:8px; font:inherit; }
+  textarea { min-height:120px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13px; }
+  .row { display:grid; grid-template-columns:1fr 1fr; gap:16px; } @media (max-width:720px) { .row { grid-template-columns:1fr; } }
+  .btn { background:var(--acc); color:#0b0d12; border:0; border-radius:6px; padding:9px 16px; font:inherit; font-weight:600; cursor:pointer; margin-top:12px; }
+  .btn.sec { background:var(--line); color:var(--text); }
+  .chk { display:inline-flex; gap:6px; align-items:center; margin-right:14px; color:var(--text); font-size:14px; } .chk input { width:auto; }
+  table { border-collapse:collapse; width:100%; font-size:14px; } th, td { border-bottom:1px solid var(--line); padding:6px 8px; text-align:left; vertical-align:top; }
+  th { color:var(--mute); font-weight:500; }
+  .good { color:var(--good); } .bad { color:var(--bad); } .warn { color:var(--warn); } .mute { color:var(--mute); }
+  .verdict { font-size:17px; font-weight:600; padding:12px 14px; border-radius:8px; border:1px solid var(--line); margin-bottom:12px; }
+  .pill { font-size:12px; padding:2px 8px; border-radius:10px; border:1px solid var(--line); }
+  .md h1 { font-size:18px; } .md h2 { font-size:16px; margin-top:18px; } .md h3 { font-size:15px; } .md pre { white-space:pre-wrap; }
+  a { color:var(--acc); } .list a { display:block; padding:6px 0; border-bottom:1px solid var(--line); text-decoration:none; }
+  .small { font-size:13px; } code { background:var(--bg); padding:1px 5px; border-radius:4px; }
+  .cardhit { border-bottom:1px solid var(--line); padding:8px 0; } .cardhit b { font-size:15px; }
+</style>
+</head><body>
+<header>
+  <h1>ROLAD Lab</h1>
+  <nav>
+    <button data-t="run" class="on">Run a test</button>
+    <button data-t="explorer">Explorer</button>
+    <button data-t="jobs">Jobs</button>
+    <button data-t="results">Results</button>
+    <button data-t="cards">Card search</button>
+    <button data-t="lines">Learned lines</button>
+  </nav>
+  <span id="cal" class="mute">Calibration: loading…</span>
+</header>
+<main>
+<section id="run" class="on">
+  <div class="card">
+    <label>What do you want to test?</label>
+    <select id="mode">
+      <option value="pair">Compare two lists (is list B better than list A?)</option>
+      <option value="screen">Test main-deck cards (each card swapped in for one slot)</option>
+      <option value="ed">Test Extra Deck cards (each card swapped in for one Extra Deck slot)</option>
+    </select>
+    <div class="row">
+      <div><label>List A (baseline)</label><select id="deckA"></select>
+        <textarea id="pasteA" placeholder="Paste a list: one card per line, e.g.&#10;3 Medius the Pure&#10;3 Nervedo the Shadebeast Power Patron&#10;#extra&#10;2 Medicurius the Power Patron of Illusions" style="display:none"></textarea></div>
+      <div id="bBox"><label>List B (the change)</label><select id="deckB"></select>
+        <textarea id="pasteB" placeholder="Paste list B the same way" style="display:none"></textarea></div>
+    </div>
+    <div id="sBox" style="display:none">
+      <label>Cards to test (one per line, exact names; use Card search to find them)</label><textarea id="cands"></textarea>
+      <label>Slot each card replaces</label><input id="slot" value="Dark Magical Circle">
+    </div>
+    <div class="row">
+      <div><label>Opening hands per list</label><select id="n"><option>50</option><option>100</option><option selected>300</option><option>600</option></select></div>
+      <div><label>Search depth per hand</label><select id="mac"><option value="150">Quick</option><option value="300" selected>Normal</option><option value="600">Deep</option></select></div>
+    </div>
+    <label>Opponent holds</label>
+    <span class="chk"><input type="checkbox" value="none" checked> nothing</span>
+    <span class="chk"><input type="checkbox" value="ash" checked> Ash Blossom</span>
+    <span class="chk"><input type="checkbox" value="imperm" checked> Infinite Impermanence</span>
+    <span class="chk"><input type="checkbox" value="droll"> Droll &amp; Lock Bird</span>
+    <span class="chk"><input type="checkbox" value="both"> Ash + Imperm</span>
+    <span class="chk"><input type="checkbox" value="all"> every hand trap</span>
+    <div><button class="btn" id="go">Add to the queue</button> <span id="goMsg" class="small"></span></div>
+  </div>
+  <div class="card small mute" id="info"></div>
+</section>
+<section id="explorer">
+  <div class="card">
+    <b>The explorer finds missing pieces by itself.</b> It plays fresh hands with your list, finds the ones that fail, works out what they were missing (no starter, too few bodies, dead cards, Theorealize Medius stuck in hand), searches every legal card for ones that supply it, replays the failing hands with each, learns which kinds of cards help, and queues full tests for its best finds. It runs every night if you set up the nightly task (see "Set up nightly runs.bat").
+    <label>Baseline list</label><select id="exDeck"></select>
+    <button class="btn" id="exGo">Run the explorer now</button> <span id="exMsg" class="small"></span>
+  </div>
+  <div class="card" id="exLearn"></div>
+  <div class="card md" id="exLast"></div>
+</section>
+<section id="jobs"><div class="card" id="jobsList">Loading…</div></section>
+<section id="results"><div class="row" style="grid-template-columns:320px 1fr"><div class="card list" id="repList">Loading…</div><div class="card" id="repView"><span class="mute">Pick a report.</span></div></div></section>
+<section id="cards">
+  <div class="card"><label>Search every legal card (name or text; words or a regular expression)</label>
+    <input id="q" placeholder="e.g.  Power Patron   or   Special Summon this card from your hand   or   2 Level 10 monsters">
+    <div style="margin-top:8px"><span class="chk"><input type="checkbox" id="qName"> names only</span><span class="chk"><input type="checkbox" id="qEd"> Extra Deck only</span><span class="chk"><input type="checkbox" id="qLegal" checked> hide banned</span> <span id="qCount" class="mute small"></span></div></div>
+  <div class="card" id="qRes"></div>
+</section>
+<section id="lines"><div class="card" id="linesView">Loading…</div></section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const api = async (p, b) => { const r = await fetch(p, b ? { method: 'POST', body: JSON.stringify(b) } : {}); if (!r.ok) throw new Error((await r.text()).slice(0, 200)); return p.startsWith('/api/file') ? r.text() : r.json(); };
+const file = (p) => api('/api/file?p=' + encodeURIComponent(p));
+document.querySelectorAll('nav button').forEach(b => b.onclick = () => { document.querySelectorAll('nav button').forEach(x => x.classList.toggle('on', x === b)); document.querySelectorAll('section').forEach(s => s.classList.toggle('on', s.id === b.dataset.t)); ({ jobs: loadJobs, results: loadReports, cards: loadCards, lines: loadLines, explorer: loadExplorer })[b.dataset.t]?.(); });
+(async () => { try { const c = JSON.parse(await file('reports/calibration.json')); $('cal').textContent = `Calibration ${c.pass ? 'PASS' : 'FAIL'}: matches the guide on ${c.matched}/${c.n} hands (${c.date.slice(0, 10)})`; $('cal').className = c.pass ? 'good' : 'bad'; } catch { $('cal').textContent = 'Calibration: not run yet'; } })();
+(async () => { try { const i = await api('/api/info'); $('info').innerHTML = `Running on this computer: ${esc(i.cpu || '')}, ${i.threads} worker threads. Jobs run one at a time; a 300-hand comparison takes about an hour. Everything (results, learned lines, what the explorer learned) is saved in this folder.`; } catch {} })();
+let DECKS = [];
+async function loadDecks() { DECKS = await api('/api/decks');
+  for (const id of ['deckA', 'deckB', 'exDeck']) { const s = $(id); s.innerHTML = (id === 'exDeck' ? '' : '<option value="__paste">— paste a new list —</option>') + DECKS.map(d => `<option>${esc(d)}</option>`).join(''); }
+  $('deckA').value = $('exDeck').value = DECKS.includes('decks/L2-vand3.ydk') ? 'decks/L2-vand3.ydk' : DECKS[0]; $('deckB').value = DECKS.includes('decks/fix/F-dmclac-cit-tm.ydk') ? 'decks/fix/F-dmclac-cit-tm.ydk' : DECKS[0]; }
+loadDecks();
+for (const k of ['A', 'B']) $('deck' + k).onchange = () => { $('paste' + k).style.display = $('deck' + k).value === '__paste' ? 'block' : 'none'; };
+$('mode').onchange = () => { const m = $('mode').value; $('bBox').style.display = m === 'pair' ? 'block' : 'none'; $('sBox').style.display = m === 'pair' ? 'none' : 'block'; $('slot').value = m === 'ed' ? 'Dark Magician of Destruction' : 'Dark Magical Circle'; };
+const pasted = async (k) => { const v = $('deck' + k).value; if (v !== '__paste') return v; return (await api('/api/deck', { name: 'list' + k, text: $('paste' + k).value })).path; };
+$('go').onclick = async () => { try { const m = $('mode').value; const scn = [...document.querySelectorAll('#run .chk input')].filter(x => x.checked).map(x => x.value).join(',') || 'none';
+  const j = { deckA: await pasted('A'), n: +$('n').value, scn, macros: +$('mac').value };
+  if (m === 'pair') Object.assign(j, { kind: 'pair', deckB: await pasted('B') });
+  else { const c = $('cands').value.split('\n').map(x => x.trim()).filter(Boolean); if (!c.length) throw new Error('List at least one card.'); Object.assign(j, { kind: 'screen', cands: c.join('\n'), slot: (m === 'ed' ? 'ED:' : '') + $('slot').value.trim(), n: Math.min(j.n, 60), scn: scn.split(',').slice(0, 2).join(',') }); }
+  const r = await api('/api/run', j); $('goMsg').innerHTML = `<span class="good">Queued as job ${r.id}. Follow it under Jobs.</span>`; } catch (e) { $('goMsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } };
+const NAME = { pair: 'Compare lists', screen: 'Card test', explore: 'Explorer', calibrate: 'Calibration' };
+async function loadJobs() { const js = await api('/api/jobs');
+  $('jobsList').innerHTML = js.length ? '<table><tr><th>Job</th><th>What</th><th>Status</th><th></th></tr>' + js.map(j => `<tr><td>${j.id}</td><td><b>${esc(j.title || NAME[j.kind])}</b><div class="small mute">${esc(j.kind === 'pair' ? j.deckA + ' vs ' + j.deckB : j.kind === 'screen' ? (j.cands || '').split('\n').length + ' cards, slot ' + j.slot : j.kind === 'explore' ? j.deckA : '')}${j.stage ? ' · ' + esc(j.stage) : ''}${j.diag ? '<br>' + esc(j.diag) : ''}</div></td><td class="${j.status === 'done' ? 'good' : j.status === 'failed' ? 'bad' : j.status === 'running' ? 'warn' : 'mute'}">${esc(j.status)}${j.status === 'running' ? ' ' + (j.progress || 0) + '%' : ''}${j.error ? '<div class="small">' + esc(j.error.slice(0, 200)) + '</div>' : ''}</td><td>${j.report ? `<a href="#" data-r="${esc(j.report)}">report</a>` : ''} ${/queued|running/.test(j.status) ? `<a href="#" data-c="${j.id}">cancel</a>` : ''}</td></tr>`).join('') + '</table>' : '<span class="mute">No jobs yet.</span>';
+  $('jobsList').querySelectorAll('a[data-r]').forEach(a => a.onclick = (e) => { e.preventDefault(); document.querySelector('nav button[data-t=results]').click(); showReport(a.dataset.r); });
+  $('jobsList').querySelectorAll('a[data-c]').forEach(a => a.onclick = async (e) => { e.preventDefault(); await api('/api/cancel', { id: +a.dataset.c }); loadJobs(); }); }
+setInterval(() => { if ($('jobs').classList.contains('on')) loadJobs(); }, 5000);
+async function loadReports() { const rs = await api('/api/reports'); $('repList').innerHTML = rs.slice(0, 120).map(r => `<a href="#" data-p="${esc(r.p)}">${esc(r.p.replace('reports/', ''))} <span class="mute small">${new Date(r.t).toLocaleString()}</span></a>`).join('') || '<span class="mute">No reports yet.</span>';
+  $('repList').querySelectorAll('a').forEach(a => a.onclick = (e) => { e.preventDefault(); showReport(a.dataset.p); }); }
+function verdictPair(md) {
+  const out = []; const re = /## Scenario: (\w+)\nA mean ([\d.-]+) \| B mean ([\d.-]+) \| diff B-A ([\d.-]+) ± ([\d.]+) \| A ≥6: (\d+)\/(\d+) \| B ≥6: (\d+)\/(\d+)/g; let m;
+  while ((m = re.exec(md))) { const d = +m[4], se = +m[5]; const v = d > 2 * se ? 'good' : d < -2 * se ? 'bad' : 'mute';
+    out.push(`<tr><td>${m[1] === 'none' ? 'no hand trap' : m[1]}</td><td class="${v}"><b>${v === 'good' ? 'B better' : v === 'bad' ? 'B worse' : 'no clear difference'}</b> (${d > 0 ? '+' : ''}${d.toFixed(2)} ± ${se.toFixed(2)})</td><td>${m[6]} → ${m[8]} of ${m[7]}</td></tr>`); }
+  if (!out.length) return '';
+  return '<table><tr><th>Opponent holds</th><th>Verdict (B minus A)</th><th>Strong boards (6+), A → B</th></tr>' + out.join('') + '</table>';
+}
+function verdictScreen(md) {
+  const rows = md.split('\n').filter(l => /^\| [^|]+ \| [-\d.]+ ± [\d.]+ \(\d+\)/.test(l)); if (!rows.length) return '';
+  const out = rows.map(l => { const c = l.split('|').map(x => x.trim()); const name = c[1]; const cells = c.slice(2, -3).map(x => { const m = /([-\d.]+) ± ([\d.]+)/.exec(x); return m ? [+m[1], +m[2]] : null; }).filter(Boolean);
+    const mean = +c[c.length - 3]; const played = c[c.length - 2]; const se = Math.sqrt(cells.reduce((s, x) => s + x[1] * x[1], 0)) / (cells.length || 1);
+    const v = /NOT PLAYED/.test(played) ? 'warn' : mean > 2 * se ? 'good' : mean < -2 * se ? 'bad' : 'mute';
+    return `<tr><td>${esc(name)}</td><td class="${v}"><b>${v === 'good' ? 'Promising: test in full' : v === 'bad' ? 'Worse' : v === 'warn' ? 'Not played: unreliable' : 'No clear effect'}</b> (${mean > 0 ? '+' : ''}${mean.toFixed(2)})</td><td class="small">${esc(played)}</td></tr>`; });
+  return '<table><tr><th>Card</th><th>Verdict</th><th>Played</th></tr>' + out.join('') + '</table>';
+}
+function mdToHtml(md) {
+  const L = md.split('\n'); let h = '', inT = false;
+  for (const l of L) {
+    if (/^\|/.test(l)) { if (/^\|[-| ]+\|$/.test(l)) continue; const c = l.split('|').slice(1, -1); h += (inT ? '' : '<table>') + '<tr>' + c.map(x => '<td>' + esc(x.trim()) + '</td>').join('') + '</tr>'; inT = true; continue; }
+    if (inT) { h += '</table>'; inT = false; }
+    if (/^### /.test(l)) h += '<h3>' + esc(l.slice(4)) + '</h3>'; else if (/^## /.test(l)) h += '<h2>' + esc(l.slice(3)) + '</h2>'; else if (/^# /.test(l)) h += '<h1>' + esc(l.slice(2)) + '</h1>';
+    else if (/^- /.test(l)) h += '<div>• ' + esc(l.slice(2)).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>') + '</div>'; else if (l.trim()) h += '<div>' + esc(l).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>') + '</div>'; else h += '<br>';
+  }
+  return h + (inT ? '</table>' : '');
+}
+async function showReport(p) { $('repView').innerHTML = 'Loading…';
+  try { const md = await file(p); const health = /## Run health: (\w+)/.exec(md); let top = ''; if (health) top += `<div class="verdict ${health[1] === 'OK' ? 'good' : 'bad'}">Run health: ${health[1] === 'OK' ? 'OK' : 'INVALID: do not use these numbers'}</div>`;
+    const v = verdictPair(md) || verdictScreen(md); $('repView').innerHTML = top + (v ? '<h3>Verdict</h3>' + v : '') + `<details ${v ? '' : 'open'} style="margin-top:14px"><summary class="mute">Full report</summary><div class="md">` + mdToHtml(md) + '</div></details>'; } catch (e) { $('repView').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } }
+// card search
+let CARDS = null;
+async function loadCards() { if (CARDS) return; $('qCount').textContent = 'loading 14,000+ cards…'; CARDS = await (await fetch('cards.json')).json(); $('qCount').textContent = CARDS.length + ' cards loaded'; }
+let qT = null; $('q').oninput = () => { clearTimeout(qT); qT = setTimeout(runQ, 250); }; ['qName', 'qEd', 'qLegal'].forEach(i => $(i).onchange = runQ);
+function runQ() {
+  if (!CARDS) return; const q = $('q').value.trim(); if (q.length < 2) { $('qRes').innerHTML = ''; return; }
+  let re; try { re = new RegExp(q, 'i'); } catch { re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'); }
+  const hits = CARDS.filter(c => ($('qName').checked ? re.test(c[0]) : re.test(c[0]) || re.test(c[4])) && (!$('qEd').checked || /Fusion|Synchro|Xyz|Link/.test(c[1])) && (!$('qLegal').checked || c[3] > 0));
+  $('qCount').textContent = hits.length + ' matches';
+  $('qRes').innerHTML = hits.slice(0, 150).map(c => `<div class="cardhit"><b>${esc(c[0])}</b> <span class="pill">${esc(c[1])}</span> <span class="mute small">${esc(c[2])}</span> <span class="pill ${c[3] === 0 ? 'bad' : c[3] < 3 ? 'warn' : ''}">${c[3] === 0 ? 'banned' : c[3] + ' allowed'}</span><div class="small" style="white-space:pre-wrap">${esc(c[4])}</div></div>`).join('') + (hits.length > 150 ? '<div class="mute">Showing 150; narrow the search.</div>' : '');
+}
+
+async function loadLines() { const by = await api('/api/lines'); const cards = Object.keys(by).sort(); if (!cards.length) { $('linesView').innerHTML = '<span class="mute">No lines learned yet.</span>'; return; }
+  $('linesView').innerHTML = `<p class="small mute">${cards.length} starting cards with saved lines. Each is replayed as an opening whenever a hand holds that card.</p>` + cards.map(c => { const ls = Object.values(by[c]).sort((a, b) => b.v - a.v).slice(0, 3); return `<details><summary><b>${esc(c)}</b> <span class="mute small">best ${ls[0].v.toFixed(2)}, ${Object.keys(by[c]).length} lines</span></summary>${ls.map(l => `<div class="small" style="margin:6px 0 10px 12px">${l.v.toFixed(2)}: ${esc(l.s.map(x => x.replace(/^\^/, '').replace(/\\/g, '')).join(' → '))}</div>`).join('')}</details>`; }).join(''); }
+async function loadExplorer() {
+  try { const L = JSON.parse(await file('data/learned.json')); const tw = Object.entries(L.tagW).sort((a, b) => b[1] - a[1]); const tried = Object.entries(L.cards).sort((a, b) => b[1].rescued - a[1].rescued);
+    $('exLearn').innerHTML = `<b>Learned from ${L.runs} run(s), ${tried.length} cards tried.</b><div class="small" style="margin-top:6px">Kinds of card that help most: ${tw.slice(0, 6).map(([t, w]) => `${esc(t.replace(/_/g, ' '))} <span class="good">×${w.toFixed(2)}</span>`).join(', ')}<br>Help least: ${tw.slice(-4).map(([t, w]) => `${esc(t.replace(/_/g, ' '))} <span class="bad">×${w.toFixed(2)}</span>`).join(', ')}</div><div class="small" style="margin-top:8px">Best cards so far (failing hands rescued / times tried): ${tried.slice(0, 10).map(([n, h]) => `${esc(n)} ${h.rescued}/${h.tests}`).join(', ')}</div>`;
+  } catch { $('exLearn').innerHTML = '<span class="mute">Nothing learned yet: the first explorer run has not finished.</span>'; }
+  try { const rs = (await api('/api/reports')).filter(r => /explore-/.test(r.p)); $('exLast').innerHTML = rs.length ? mdToHtml(await file(rs[0].p)) : '<span class="mute">No explorer report yet.</span>'; } catch {} }
+$('exGo').onclick = async () => { try { const r = await api('/api/run', { kind: 'explore', deckA: $('exDeck').value, macros: 150 }); $('exMsg').innerHTML = `<span class="good">Queued as job ${r.id}. On this computer it takes about 4 to 6 hours.</span>`; } catch (e) { $('exMsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } };
+</script></body></html>
