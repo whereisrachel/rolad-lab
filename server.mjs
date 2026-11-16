@@ -13,7 +13,7 @@ let current = null;
 
 // ---- job steps --------------------------------------------------------------------------
 function run(args, env = {}, onLine = () => {}) {
-  return new Promise((ok) => { const p = spawn(NODE, ['--no-warnings', ...args], { cwd: ROOT, env: { ...process.env, LEARN: '1', ...env } }); current.proc = p; let out = '';
+  return new Promise((ok) => { const p = spawn(NODE, ['--no-warnings', ...args], { cwd: ROOT, env: { ...process.env, LEARN: '1', ROLAD_FAST: process.env.ROLAD_FULL ? '' : '1', ...env } }); current.proc = p; let out = '';
     const take = (b) => { const s = b.toString(); out += s; for (const l of s.split(/\r?\n/)) if (l.trim()) { onLine(l.trim()); current.last = l.trim().slice(0, 160); } };
     p.stdout.on('data', take); p.stderr.on('data', take); p.on('close', (code) => ok({ code, out })); });
 }
@@ -36,8 +36,8 @@ const STEPS = {
     const seed = String(j.id % 100000), common = ['--deck', A, '--n', String(j.hands || 200), '--seed', seed, '--macros', String(j.macros), '--threads', String(THREADS)];
     const step = async (name, args, pct) => { j.stage = name; const r = await run(['explore.mjs', ...args], { GITHUB_RUN_ID: String(j.id) }, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) j.progress = Math.round(pct[0] + (pct[1] - pct[0]) * m[1] / m[2]); }); if (r.code) throw new Error(name + ' failed: ' + r.out.slice(-400)); j.progress = pct[1]; return r.out; };
     await step('playing fresh hands', ['base', ...common], [0, 15]); fs.renameSync('results/base-0.json', `${dir}/base-0.json`);
-    j.diag = (await step('finding failures', ['fails', ...common, '--merge', dir, '--fails', String(j.fails || 30)], [15, 16])).split('\n').filter(l => /needs|failing/.test(l)).join(' | ');
-    await step('searching all cards', ['pool', ...common, '--poolmain', String(j.poolmain || 160), '--pooled', String(j.pooled || 40)], [16, 18]);
+    j.diag = (await step('finding failures', ['fails', ...common, '--merge', dir, '--fails', String(j.fails || 20)], [15, 16])).split('\n').filter(l => /needs|failing/.test(l)).join(' | ');
+    await step('searching all cards', ['pool', ...common, '--poolmain', String(j.poolmain || 100), '--pooled', String(j.pooled || 20)], [16, 18]);
     await step('replaying failing hands with each card', ['rescue', ...common], [18, 97]); fs.renameSync('results/res-0.json', `${dir}/res-0.json`);
     await step('ranking and learning', ['rank', ...common, '--merge', dir, '--confirm', String(j.confirm ?? 3)], [97, 100]);
     j.report = `reports/explore-${j.id}.md`;

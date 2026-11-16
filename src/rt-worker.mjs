@@ -1,5 +1,6 @@
 import { CORE_MEDIUS, CORE_PREFIX, lineScripts } from './guide-core.mjs';
 import { seedsFor } from './library.mjs';
+const FAST = !!process.env.ROLAD_FAST; // lighter search for a single PC
 import { autoSearch } from './autoopen.mjs';
 import { parentPort, workerData } from 'worker_threads';
 import fs from 'fs'; import path from 'path';
@@ -23,14 +24,14 @@ async function job(t) {
     const RIT = /Griffoh|Black Chaos|Mind Shuffle|Skull Archfiend|Light and Darkness Ritual|Magician of Dark Chaos|Black Luster/;
     const ritual = hand.some(c => RIT.test(name(c)));
     const cfgs = [{ gw: 0.3, alt: 4, mm: 25, mac: t.macros }, { gw: 0.6, alt: 4, mm: 25, mac: t.macros }].slice(0, t.passes || 2);
-    if (ritual) cfgs.push({ gw: 0.3, alt: 8, mm: 80, mac: t.macros * 4, pat: 150 }); // Ritual-wing hands need wider sub-decision branching (Skull/LADR/Magician chains)
+    if (ritual) cfgs.push({ gw: 0.3, alt: 8, mm: FAST ? 40 : 80, mac: t.macros * (FAST ? 2 : 4), pat: 150 }); // Ritual-wing hands need wider sub-decision branching (Skull/LADR/Magician chains)
     // Seeded passes: free search gets stuck on a shallow line (it never found the guide's Medius/Nervedo line). Replay one opener per distinct hand card first, then search on from there; keep the best board.
     if (t.seeds) for (const sc of seedsFor(hand.map(c => name(c)))) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc, lib: true }); // learned lines
     if (t.seeds) for (const sc of lineScripts(hand.map(c => name(c)))) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc });
-    if (t.seeds && hand.some(c => name(c) === 'Medius the Pure')) for (const sc of [CORE_MEDIUS, CORE_PREFIX]) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc });
+    if (t.seeds && hand.some(c => name(c) === 'Medius the Pure')) for (const sc of FAST ? [CORE_MEDIUS] : [CORE_MEDIUS, CORE_PREFIX]) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc });
     // (single-card opener seeds replaced by automatic openers below)
     const errs = []; let ok = 0;
-    if (t.seeds) { try { const a = await autoSearch({ ...g, responses: [] }, { macros: t.macros, depth: 3, cap: 60, evalFn: (S, s) => disruption(S, s) }); if (a.best && !a.best.error) { ok++; if ((a.best.score || 0) > (best.score || 0)) best = a.best; } } catch (e) { errs.push('auto: ' + String(e.message).slice(0, 90)); } }
+    if (t.seeds) { try { const a = await autoSearch({ ...g, responses: [] }, { macros: t.macros, ...(FAST ? { depth: 2, cap: 24, top: 1, quick: 0.15 } : { depth: 3, cap: 60 }), evalFn: (S, s) => disruption(S, s) }); if (a.best && !a.best.error) { ok++; if ((a.best.score || 0) > (best.score || 0)) best = a.best; } } catch (e) { errs.push('auto: ' + String(e.message).slice(0, 90)); } }
     for (const c of cfgs) { let r; try { r = await searchT1({ ...g, responses: [] }, { ms: 90000, maxMacros: c.mac, patience: c.pat || t.patience || 60, guideW: c.gw, altCap: c.alt, maxMacro: c.mm, frontierCap: 400, script: c.script || null, evalFn: (S, s) => disruption(S, s) }); } catch (e) { errs.push(String(e.message).slice(0, 100)); continue; }
       if (r.error) { errs.push(String(r.error).slice(0, 100)); continue; } ok++; if ((r.score || 0) > (best.score || 0)) best = r; }
     // which hand cards were used: count names still in the final hand
