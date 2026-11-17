@@ -164,7 +164,12 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const ptBy = (z) => { const r = []; mz.forEach((c, zz) => { if (c && c.code && c.link && pointsTo(zz, c.link.marker || 0).includes(z)) r.push(zz); }); return r.join(','); };
     const seenK = new Set(), out = []; d.options.forEach((o, i) => { const z = o.place.sequence; if (o.place.player !== d.options[0].place.player) return; const k = z >= 5 ? 'EMZ' + z : COLCLASS[z] + '|' + ptBy(z); if (seenK.has(k)) return; seenK.add(k); out.push({ kind: 'text', t: String(i + 1) }); });
     return out.length ? out : [{ kind: 'text', t: '1' }]; };
-  const subCands = (d) => { let cs = cands(d); if (d.kind === 'place') return (d.min || 1) === 1 ? placeCands(d) : cs.slice(0, 1);
+  const multiCands = (d) => { // every distinct choice (identical copies once); choose-2/3: every distinct combination, capped
+    const o = d.options; const idx = o.map((x, i) => i).filter(i => !o[i].cancel); const n = Math.max(d.min || 1, 1); const byL = new Map(); for (const i of idx) { const k = normLabel(o[i].label); if (!byL.has(k)) byL.set(k, i); }
+    const uniq = [...byL.values()]; if (n === 1) return uniq.map(i => ({ kind: 'text', t: String(i + 1) }));
+    const out = [], seenK = new Set(); const rec = (st, pick) => { if (out.length >= 40) return; if (pick.length === n) { const k = pick.map(i => normLabel(o[i].label)).sort().join('|'); if (!seenK.has(k)) { seenK.add(k); out.push({ kind: 'text', t: pick.map(i => i + 1).join(' ') }); } return; } for (let j = st; j < idx.length; j++) { pick.push(idx[j]); rec(j + 1, pick); pick.pop(); } };
+    rec(0, []); return out.length ? out : cands(d); };
+  const subCands = (d) => { let cs = d.kind === 'multi' ? multiCands(d) : cands(d); if (d.kind === 'place') return (d.min || 1) === 1 ? placeCands(d) : cs.slice(0, 1);
     if (d.kind === 'pick' && d.options.every(o => /^face-/.test(o.label))) return cs.slice(0, 1); // battle position: irrelevant first turn
     if (d.type === M.SELECT_CHAIN) cs = cs.filter(c => c.kind !== 'pick' || d.options[c.i].pass || !handTrap(d.options[c.i].label)); const seenL = new Set(), out = [];
     for (const c of cs) { let k; if (c.kind === 'pick') k = normLabel(d.options[c.i].label); else if (c.kind === 'text' && d.options && /^[0-9 ]+$/.test(c.t)) k = c.t.split(' ').map(n => normLabel(d.options[+n - 1]?.label || n)).sort().join('|'); else k = JSON.stringify(c); if (seenL.has(k)) continue; seenL.add(k); out.push(c); }
