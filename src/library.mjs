@@ -42,8 +42,8 @@ export function update(recs, KEEP = 6, MIN = 6) {
   return added;
 }
 let CACHE = null;
-export function seedsFor(handNames, per = 2) {
-  if (!CACHE) CACHE = load(); const out = []; const seen = new Set();
-  for (const n of handNames) { if (seen.has(n)) continue; seen.add(n); for (const e of (CACHE.byCard[n] || []).slice(0, per)) out.push(e.s); }
-  return out;
+export function seedsFor(handNames, per = 2, max = 3) { // the few best known lines for this hand (more lines = more passes = slower)
+  if (!CACHE) CACHE = load(); const all = []; const seen = new Set();
+  for (const n of handNames) { if (seen.has(n)) continue; seen.add(n); for (const e of (CACHE.byCard[n] || []).slice(0, per)) all.push(e); }
+  return all.sort((a, b) => (b.v + 0.05 * b.hits) - (a.v + 0.05 * a.hits)).slice(0, max).map(e => e.s);
 }

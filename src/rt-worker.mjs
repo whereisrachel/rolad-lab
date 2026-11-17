@@ -26,7 +26,7 @@ async function job(t) {
     const cfgs = [{ gw: 0.3, alt: 4, mm: 25, mac: t.macros }, { gw: 0.6, alt: 4, mm: 25, mac: t.macros }].slice(0, t.passes || 2);
     const ritCfg = ritual ? { gw: 0.3, alt: 8, mm: FAST ? 40 : 80, mac: t.macros * (FAST ? 2 : 4), pat: 150 } : null; // run last, only if the board is still weak // Ritual-wing hands need wider sub-decision branching (Skull/LADR/Magician chains)
     // Seeded passes: free search gets stuck on a shallow line (it never found the guide's Medius/Nervedo line). Replay one opener per distinct hand card first, then search on from there; keep the best board.
-    if (t.seeds) for (const sc of seedsFor(hand.map(c => name(c)))) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc, lib: true }); // learned lines
+    if (t.seeds) for (const sc of seedsFor(hand.map(c => name(c)))) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: Math.max(30, Math.round(t.macros / 3)), script: sc, lib: true }); // learned lines: replay, then a short search
     if (t.seeds) for (const sc of lineScripts(hand.map(c => name(c)))) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc });
     if (t.seeds && hand.some(c => name(c) === 'Medius the Pure')) for (const sc of FAST ? [CORE_MEDIUS] : [CORE_MEDIUS, CORE_PREFIX]) cfgs.push({ gw: 0.3, alt: 4, mm: 25, mac: t.macros, script: sc });
     // (single-card opener seeds replaced by automatic openers below)
