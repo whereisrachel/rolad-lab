@@ -6,7 +6,7 @@ const PAR = Math.min(+(process.argv[3] || Math.max(1, os.cpus().length - 1)), me
 const cal = JSON.parse(fs.readFileSync('reports/calibration.json', 'utf8')).rows.filter(r => !process.env.ONLY || process.env.ONLY.split(',').includes(r.id)); const OD = 'results/deep'; fs.rmSync(OD, { recursive: true, force: true }); fs.mkdirSync(OD, { recursive: true });
 console.log(`bench: ${cal.length} hands, ${MIN} min each, ${PAR} at a time`);
 let done = 0; const q = cal.slice();
-const runOne = (row) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deep.mjs', row.id, String(MIN)], { env: { ...process.env, LIGHT: '1', CANON: '1', FC: '3000', OUTDIR: OD }, stdio: 'ignore' }); p.on('close', () => { done++; console.log(`${done}/${cal.length}`); ok(); }); });
+const runOne = (row) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deep.mjs', row.id, String(MIN)], { env: { ...process.env, LIGHT: '1', CANON: '1', FC: '3000', DIV: process.env.DIV || '6', OUTDIR: OD }, stdio: 'ignore' }); p.on('close', () => { done++; console.log(`${done}/${cal.length}`); ok(); }); });
 await Promise.all(Array.from({ length: PAR }, async () => { while (q.length) await runOne(q.shift()); }));
 const rows = cal.map(r => { const t = fs.existsSync(`${OD}/${r.id}.log`) ? fs.readFileSync(`${OD}/${r.id}.log`, 'utf8') : ''; const f = /FINAL ([\d.]+)/.exec(t); const at = /BESTAT ([\d.]+)/.exec(t); const ln = /LINE (.*)/.exec(t);
   const v = f ? +f[1] : 0; return { ...r, deep: v, at: at ? +at[1] : null, pass: v >= r.lab - 0.5, line: ln ? ln[1].split(' > ').filter(l => /Summon|Activate/.test(l)).slice(0, 25).join(' > ') : '' }; });

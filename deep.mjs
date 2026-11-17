@@ -11,7 +11,18 @@ const pool = deck.main.slice(); const h = hand.map(n => { const c = findCard(n);
 const op = OPP.main.slice(), oh = []; while (oh.length < 5) oh.push(op.splice(op.indexOf(GS), 1)[0]);
 const g = { id: 'deep', seed: '7', first: 0, lab: true, seats: { 0: { name: 'A', deck: { ...deck, main: [...h, ...pool] }, hand: h }, 1: { name: 'o', deck: { ...OPP, main: [...oh, ...op] }, hand: oh } }, responses: [], cursor: { 0: 0, 1: 0 }, goldfish: [1], bot: {}, script: { 1: [] }, stopAfterTurn: null };
 const OD = process.env.OUTDIR || 'results/deep'; fs.mkdirSync(OD, { recursive: true }); const out = `${OD}/${id}.log`; let bestAt = 0; fs.writeFileSync(out, `hand ${hand.join(', ')}\n`); let lastB = -1;
-const r = await searchT1(g, { ms: MIN * 60000, maxMacros: Infinity, patience: Infinity, guideW: +(process.env.GW ?? 0.3), altCap: +(process.env.ALT ?? 8), maxMacro: +(process.env.MM ?? 80), frontierCap: +(process.env.FC ?? 20000), dfs: !!process.env.DFS, probe: +(process.env.PROBE || 0), evalFn: (S, s) => disruption(S, s),
-  onProgress: (p) => { fs.appendFileSync(out, `${(p.ms / 60000).toFixed(1)}m macros ${p.macros} states ${p.seen} frontier ${p.frontier} best ${p.best.toFixed(2)}\n`); if (p.best > lastB) { lastB = p.best; bestAt = p.ms; fs.appendFileSync(out, '  NEW BEST: ' + (p.line || []).filter(l => /Summon|Activate|Selected/.test(l)).slice(0, 40).join(' > ') + '\n'); } } });
-if (r.probe) { console.log(JSON.stringify(r)); const T = searchT1._tally; const K = T.IDLEKIND; delete T.IDLEKIND; for (const [k, e] of Object.entries(T).sort((a, b) => b[1].n - a[1].n).slice(0, 25)) console.log(e.n, 'avg', (e.b / e.n).toFixed(1), k, '|', e.ex); console.log('IDLE option kinds', JSON.stringify(K)); process.exit(0); }
+// Normal Summon lanes: the Normal Summon is spent once, so a search that spends it early on whatever adds a body fastest
+// can miss the line built around a different Normal Summon. Each monster in hand gets its own lane where only it may be
+// Normal Summoned, plus one open lane; the time is split evenly and the best board over all lanes is kept.
+const { cardDB } = await import('./src/cards.mjs'); const DB = cardDB().data;
+const handMons = [...new Set(h.filter(c => ((DB.get(c)?.type ?? 0) & 0x1)).map(c => name(c)))];
+const lanes = process.env.LANES === '1' ? [...handMons, null] : [null]; let r = { score: -1 };
+for (const lane of lanes) {
+  fs.appendFileSync(out, `LANE ${lane ?? 'open'}\n`);
+  const rr = await searchT1({ ...g, responses: [] }, { ms: MIN * 60000 / lanes.length, maxMacros: Infinity, patience: Infinity, guideW: +(process.env.GW ?? 0.3), altCap: +(process.env.ALT ?? 8), maxMacro: +(process.env.MM ?? 80), frontierCap: +(process.env.FC ?? 20000), dfs: !!process.env.DFS, probe: +(process.env.PROBE || 0), nsOnly: lane, script: process.env.SCRIPT ? JSON.parse(process.env.SCRIPT) : null, evalFn: (S, s) => disruption(S, s),
+    onProgress: (p) => { fs.appendFileSync(out, `${(p.ms / 60000).toFixed(1)}m macros ${p.macros} states ${p.seen} frontier ${p.frontier} best ${p.best.toFixed(2)}\n`); if (p.best > lastB) { lastB = p.best; bestAt = p.ms; fs.appendFileSync(out, '  NEW BEST: ' + (p.line || []).filter(l => /Summon|Activate|Selected/.test(l)).slice(0, 40).join(' > ') + '\n'); } } });
+  if (rr.probe) { console.log(JSON.stringify(rr)); process.exit(0); }
+  fs.appendFileSync(out, `LANE ${lane ?? 'open'} RESULT ${(rr.score || 0).toFixed(2)}\n`);
+  if ((rr.score || 0) > (r.score || 0)) r = rr;
+}
 fs.appendFileSync(out, `BESTAT ${(bestAt / 60000).toFixed(1)}\nFINAL ${r.score?.toFixed(2)} states ${r.macros} complete ${r.complete} ms ${r.ms}\nBOARD ${r.board}\nLINE ${(r.line || []).join(' > ')}\n`);

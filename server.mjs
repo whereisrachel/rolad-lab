@@ -46,7 +46,7 @@ const STEPS = {
   },
   async bench(j) { // line finder test on the guide hands, no helpers
     j.stage = 'searching each guide hand from scratch';
-    const r = await run(['bench.mjs', String(j.minutes || 10)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
+    const r = await run(['bench.mjs', String(j.minutes || 10)], j.only ? { ONLY: j.only } : {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
     if (r.code || !fs.existsSync('reports/deep-bench.md')) throw new Error('bench failed: ' + r.out.slice(-400)); j.report = 'reports/deep-bench.md';
   },
   async calibrate(j) {

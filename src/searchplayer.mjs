@@ -36,8 +36,8 @@ export function evalBoard(S, seat) {
   return v;
 }
 
-export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48, onProgress = null, dfs = false, probe = 0 } = {}) {
-  resetLib(); const S = autoAdvance(await simulate(game));
+export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48, onProgress = null, dfs = false, probe = 0, nsOnly = null } = {}) {
+  searchT1._lp = 0; resetLib(); const S = autoAdvance(await simulate(game));
   S.ev = function () {}; S.events.length = 0; // no event log during search
   const mod = S.lb[OcgCoreInternal].module; const me = teamOf(game, seat);
   let base = Buffer.from(new Uint8Array(mod.HEAPU8.buffer.slice(0, mod.HEAPU8.length)));
@@ -138,7 +138,8 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   // legal options worth branching on: identical choices once, Set only Traps/Quick-Play Spells (setting anything else first turn changes nothing)
   const SETOK = (lbl) => { if (/^Set monster /.test(lbl)) return false; const m = /^Set Spell\/Trap (.+?) \(/.exec(lbl); if (!m) return true; const D = cardDB(); for (const [code, c] of D.data) if (name(code) === m[1]) { const t = c.type ?? 0; return !!(t & 0x4) || ((t & 0x2) && (t & 0x10000)); } return true; };
   const SETC = new Map(); const setOk = (l) => { if (!SETC.has(l)) SETC.set(l, SETOK(l)); return SETC.get(l); };
-  const idleOpts = (d) => { const seenL = new Set(), ix = []; d.options.forEach((o, i) => { if (/Battle Phase|End Phase/.test(o.label)) return; if (!setOk(o.label)) return; const k = normLabel(o.label); if (seenL.has(k)) return; seenL.add(k); ix.push(i); }); return ix; };
+  const nsBlocked = (l) => { if (nsOnly === null) return false; const m = /^Normal Summon (.+?) \(/.exec(l); return !!m && m[1] !== nsOnly; };
+  const idleOpts = (d) => { const seenL = new Set(), ix = []; d.options.forEach((o, i) => { if (/Battle Phase|End Phase/.test(o.label)) return; if (!setOk(o.label) || nsBlocked(o.label)) return; const k = normLabel(o.label); if (seenL.has(k)) return; seenL.add(k); ix.push(i); }); return ix; };
   // first turn: never chain your own hand trap (an effect that only answers the opponent) to your own play
   const HTX = new Map(); const handTrap = (lbl) => { const m = /^Activate (.+?) \(hand\)/.exec(lbl); if (!m) return false; if (!HTX.has(m[1])) { const D = cardDB(); let t = ''; for (const [code] of D.data) if (name(code) === m[1]) { t = (D.text.get(code) || {}).desc || ''; break; } HTX.set(m[1], /Quick Effect/i.test(t) && /(negate|your opponent|opponent.s)/i.test(t) && !/Special Summon this card/i.test(t)); } return HTX.get(m[1]); };
   const subCands = (d) => { let cs = cands(d); if (d.kind === 'place') return cs.slice(0, 1);
