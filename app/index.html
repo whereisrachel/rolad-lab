@@ -82,6 +82,7 @@
     <label>Baseline list</label><select id="exDeck"></select>
     <button class="btn" id="exGo">Run the explorer now</button> <span id="exMsg" class="small"></span>
   </div>
+  <div class="card" id="exLive"></div>
   <div class="card" id="exLearn"></div>
   <div class="card md" id="exLast"></div>
 </section>
@@ -166,10 +167,15 @@ function runQ() {
 
 async function loadLines() { const by = await api('/api/lines'); const cards = Object.keys(by).sort(); if (!cards.length) { $('linesView').innerHTML = '<span class="mute">No lines learned yet.</span>'; return; }
   $('linesView').innerHTML = `<p class="small mute">${cards.length} starting cards with saved lines. Each is replayed as an opening whenever a hand holds that card.</p>` + cards.map(c => { const ls = Object.values(by[c]).sort((a, b) => b.v - a.v).slice(0, 3); return `<details><summary><b>${esc(c)}</b> <span class="mute small">best ${ls[0].v.toFixed(2)}, ${Object.keys(by[c]).length} lines</span></summary>${ls.map(l => `<div class="small" style="margin:6px 0 10px 12px">${l.v.toFixed(2)}: ${esc(l.s.map(x => x.replace(/^\^/, '').replace(/\\/g, '')).join(' → '))}</div>`).join('')}</details>`; }).join(''); }
-async function loadExplorer() {
+async function loadLive() { try { const L = JSON.parse(await file('data/explore-live.json'));
+    $('exLive').innerHTML = `<b>Live results (job ${esc(String(L.run))})</b> <span class="small mute">${L.done}/${L.total} replays, ${L.cardsDone}/${L.cards} cards finished, control avg ${L.control ?? '-'}, updated ${new Date(L.at).toLocaleTimeString()}</span>`
+      + (L.rows.length ? `<table class="small" style="margin-top:8px"><tr><th>card</th><th>where</th><th>hands done</th><th>rescued</th><th>avg gain vs control</th></tr>${L.rows.slice(0, 25).map(z => `<tr><td>${esc(z.name)}</td><td>${z.zone}</td><td>${z.done}/${z.of}</td><td class="${z.rescued ? 'good' : ''}">${z.rescued}</td><td class="${z.gain > 0.5 ? 'good' : z.gain < 0 ? 'bad' : ''}">${z.gain >= 0 ? '+' : ''}${z.gain.toFixed(2)}</td></tr>`).join('')}</table>` : '<div class="small mute">No cards scored yet.</div>');
+  } catch { $('exLive').innerHTML = '<span class="mute">No live results yet: they appear once an explorer run reaches the card-testing stage.</span>'; } }
+setInterval(() => { if (document.querySelector('#explorer.on')) loadLive(); }, 30000);
+async function loadExplorer() { loadLive();
   try { const L = JSON.parse(await file('data/learned.json')); const tw = Object.entries(L.tagW).sort((a, b) => b[1] - a[1]); const tried = Object.entries(L.cards).sort((a, b) => b[1].rescued - a[1].rescued);
     $('exLearn').innerHTML = `<b>Learned from ${L.runs} run(s), ${tried.length} cards tried.</b><div class="small" style="margin-top:6px">Kinds of card that help most: ${tw.slice(0, 6).map(([t, w]) => `${esc(t.replace(/_/g, ' '))} <span class="good">×${w.toFixed(2)}</span>`).join(', ')}<br>Help least: ${tw.slice(-4).map(([t, w]) => `${esc(t.replace(/_/g, ' '))} <span class="bad">×${w.toFixed(2)}</span>`).join(', ')}</div><div class="small" style="margin-top:8px">Best cards so far (failing hands rescued / times tried): ${tried.slice(0, 10).map(([n, h]) => `${esc(n)} ${h.rescued}/${h.tests}`).join(', ')}</div>`;
   } catch { $('exLearn').innerHTML = '<span class="mute">Nothing learned yet: the first explorer run has not finished.</span>'; }
   try { const rs = (await api('/api/reports')).filter(r => /explore-/.test(r.p)); $('exLast').innerHTML = rs.length ? mdToHtml(await file(rs[0].p)) : '<span class="mute">No explorer report yet.</span>'; } catch {} }
-$('exGo').onclick = async () => { try { const r = await api('/api/run', { kind: 'explore', deckA: $('exDeck').value, macros: 150 }); $('exMsg').innerHTML = `<span class="good">Queued as job ${r.id}. On this computer it takes about 1.5 to 2 hours.</span>`; } catch (e) { $('exMsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } };
+$('exGo').onclick = async () => { try { const r = await api('/api/run', { kind: 'explore', deckA: $('exDeck').value, macros: 150 }); $('exMsg').innerHTML = `<span class="good">Queued as job ${r.id}. On this computer the full run takes about 7 to 9 hours; live results show on this tab once card testing starts.</span>`; } catch (e) { $('exMsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } };
 </script></body></html>

@@ -18,9 +18,9 @@ const D = parseYdk(fs.readFileSync(DECK, 'utf8'));
 let x = +f('seed', 12345) >>> 0; const SEED = x; const rnd = () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296;
 const hands = []; for (let i = 0; i < N; i++) { const idx = D.main.map((_, k) => k); for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; } hands.push(idx.slice(0, 5)); }
 const wfile = fileURLToPath(new URL('./src/rt-worker.mjs', import.meta.url));
-async function runTasks(tasks) {
+async function runTasks(tasks, onResult) {
   const res = {}; const chunks = Array.from({ length: T }, () => []); tasks.forEach((t, i) => chunks[i % T].push(t)); let done = 0;
-  await Promise.all(chunks.filter(c => c.length).map(c => new Promise((ok) => { const w = new Worker(wfile, { workerData: { tasks: c } }); w.on('message', m => { if (m.done) { ok(); return; } res[m.id] = m; if (++done % 25 === 0) console.log(done + '/' + tasks.length); }); w.on('error', e => { console.log('worker error', e.message); ok(); }); })));
+  await Promise.all(chunks.filter(c => c.length).map(c => new Promise((ok) => { const w = new Worker(wfile, { workerData: { tasks: c } }); w.on('message', m => { if (m.done) { ok(); return; } res[m.id] = m; if (onResult) try { onResult(m, done + 1) } catch {} if (++done % 25 === 0) console.log(done + '/' + tasks.length); }); w.on('error', e => { console.log('worker error', e.message); ok(); }); })));
   return res;
 }
 const mine = (arr) => SH === null ? arr : arr.filter((_, i) => i % OF === +SH);
@@ -78,7 +78,15 @@ if (cmd === 'rescue') {
   const cands = [{ name: CONTROL, zone: 'main', control: true }, ...pool]; const tasks = []; let id = 0;
   for (let ci = 0; ci < cands.length; ci++) { const c = cands[ci]; const dk = variantDeck(c); const L = D.main.length;
     for (let fi = 0; fi < F.fails.length; fi++) { const hid = id++; if (SH !== null && hid % OF !== +SH) continue; tasks.push({ ...task(hid, dk, c.zone === 'ed' ? F.fails[fi].idx : [...F.fails[fi].idx, L]), ci, fi }); } }
-  const r = await runTasks(tasks); const meta = Object.fromEntries(tasks.map(t => [t.id, t]));
+  const meta = Object.fromEntries(tasks.map(t => [t.id, t]));
+  // live results: rescue rate per card vs the control, rewritten every 25 hands so the app can show finds mid-run
+  const live = {}; const ctlV = {}; let lastW = 0; const NF = F.fails.length;
+  const writeLive = (done) => { const rows = []; for (const [ci, arr] of Object.entries(live)) { if (+ci === 0) continue; const c = cands[+ci]; const sc = arr.filter(z => ctlV[z.fi] !== undefined);
+      if (!sc.length) continue; const resc = sc.filter(z => z.v >= 6 && z.v - ctlV[z.fi] >= 1).length; const gain = sc.reduce((s2, z) => s2 + z.v - ctlV[z.fi], 0) / sc.length;
+      rows.push({ name: c.name, zone: c.zone, done: arr.length, of: NF, rescued: resc, gain: +gain.toFixed(2) }); }
+    rows.sort((p, q) => q.rescued - p.rescued || q.gain - p.gain);
+    const cv = Object.values(ctlV); try { fs.writeFileSync('data/explore-live.json', JSON.stringify({ run: process.env.GITHUB_RUN_ID || 'local', at: new Date().toISOString(), done, total: tasks.length, cardsDone: rows.filter(z => z.done === NF).length, cards: cands.length - 1, control: cv.length ? +(cv.reduce((a, b) => a + b, 0) / cv.length).toFixed(2) : null, rows: rows.slice(0, 60) })); } catch {} };
+  const r = await runTasks(tasks, (m, done) => { const t = meta[m.id]; if (!t) return; if (t.ci === 0) ctlV[t.fi] = m.v || 0; else (live[t.ci] || (live[t.ci] = [])).push({ fi: t.fi, v: m.v || 0 }); if (done - lastW >= 25 || done === tasks.length) { lastW = done; writeLive(done); } });
   writeShard('res', Object.fromEntries(Object.values(r).map(v => [v.id, { ci: meta[v.id].ci, fi: meta[v.id].fi, v: v.v, crash: !!v.crash, played: v.played, line: (v.v || 0) >= 6 ? v.line : undefined }])));
 }
 if (cmd === 'rank') {
