@@ -61,7 +61,7 @@ const STEPS = {
     const out = `reports/decktest-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('deck test failed: ' + r.out.slice(-400)); j.report = out;
   },
   async findlist(j) { // every stage by itself: noise, candidates, rounds, new list, fresh-hand check, report
-    j.stage = 'finding a better list'; const A = await resolveDeck(j.deckA); const args = ['findlist.mjs', '--deck', A, '--id', String(j.id)]; if (j.mini) args.push('--mini');
+    j.stage = 'finding a better list'; const A = await resolveDeck(j.deckA); const args = ['findlist.mjs', '--deck', A, '--id', String(j.id)]; if (j.mini) args.push('--mini'); for (const k of ['h1', 'h2', 'h3', 'hv', 'adds', 'eds', 'keep2', 'keep3', 'min']) if (j[k] !== undefined) args.push('--' + k, String(j[k]));
     const r = await run(args, {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/^(stage|noise|candidates|Extra Deck use|findlist)/.test(l)) { if (/^stage/.test(l)) j.stage = l; j.diag = (j.diag ? j.diag + ' | ' : '') + l; } });
     const out = `reports/findlist-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('find a better list failed: ' + r.out.slice(-400)); j.report = out;
   },
