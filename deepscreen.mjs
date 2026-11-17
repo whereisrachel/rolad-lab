@@ -20,13 +20,13 @@ console.log(`deep screen ${ID}: ${syn.length} connected cards of all legal cards
 // hands: random 5-card hands from the (planted) list, same hands for every candidate
 let x = +f('seed', 777) >>> 0; const rnd = () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296;
 const deal = () => { const idx = D.main.map((_, k) => k); for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; } return idx.slice(0, 5).map(i => name(D.main[i])); };
-let hands = []; const WEAK = +f('weak', 0), POOLN = +f('pool', 100), PREMIN = +f('premin', 1);
+let hands = []; const WEAK = +f('weak', 0), POOLN = +f('pool', 100), PREMIN = +f('premin', 1), CUT = +f('cut', 7);
 const runW = (t, min) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify({ deck: baseDeck, hand: t.hand, minutes: min, seed: 7 + t.hi })], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = ''; p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); ok(m ? JSON.parse(m[1]).v : 0); }); });
 if (WEAK > 0) { // weak hands only: deal POOLN hands, play each once, keep the WEAK lowest that end under 7 (where a missing piece shows)
   const pool = Array.from({ length: POOLN }, deal); const sc = new Array(POOLN); let k = 0, dn = 0; console.log(`dealing ${POOLN} hands to find weak ones`);
   await Promise.all(Array.from({ length: PAR }, async () => { while (k < POOLN) { const i = k++; sc[i] = await runW({ hand: pool[i], hi: 1000 + i }, PREMIN); dn++; if (dn % 10 === 0) console.log(`pre ${dn}/${POOLN}`); } }));
-  const order = pool.map((h, i) => ({ h, v: sc[i] })).filter(x => x.v < 7).sort((a, b) => a.v - b.v).slice(0, WEAK); hands = order.map(x => x.h);
-  console.log(`weak hands: ${order.length} of ${POOLN} under 7 (kept ${hands.length}; mean ${(order.reduce((s, x) => s + x.v, 0) / Math.max(1, order.length)).toFixed(2)})`);
+  const order = pool.map((h, i) => ({ h, v: sc[i] })).filter(x => x.v < CUT).sort((a, b) => a.v - b.v).slice(0, WEAK); hands = order.map(x => x.h);
+  console.log(`weak hands: ${order.length} of ${POOLN} under ${CUT} (kept ${hands.length}; mean ${(order.reduce((s, x) => s + x.v, 0) / Math.max(1, order.length)).toFixed(2)})`);
 } else for (let i = 0; i < H; i++) hands.push(deal());
 const HN = hands.length;
 // Extra Deck candidates: own deck file with the candidate in place of one Extra Deck card

@@ -51,7 +51,7 @@ const STEPS = {
   },
   async deepscreen(j) { // candidate cards get their own lines found (line finder), same hands as a control; optional planted-card check
     j.stage = 'finding lines for each candidate card'; const A = await resolveDeck(j.deckA);
-    const args = ['deepscreen.mjs', '--deck', A, '--id', String(j.id), '--hands', String(j.hands || 15), '--min', String(j.min || 1.5), '--cands', String(j.cands ?? 40), '--edcands', String(j.edcands ?? 10)]; if (j.plant) args.push('--plant', j.plant); if (j.weak) args.push('--weak', String(j.weak), '--pool', String(j.pool || 100), '--premin', String(j.premin || 1));
+    const args = ['deepscreen.mjs', '--deck', A, '--id', String(j.id), '--hands', String(j.hands || 15), '--min', String(j.min || 1.5), '--cands', String(j.cands ?? 40), '--edcands', String(j.edcands ?? 10)]; if (j.plant) args.push('--plant', j.plant); if (j.weak) args.push('--weak', String(j.weak), '--pool', String(j.pool || 100), '--premin', String(j.premin || 1), '--cut', String(j.cut || 7));
     const r = await run(args, {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/^deep screen|^weak hands/.test(l)) j.diag = (j.diag ? j.diag + ' | ' : '') + l; });
     const out = `reports/deepscreen-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('deep screen failed: ' + r.out.slice(-400)); j.report = out;
   },
