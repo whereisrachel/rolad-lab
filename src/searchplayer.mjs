@@ -1,6 +1,8 @@
 // Generic first-turn search player. Works for ANY card the engine has a script for: it explores the real game
 // (snapshots of the engine's memory, so backtracking is cheap) and keeps the best board it finds.
 import { OcgCoreInternal } from 'ocgcore-wasm';
+import zlib from 'zlib';
+const ZS = !!process.env.ZSNAP;
 import { resetLib, simulate, push, decision, answer, boardView, teamOf, seatOf, M, R, L } from './engine.mjs';
 import { autoAdvance } from './auto.mjs';
 import { cardDB, name } from './cards.mjs';
@@ -8,6 +10,18 @@ import { cardDB, name } from './cards.mjs';
 const PAGE = 4096;
 const LIM = 4 * 1024 * 1024; // observed: engine memory changes only below ~2 MB; checked in full every 40 snapshots
 export const DEAD = {};
+// --- canonical positions: the same board reached in a different order / different zone counts once ---
+const ZN = /\b(M[1-5]|EMZ-[LR]|S[1-5]|FZ|PZ-[LR])\b/g;
+export const normLabel = (l) => String(l).replace(ZN, (z) => z.startsWith('EMZ') ? 'EMZ' : z[0]);
+export function canonBoard(bv) {
+  return String(bv).split('\n').map(line => {
+    let m;
+    if ((m = /^(\s*(?:Monsters|Spell\/Trap): )(.*)$/.exec(line))) return m[1] + m[2].split(' || ').map(x => normLabel(x.replace(/^(M[1-5]|EMZ-[LR]|S[1-5]|FZ|PZ-[LR]):\s*/, (z) => z.startsWith('EMZ') ? 'EMZ:' : ''))).sort().join(' || ');
+    if ((m = /^(\s*(?:GY|Banished|Hand): )(.*)$/.exec(line))) return m[1] + m[2].split(', ').sort().join(', ');
+    return line;
+  }).join('\n');
+}
+
 const FIELDS = ['lp', 'turn', 'turnPlayer', 'phase', 'winner', 'winReason', 'ended', 'pending', 'lastSelect', 'hint', 'chain', 'retry', 'retryFlag', 'ri', 'repaired'];
 const faceup = (p) => (p & 0x5) !== 0; // face-up attack / face-up defense
 
@@ -48,7 +62,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     for (let b = 0; b < lim0; b += BLK) { const be = Math.min(b + BLK, lim0); if (cur.compare(B, b, be, b, be) === 0) continue;
       for (let o = b; o < be; o += PAGE) { const e = Math.min(o + PAGE, be); if (cur.compare(B, o, e, o, e) !== 0) { const L = runs.length; if (L && runs[L - 2] + runs[L - 1] === o) runs[L - 1] += e - o; else runs.push(o, e - o); tot += e - o; } } }
     const data = Buffer.allocUnsafe(tot); let w = 0; for (let i = 0; i < runs.length; i += 2) { cur.copy(data, w, runs[i], runs[i] + runs[i + 1]); w += runs[i + 1]; }
-    const pages = { runs, data, bi };
+    const pages = { runs, data: ZS ? zlib.deflateRawSync(data, { level: 1 }) : data, bi, z: ZS };
     PROF.pages += tot / PAGE; recent += tot / PAGE; recentN++;
     if (recentN >= 30) { if (process.env.REBASE && recent / recentN > 96 && bases.length < 12) { bases.push(Buffer.from(cur.subarray(0, Math.max(lim0, cur.length)))); } recent = 0; recentN = 0; }
     const st = {}; for (const k of FIELDS) st[k] = structuredClone(S[k]);
@@ -59,7 +73,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   }
   function restore0(s) {
     const cur = heap(); const B = bases[s.pages.bi || 0]; cur.set(B.subarray(0, Math.min(B.length, cur.length, LIM)));
-    { const r = s.pages.runs, d = s.pages.data; let w = 0; for (let i = 0; i < r.length; i += 2) { d.copy(cur, r[i], w, w + r[i + 1]); w += r[i + 1]; } }
+    { const r = s.pages.runs, d = s.pages.z ? zlib.inflateRawSync(s.pages.data) : s.pages.data; let w = 0; for (let i = 0; i < r.length; i += 2) { d.copy(cur, r[i], w, w + r[i + 1]); w += r[i + 1]; } }
     for (const k of FIELDS) S[k] = structuredClone(s.st[k]);
     game.responses.length = 0; for (const r of s.rsp) game.responses.push({ ...r });
   }
@@ -121,6 +135,18 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     for (const r of res.resps) if (!push(S, { seat, resp: r.resp, label: r.label })) return false;
     return true;
   }
+  // legal options worth branching on: identical choices once, Set only Traps/Quick-Play Spells (setting anything else first turn changes nothing)
+  const SETOK = (lbl) => { if (/^Set monster /.test(lbl)) return false; const m = /^Set Spell\/Trap (.+?) \(/.exec(lbl); if (!m) return true; const D = cardDB(); for (const [code, c] of D.data) if (name(code) === m[1]) { const t = c.type ?? 0; return !!(t & 0x4) || ((t & 0x2) && (t & 0x10000)); } return true; };
+  const SETC = new Map(); const setOk = (l) => { if (!SETC.has(l)) SETC.set(l, SETOK(l)); return SETC.get(l); };
+  const idleOpts = (d) => { const seenL = new Set(), ix = []; d.options.forEach((o, i) => { if (/Battle Phase|End Phase/.test(o.label)) return; if (!setOk(o.label)) return; const k = normLabel(o.label); if (seenL.has(k)) return; seenL.add(k); ix.push(i); }); return ix; };
+  // first turn: never chain your own hand trap (an effect that only answers the opponent) to your own play
+  const HTX = new Map(); const handTrap = (lbl) => { const m = /^Activate (.+?) \(hand\)/.exec(lbl); if (!m) return false; if (!HTX.has(m[1])) { const D = cardDB(); let t = ''; for (const [code] of D.data) if (name(code) === m[1]) { t = (D.text.get(code) || {}).desc || ''; break; } HTX.set(m[1], /Quick Effect/i.test(t) && /(negate|your opponent|opponent.s)/i.test(t) && !/Special Summon this card/i.test(t)); } return HTX.get(m[1]); };
+  const subCands = (d) => { let cs = cands(d); if (d.kind === 'place') return cs.slice(0, 1);
+    if (d.kind === 'pick' && d.options.every(o => /^face-/.test(o.label))) return cs.slice(0, 1); // battle position: irrelevant first turn
+    if (d.type === M.SELECT_CHAIN) cs = cs.filter(c => c.kind !== 'pick' || d.options[c.i].pass || !handTrap(d.options[c.i].label)); const seenL = new Set(), out = [];
+    for (const c of cs) { let k; if (c.kind === 'pick') k = normLabel(d.options[c.i].label); else if (c.kind === 'text' && d.options && /^[0-9 ]+$/.test(c.t)) k = c.t.split(' ').map(n => normLabel(d.options[+n - 1]?.label || n)).sort().join('|'); else k = JSON.stringify(c); if (seenL.has(k)) continue; seenL.add(k); out.push(c); }
+    return out; };
+  const canonSig = (d) => canonBoard(boardView(S, seat)) + '|' + [...new Set(d.options.map(o => normLabel(o.label)))].sort().join(';');
   const isIdle = () => S.pending && S.pending.type === M.SELECT_IDLECMD && dseat() === seat && S.turn === 1;
   const sigOf = (d) => boardView(S, seat) + '|' + d.options.map(o => o.label).join(';');
   // branch diversity: every opening branch (incl. each choice at its first sub-decisions) gets explored a few steps before the search narrows on whatever looks best right away
@@ -144,7 +170,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   }
   function consider(depth) {
     const d = decision(S, seat); if (!d) return;
-    const sig = sigOf(d); if (seen.has(sig)) return; seen.add(sig);
+    const sig = process.env.CANON ? canonSig(d) : sigOf(d); if (seen.has(sig)) return; seen.add(sig);
     const v = (evalFn || evalBoard)(S, seat); nodes++;
     if (v > best.v) lastImp = macros, best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) };
     const gv = guideW ? guideW * evalBoard(S, seat) : 0;
@@ -168,7 +194,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
         if (isIdle()) { consider(depth + 1); return; }
         const d = decision(S, seat); if (!d) return;
         if (process.env.DBG2) console.log('SUB', d.kind, String(d.msg||'').slice(0,60), '|', d.options.slice(0,14).map(o=>o.label.slice(0,40)).join(' ; '));
-        const cs = cands(d); if (!cs.length) { { const dk = d.kind + ':' + String(d.prompt || '').slice(0, 50); DEAD[dk] = (DEAD[dk] || 0) + 1; } return; }
+        const cs = process.env.CANON ? subCands(d) : cands(d); if (!cs.length) { { const dk = d.kind + ':' + String(d.prompt || '').slice(0, 50); DEAD[dk] = (DEAD[dk] || 0) + 1; } return; }
         if (cs.length > 1 && variants < maxMacro) { const sn = snapshot(); for (let k = 1; k < Math.min(cs.length, altCap + 1); k++) { if (variants >= maxMacro) break; variants++; stack.push({ sn, d, c: cs[k] }); } }
         if (!apply(d, cs[0])) { DEAD['applyfail:' + d.kind] = (DEAD['applyfail:' + d.kind] || 0) + 1; return; }
       }
@@ -223,8 +249,8 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const root = snapshot(); const ests = []; const depths = [];
     for (let k = 0; k < probe; k++) { restore(root); let w = 1, tot = 1, dep = 0;
       for (let g = 0; g < 3000; g++) { autoAdvance(S); if (S.ended || !S.pending || S.turn !== 1 || dseat() !== seat) break; const d = decision(S, seat); if (!d) break;
-        if (isIdle()) { const ix = d.options.map((o, i) => i).filter(i => !/Battle Phase|End Phase/.test(d.options[i].label)); if (!ix.length) break; w *= ix.length; tot += w; dep++; const i = ix[Math.floor(rnd() * ix.length)]; if (!push(S, { seat, resp: d.options[i].resp, label: d.options[i].label })) break; continue; }
-        const cs = cands(d); if (!cs.length) break; if (cs.length > 1) { w *= cs.length; tot += w; } if (!apply(d, cs[Math.floor(rnd() * cs.length)])) break; }
+        if (isIdle()) { const ix = process.env.RAW ? d.options.map((o, i) => i).filter(i => !/Battle Phase|End Phase/.test(d.options[i].label)) : idleOpts(d); if (!ix.length) break; { const T = (searchT1._tally ||= {}); const e = (T['IDLE'] ||= { n: 0, b: 0, ex: '' }); e.n++; e.b += ix.length; const kinds = (T['IDLEKIND'] ||= {}); for (const i of ix) { const k = d.options[i].label.split(' ')[0] + (/\(hand\)/.test(d.options[i].label) ? '(hand)' : ''); kinds[k] = (kinds[k] || 0) + 1; } } w *= ix.length; tot += w; dep++; const i = ix[Math.floor(rnd() * ix.length)]; if (!push(S, { seat, resp: d.options[i].resp, label: d.options[i].label })) break; continue; }
+        const cs = process.env.RAW ? cands(d) : subCands(d); if (!cs.length) break; if (cs.length > 1) { w *= cs.length; tot += w; const key = d.kind + ':' + String(d.msg || d.prompt || '').replace(/[0-9]+/g, '#').slice(0, 70); const T = (searchT1._tally ||= {}); const e = (T[key] ||= { n: 0, b: 0, ex: '' }); e.n++; e.b += cs.length; if (!e.ex) e.ex = d.options.slice(0, 6).map(o => o.label.slice(0, 40)).join(' ; '); } if (!apply(d, cs[Math.floor(rnd() * cs.length)])) break; }
       ests.push(tot); depths.push(dep); }
     ests.sort((a, b) => a - b); const mean = ests.reduce((a, b) => a + b, 0) / ests.length;
     return { probe: true, mean, median: ests[ests.length >> 1], p90: ests[Math.floor(ests.length * 0.9)], depthMean: depths.reduce((a, b) => a + b, 0) / depths.length, depthMax: Math.max(...depths) };
@@ -233,23 +259,28 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const seenI = new Set(); let states = 0, leaves = 0, lastP = 0; let complete = true;
     const record = () => { const v = (evalFn || evalBoard)(S, seat); if (v > best.v) { lastImp = macros; best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) }; } };
     const timeOver = () => Date.now() - t0 > ms;
-    const rec = (depth) => {
-      if (timeOver()) { complete = false; return; }
+    // budget-split depth-first: every branch at every level gets its share of the budget, and the budget doubles each round,
+    // so all first moves are covered early and the search deepens evenly; a round that never cut a branch is a complete search
+    let cut = false;
+    const rec = (depth, bud) => {
+      if (timeOver()) { complete = false; cut = true; return; }
       for (let g = 0; g < 400; g++) { autoAdvance(S); if (S.ended || !S.pending || S.turn !== 1 || dseat() !== seat) { leaves++; return; }
         const d = decision(S, seat); if (!d) return;
-        if (isIdle()) { const sig = sigOf(d); if (seenI.has(sig)) return; seenI.add(sig); states++; macros++; record();
+        if (isIdle()) { const sig = canonSig(d); if (seenI.has(sig)) return; seenI.add(sig); states++; macros++; record(); bud -= 1;
           if (onProgress && states - lastP >= 500) { lastP = states; onProgress({ macros: states, nodes: leaves, seen: seenI.size, frontier: depth, best: best.v, line: best.rs, ms: Date.now() - t0 }); }
-          const ix = d.options.map((o, i) => i).filter(i => !/Battle Phase|End Phase/.test(d.options[i].label));
-          const sn = snapshot();
-          for (const i of ix) { if (timeOver()) { complete = false; return; } restore(sn); const dd = decision(S, seat); if (push(S, { seat, resp: dd.options[i].resp, label: dd.options[i].label })) rec(depth + 1); }
+          const ix = idleOpts(d); if (!ix.length) return; if (bud < 1) { cut = true; return; }
+          const share = bud / ix.length; const sn = snapshot();
+          for (const i of ix) { if (timeOver()) { complete = false; cut = true; return; } restore(sn); const dd = decision(S, seat); if (push(S, { seat, resp: dd.options[i].resp, label: dd.options[i].label })) rec(depth + 1, share); }
           return; }
-        const cs = cands(d); if (!cs.length) return;
+        const cs = subCands(d); if (!cs.length) return;
         if (cs.length === 1) { if (!apply(d, cs[0])) return; continue; }
+        const share = bud / cs.length; if (share < 0.05) { cut = true; if (!apply(d, cs[0])) return; continue; }
         const sn = snapshot();
-        for (const c of cs) { if (timeOver()) { complete = false; return; } restore(sn); const dd = decision(S, seat); if (dd && apply(dd, c)) rec(depth + 1); }
+        for (const c of cs) { if (timeOver()) { complete = false; cut = true; return; } restore(sn); const dd = decision(S, seat); if (dd && apply(dd, c)) rec(depth + 1, share); }
         return; }
     };
-    rec(0);
+    const root = snapshot(); let B = 64, rounds = 0;
+    while (!timeOver()) { rounds++; seenI.clear(); cut = false; restore(root); rec(0, B); if (onProgress) onProgress({ macros: states, nodes: leaves, seen: seenI.size, frontier: -B, best: best.v, line: best.rs, ms: Date.now() - t0 }); if (!cut) { complete = true; break; } B *= 2; }
     return { score: best.v, raw: best.raw, line: best.rs, board: best.board, nodes: leaves, macros: states, states, complete, ms: Date.now() - t0, prof: PROF };
   }
   consider(0); const rootSnap = frontier[0].snap;
@@ -258,8 +289,9 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     if (onProgress && macros - (searchT1._lp || 0) >= 50) { searchT1._lp = macros; onProgress({ macros, nodes, seen: seen.size, frontier: frontier.length, best: best.v, line: best.rs, ms: Date.now() - t0 }); }
     restore(node.snap); const d = decision(S, seat); if (!d) continue;
     if (process.env.DBG) console.log('EXPAND', node.depth, d.options.map(o => o.label.slice(0, 50)).join(' | '));
+    const okI = process.env.CANON ? new Set(idleOpts(d)) : null;
     for (let i = 0; i < d.options.length && !timeUp(); i++) {
-      const o = d.options[i]; if (/Battle Phase|End Phase/.test(o.label)) continue;
+      const o = d.options[i]; if (/Battle Phase|End Phase/.test(o.label)) continue; if (okI && !okI.has(i)) continue;
       restore(node.snap); const dd = decision(S, seat);
       if (!push(S, { seat, resp: dd.options[i].resp, label: dd.options[i].label })) { if (process.env.DBG) console.log('PUSHFAIL', dd.options[i].label, JSON.stringify(S.errors && S.errors.slice(-1))); continue; }
       macro(node.depth, null, i);
