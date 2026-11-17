@@ -19,11 +19,20 @@ const plantRank = PLANT ? main.findIndex(x => x.name === PLANT) + 1 : null;
 console.log(`deep screen ${ID}: ${syn.length} connected cards of all legal cards; testing ${cands.length} (main ${Math.min(K, main.length)}, Extra Deck ${Math.min(KE, ed.length)})${PLANT ? `; planted ${PLANT} x${planted} removed, ranked #${plantRank} by connection` : ''}; ${H} hands, ${MIN} min each, ${PAR} at a time`);
 // hands: random 5-card hands from the (planted) list, same hands for every candidate
 let x = +f('seed', 777) >>> 0; const rnd = () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296;
-const hands = []; for (let i = 0; i < H; i++) { const idx = D.main.map((_, k) => k); for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; } hands.push(idx.slice(0, 5).map(i => name(D.main[i]))); }
+const deal = () => { const idx = D.main.map((_, k) => k); for (let k = idx.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [idx[k], idx[j]] = [idx[j], idx[k]]; } return idx.slice(0, 5).map(i => name(D.main[i])); };
+let hands = []; const WEAK = +f('weak', 0), POOLN = +f('pool', 100), PREMIN = +f('premin', 1);
+const runW = (t, min) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify({ deck: baseDeck, hand: t.hand, minutes: min, seed: 7 + t.hi })], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = ''; p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); ok(m ? JSON.parse(m[1]).v : 0); }); });
+if (WEAK > 0) { // weak hands only: deal POOLN hands, play each once, keep the WEAK lowest that end under 7 (where a missing piece shows)
+  const pool = Array.from({ length: POOLN }, deal); const sc = new Array(POOLN); let k = 0, dn = 0; console.log(`dealing ${POOLN} hands to find weak ones`);
+  await Promise.all(Array.from({ length: PAR }, async () => { while (k < POOLN) { const i = k++; sc[i] = await runW({ hand: pool[i], hi: 1000 + i }, PREMIN); dn++; if (dn % 10 === 0) console.log(`pre ${dn}/${POOLN}`); } }));
+  const order = pool.map((h, i) => ({ h, v: sc[i] })).filter(x => x.v < 7).sort((a, b) => a.v - b.v).slice(0, WEAK); hands = order.map(x => x.h);
+  console.log(`weak hands: ${order.length} of ${POOLN} under 7 (kept ${hands.length}; mean ${(order.reduce((s, x) => s + x.v, 0) / Math.max(1, order.length)).toFixed(2)})`);
+} else for (let i = 0; i < H; i++) hands.push(deal());
+const HN = hands.length;
 // Extra Deck candidates: own deck file with the candidate in place of one Extra Deck card
 const edDeck = (c) => { const p = `decks/_explore/ds-${ID}-ed-${c.code}.ydk`; if (!fs.existsSync(p)) { const e = D.extra.slice(); const i = e.findIndex(k => name(k) === EDSLOT); e[i >= 0 ? i : e.length - 1] = c.code; fs.writeFileSync(p, ydk({ main: D.main, extra: e })); } return p; };
-const tasks = []; for (let hi = 0; hi < H; hi++) tasks.push({ ci: -1, hi, deck: baseDeck, hand: [...hands[hi], CONTROL] });
-cands.forEach((c, ci) => { for (let hi = 0; hi < H; hi++) tasks.push({ ci, hi, deck: c.zone === 'ed' ? edDeck(c) : baseDeck, hand: [...hands[hi], c.zone === 'ed' ? CONTROL : c.name] }); });
+const tasks = []; for (let hi = 0; hi < HN; hi++) tasks.push({ ci: -1, hi, deck: baseDeck, hand: [...hands[hi], CONTROL] });
+cands.forEach((c, ci) => { for (let hi = 0; hi < HN; hi++) tasks.push({ ci, hi, deck: c.zone === 'ed' ? edDeck(c) : baseDeck, hand: [...hands[hi], c.zone === 'ed' ? CONTROL : c.name] }); });
 const res = []; let done = 0; const live = 'data/explore-live.json';
 const rank = () => { const ctl = {}; for (const r of res) if (r.ci === -1) ctl[r.hi] = r.v; const by = {};
   for (const r of res) if (r.ci >= 0 && ctl[r.hi] !== undefined) (by[r.ci] ||= []).push(r);
@@ -32,12 +41,12 @@ const rank = () => { const ctl = {}; for (const r of res) if (r.ci === -1) ctl[r
     const best = rs.slice().sort((p, q) => (q.v - ctl[q.hi]) - (p.v - ctl[p.hi]))[0];
     return { name: c.name, zone: c.zone, why: c.why, n: rs.length, gain: +m.toFixed(2), se: +(sd / Math.sqrt(g.length)).toFixed(2), improved: g.filter(v => v >= 1).length, used, ex: best ? { hand: hands[best.hi], before: ctl[best.hi], after: best.v, line: best.line } : null }; })
     .sort((p, q) => q.gain - p.gain); };
-const writeLive = () => { const rows = rank(); try { fs.writeFileSync(live, JSON.stringify({ run: ID, at: new Date().toISOString(), done, total: tasks.length, cardsDone: rows.filter(r => r.n === H).length, cards: cands.length, control: +(res.filter(r => r.ci === -1).reduce((s, r) => s + r.v, 0) / Math.max(1, res.filter(r => r.ci === -1).length)).toFixed(2), plant: PLANT, rows: rows.slice(0, 60).map(r => ({ name: r.name, zone: r.zone, done: r.n, of: H, rescued: r.improved, gain: r.gain })) })); } catch {} };
+const writeLive = () => { const rows = rank(); try { fs.writeFileSync(live, JSON.stringify({ run: ID, at: new Date().toISOString(), done, total: tasks.length, cardsDone: rows.filter(r => r.n === HN).length, cards: cands.length, control: +(res.filter(r => r.ci === -1).reduce((s, r) => s + r.v, 0) / Math.max(1, res.filter(r => r.ci === -1).length)).toFixed(2), plant: PLANT, rows: rows.slice(0, 60).map(r => ({ name: r.name, zone: r.zone, done: r.n, of: HN, rescued: r.improved, gain: r.gain })) })); } catch {} };
 const runOne = (t) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify({ deck: t.deck, hand: t.hand, minutes: MIN, divs: DIVS, seed: 7 + t.hi })], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
   p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; res.push({ ...t, ...r }); done++; console.log(`${done}/${tasks.length}`); writeLive(); ok(); }); });
 const q = tasks.slice(); await Promise.all(Array.from({ length: PAR }, async () => { while (q.length) await runOne(q.shift()); }));
-const rows = rank(); const ctlMean = res.filter(r => r.ci === -1).reduce((s, r) => s + r.v, 0) / H; const crashes = res.filter(r => r.crash).length;
-let md = `# Deep card screen ${ID}\n${new Date().toISOString()} · ${H} hands × ${cands.length + 1} (control + candidates), line finder ${MIN} min per hand, no guide lines or saved lines · crashes ${crashes}\n\n`;
+const rows = rank(); const ctlMean = res.filter(r => r.ci === -1).reduce((s, r) => s + r.v, 0) / HN; const crashes = res.filter(r => r.crash).length;
+let md = `# Deep card screen ${ID}\n${new Date().toISOString()} · ${HN} ${WEAK ? 'weak ' : ''}hands × ${cands.length + 1} (control + candidates), line finder ${MIN} min per hand, no guide lines or saved lines · crashes ${crashes}\n\n`;
 if (PLANT) { const pr = rows.findIndex(r => r.name === PLANT) + 1; md += `**Planted-card test: ${PLANT} removed from the list. ${pr && pr <= 5 ? 'PASS' : 'FAIL'}: it ranked #${pr || '-'} of ${rows.length} on results (#${plantRank} on connection before testing). Pass = top 5.**\n\n`; }
 md += `Control (same hand + a do-nothing card): mean ${ctlMean.toFixed(2)}. Gain = candidate minus control on the same hand (± is the standard error).\n\n| # | card | where | gain | ± | hands improved by 1+ | used | why it was picked |\n|---|---|---|---|---|---|---|---|\n`;
 rows.forEach((r, i) => { md += `| ${i + 1} | ${r.name} | ${r.zone} | ${r.gain >= 0 ? '+' : ''}${r.gain.toFixed(2)} | ${r.se.toFixed(2)} | ${r.improved}/${r.n} | ${r.used}/${r.n} | ${(r.why || []).join('; ')} |\n`; });
