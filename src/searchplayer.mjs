@@ -22,7 +22,7 @@ export function evalBoard(S, seat) {
   return v;
 }
 
-export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48 } = {}) {
+export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48, onProgress = null, dfs = false, probe = 0 } = {}) {
   resetLib(); const S = autoAdvance(await simulate(game));
   S.ev = function () {}; S.events.length = 0; // no event log during search
   const mod = S.lb[OcgCoreInternal].module; const me = teamOf(game, seat);
@@ -219,9 +219,43 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     return { openers: out };
   }
   const rd = decision(S, seat); if (!rd || !isIdle()) return { error: 'no first-turn idle decision, pending=' + (S.pending && S.pending.type) + ' turn=' + S.turn + ' seat=' + dseat(), score: 0 };
+  if (probe) { // Knuth estimate of the game-tree size: random walks, product of branching factors along the way
+    const root = snapshot(); const ests = []; const depths = [];
+    for (let k = 0; k < probe; k++) { restore(root); let w = 1, tot = 1, dep = 0;
+      for (let g = 0; g < 3000; g++) { autoAdvance(S); if (S.ended || !S.pending || S.turn !== 1 || dseat() !== seat) break; const d = decision(S, seat); if (!d) break;
+        if (isIdle()) { const ix = d.options.map((o, i) => i).filter(i => !/Battle Phase|End Phase/.test(d.options[i].label)); if (!ix.length) break; w *= ix.length; tot += w; dep++; const i = ix[Math.floor(rnd() * ix.length)]; if (!push(S, { seat, resp: d.options[i].resp, label: d.options[i].label })) break; continue; }
+        const cs = cands(d); if (!cs.length) break; if (cs.length > 1) { w *= cs.length; tot += w; } if (!apply(d, cs[Math.floor(rnd() * cs.length)])) break; }
+      ests.push(tot); depths.push(dep); }
+    ests.sort((a, b) => a - b); const mean = ests.reduce((a, b) => a + b, 0) / ests.length;
+    return { probe: true, mean, median: ests[ests.length >> 1], p90: ests[Math.floor(ests.length * 0.9)], depthMean: depths.reduce((a, b) => a + b, 0) / depths.length, depthMax: Math.max(...depths) };
+  }
+  if (dfs) { // exhaustive depth-first: every option at every decision, positions already seen are skipped; memory = current path only
+    const seenI = new Set(); let states = 0, leaves = 0, lastP = 0; let complete = true;
+    const record = () => { const v = (evalFn || evalBoard)(S, seat); if (v > best.v) { lastImp = macros; best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) }; } };
+    const timeOver = () => Date.now() - t0 > ms;
+    const rec = (depth) => {
+      if (timeOver()) { complete = false; return; }
+      for (let g = 0; g < 400; g++) { autoAdvance(S); if (S.ended || !S.pending || S.turn !== 1 || dseat() !== seat) { leaves++; return; }
+        const d = decision(S, seat); if (!d) return;
+        if (isIdle()) { const sig = sigOf(d); if (seenI.has(sig)) return; seenI.add(sig); states++; macros++; record();
+          if (onProgress && states - lastP >= 500) { lastP = states; onProgress({ macros: states, nodes: leaves, seen: seenI.size, frontier: depth, best: best.v, line: best.rs, ms: Date.now() - t0 }); }
+          const ix = d.options.map((o, i) => i).filter(i => !/Battle Phase|End Phase/.test(d.options[i].label));
+          const sn = snapshot();
+          for (const i of ix) { if (timeOver()) { complete = false; return; } restore(sn); const dd = decision(S, seat); if (push(S, { seat, resp: dd.options[i].resp, label: dd.options[i].label })) rec(depth + 1); }
+          return; }
+        const cs = cands(d); if (!cs.length) return;
+        if (cs.length === 1) { if (!apply(d, cs[0])) return; continue; }
+        const sn = snapshot();
+        for (const c of cs) { if (timeOver()) { complete = false; return; } restore(sn); const dd = decision(S, seat); if (dd && apply(dd, c)) rec(depth + 1); }
+        return; }
+    };
+    rec(0);
+    return { score: best.v, raw: best.raw, line: best.rs, board: best.board, nodes: leaves, macros: states, states, complete, ms: Date.now() - t0, prof: PROF };
+  }
   consider(0); const rootSnap = frontier[0].snap;
   while (frontier.length && !timeUp()) {
     frontier.sort((a, b) => eff(b) - eff(a)); const node = frontier.shift(); CUR_BR = node.depth === 0 ? null : node.br; bexp[node.br] = (bexp[node.br] || 0) + 1;
+    if (onProgress && macros - (searchT1._lp || 0) >= 50) { searchT1._lp = macros; onProgress({ macros, nodes, seen: seen.size, frontier: frontier.length, best: best.v, line: best.rs, ms: Date.now() - t0 }); }
     restore(node.snap); const d = decision(S, seat); if (!d) continue;
     if (process.env.DBG) console.log('EXPAND', node.depth, d.options.map(o => o.label.slice(0, 50)).join(' | '));
     for (let i = 0; i < d.options.length && !timeUp(); i++) {
