@@ -49,6 +49,12 @@ const STEPS = {
     const r = await run(['bench.mjs', String(j.minutes || 10)], j.only ? { ONLY: j.only } : {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
     if (r.code || !fs.existsSync('reports/deep-bench.md')) throw new Error('bench failed: ' + r.out.slice(-400)); j.report = 'reports/deep-bench.md';
   },
+  async deepscreen(j) { // candidate cards get their own lines found (line finder), same hands as a control; optional planted-card check
+    j.stage = 'finding lines for each candidate card'; const A = await resolveDeck(j.deckA);
+    const args = ['deepscreen.mjs', '--deck', A, '--id', String(j.id), '--hands', String(j.hands || 15), '--min', String(j.min || 1.5), '--cands', String(j.cands ?? 40), '--edcands', String(j.edcands ?? 10)]; if (j.plant) args.push('--plant', j.plant);
+    const r = await run(args, {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/^deep screen/.test(l)) j.diag = l; });
+    const out = `reports/deepscreen-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('deep screen failed: ' + r.out.slice(-400)); j.report = out;
+  },
   async calibrate(j) {
     const dir = `results/cal-${j.id}`; fs.mkdirSync(dir, { recursive: true }); const T = JSON.parse(fs.readFileSync('data/guide_tests.json', 'utf8'));
     for (let i = 0; i < T.length; i++) { j.stage = 'guide hand ' + (i + 1) + '/' + T.length; await run(['guidecheck.mjs', 'decks/ROLAD-L2.ydk', '22'], { ONLY: T[i].id, MAC: '800', PAT: '400', JSONOUT: `${dir}/cal.jsonl` }); j.progress = Math.round(100 * (i + 1) / T.length); }
