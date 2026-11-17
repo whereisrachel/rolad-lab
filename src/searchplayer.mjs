@@ -169,7 +169,8 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const uniq = [...byL.values()]; if (n === 1) return uniq.map(i => ({ kind: 'text', t: String(i + 1) }));
     const out = [], seenK = new Set(); const rec = (st, pick) => { if (out.length >= 40) return; if (pick.length === n) { const k = pick.map(i => normLabel(o[i].label)).sort().join('|'); if (!seenK.has(k)) { seenK.add(k); out.push({ kind: 'text', t: pick.map(i => i + 1).join(' ') }); } return; } for (let j = st; j < idx.length; j++) { pick.push(idx[j]); rec(j + 1, pick); pick.pop(); } };
     rec(0, []); return out.length ? out : cands(d); };
-  const subCands = (d) => { let cs = d.kind === 'multi' ? multiCands(d) : cands(d); if (d.kind === 'place') return (d.min || 1) === 1 ? placeCands(d) : cs.slice(0, 1);
+  const unselCands = (d) => { const sel = d.options.filter(x => x.card && !/^UN/.test(x.label)); const seenL = new Set(), out = []; sel.forEach((x, k) => { const key = normLabel(x.label); if (seenL.has(key)) return; seenL.add(key); out.push({ kind: 'unselect', skip: k }); }); return out.length ? out : cands(d); };
+  const subCands = (d) => { let cs = d.kind === 'multi' ? multiCands(d) : d.kind === 'unselect' ? unselCands(d) : cands(d); if (d.kind === 'place') return (d.min || 1) === 1 ? placeCands(d) : cs.slice(0, 1);
     if (d.kind === 'pick' && d.options.every(o => /^face-/.test(o.label))) return cs.slice(0, 1); // battle position: irrelevant first turn
     if (d.type === M.SELECT_CHAIN) cs = cs.filter(c => c.kind !== 'pick' || d.options[c.i].pass || !handTrap(d.options[c.i].label)); const seenL = new Set(), out = [];
     for (const c of cs) { let k; if (c.kind === 'pick') k = normLabel(d.options[c.i].label); else if (c.kind === 'text' && d.options && /^[0-9 ]+$/.test(c.t)) k = c.t.split(' ').map(n => normLabel(d.options[+n - 1]?.label || n)).sort().join('|'); else k = JSON.stringify(c); if (seenL.has(k)) continue; seenL.add(k); out.push(c); }
@@ -320,8 +321,14 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   if (nrpa) { // Nested Rollout Policy Adaptation: play whole turns to the end, learn which moves appear in the best whole turns, steer toward them.
     // Only finished turns are judged (best point of each turn), so long set-up lines are not cut off for looking weak half-way.
     const ROOTF = snapshot(); const N = +(process.env.NRPA_N || 60), LV = nrpa, ALPHA = 1;
-    const ckey = (d, c) => { if (c.kind === 'pick') return normLabel(d.options[c.i].label); if (c.kind === 'text' && d.options && /^[0-9 ]+$/.test(c.t)) return c.t.split(' ').map(n => normLabel(d.options[+n - 1]?.label || n)).sort().join('|'); return JSON.stringify(c); };
+    const ckey = (d, c) => { if (c.kind === 'pick') return normLabel(d.options[c.i].label); if (c.kind === 'unselect') { const sel = d.options.filter(x => x.card && !/^UN/.test(x.label)); return 'U:' + normLabel(sel[Math.min(c.skip, sel.length - 1)]?.label || ''); } if (c.kind === 'text' && d.options && /^[0-9 ]+$/.test(c.t)) return c.t.split(' ').map(n => normLabel(d.options[+n - 1]?.label || n)).sort().join('|'); return JSON.stringify(c); };
     const pkey = (d) => String(d.prompt || d.kind || '').replace(/[0-9]+/g, '#').slice(0, 80);
+    // starting preference read from card text (learning can overturn it): Normal Summoning a monster with no Normal Summon effect is unlikely,
+    // a hand trap even less (it spends the Normal Summon and the hand trap)
+    const PRI = new Map(); const prior = (key) => { if (PRI.has(key)) return PRI.get(key); let p = 0; const m = /^I:Normal Summon (.+?) \(/.exec(key);
+      if (m) { const D = cardDB(); let t = ''; for (const [code] of D.data) if (name(code) === m[1]) { t = (D.text.get(code) || {}).desc || ''; break; }
+        if (/\(Quick Effect\): You can (discard|send) this card/i.test(t)) p = -3; else if (!/Normal Summoned|Normal or Special Summoned/i.test(t)) p = -1; }
+      PRI.set(key, p); return p; };
     let playouts = 0; const BR = searchT1.BR = { ended: 0, nopending: 0, turn: 0, oppdecides: 0, nodec: 0, noidle: 0, nocands: 0, apply1: 0, gofail: 0, dbg: 0 };
     const playout = (pol) => {
       restore(ROOTF); playouts++; const steps = []; let bv = -1, blen = 0;
@@ -332,12 +339,12 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
           if (v > best.v) best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) };
           const ix = idleOpts(d); if (!ix.length) { BR.noidle++; if (process.env.DBGN && steps.length > 2 && BR.dbg++ < 4) console.error('NOIDLE', steps.length, steps.map(x => x.k).join(' > '), JSON.stringify(d.options.map(o => o.label)).slice(0, 600)); break; } moves = ix.map(i => ({ key: 'I:' + normLabel(d.options[i].label), go: () => push(S, { seat, resp: d.options[i].resp, label: d.options[i].label }) })); }
         else { const cs = subCands(d); if (!cs.length) { BR.nocands++; BR['nc:' + d.kind] = (BR['nc:' + d.kind] || 0) + 1; break; } if (cs.length === 1) { if (!apply(d, cs[0])) { BR.apply1++; break; } continue; } const pk = pkey(d); moves = cs.map(c => ({ key: 'S:' + pk + '|' + ckey(d, c), go: () => apply(d, c) })); }
-        let z = 0; const w = moves.map(m => { const e = Math.exp(pol.get(m.key) || 0); z += e; return e; }); let r = rnd() * z, ci = 0; while (ci < w.length - 1 && (r -= w[ci]) > 0) ci++;
+        let z = 0; const w = moves.map(m => { const e = Math.exp((pol.get(m.key) || 0) + prior(m.key)); z += e; return e; }); let r = rnd() * z, ci = 0; while (ci < w.length - 1 && (r -= w[ci]) > 0) ci++;
         steps.push({ keys: moves.map(m => m.key), k: moves[ci].key }); if (!moves[ci].go()) { BR.gofail++; BR['gf:' + moves[ci].key.slice(0, 60)] = (BR['gf:' + moves[ci].key.slice(0, 60)] || 0) + 1; break; }
       }
       return { v: bv, seq: steps.slice(0, blen) };
     };
-    const adapt = (pol, seq) => { const p = new Map(pol); for (const st of seq) { let z = 0; const e = st.keys.map(k => { const x = Math.exp(pol.get(k) || 0); z += x; return x; }); p.set(st.k, (p.get(st.k) || 0) + ALPHA); st.keys.forEach((k, i) => p.set(k, (p.get(k) || 0) - ALPHA * e[i] / z)); } return p; };
+    const adapt = (pol, seq) => { const p = new Map(pol); for (const st of seq) { let z = 0; const e = st.keys.map(k => { const x = Math.exp((pol.get(k) || 0) + prior(k)); z += x; return x; }); p.set(st.k, (p.get(st.k) || 0) + ALPHA); st.keys.forEach((k, i) => p.set(k, (p.get(k) || 0) - ALPHA * e[i] / z)); } return p; };
     const run = (lv, pol) => { if (lv === 0 || timeUp()) return playout(pol); let b = { v: -1, seq: [] }; for (let i = 0; i < N && !timeUp(); i++) { const r = run(lv - 1, pol); if (r.v >= b.v) b = r; pol = adapt(pol, b.seq); } return b; };
     let lastP = 0;
     while (!timeUp()) { run(LV, new Map()); if (onProgress && playouts - lastP >= 200) { lastP = playouts; onProgress({ macros: playouts, nodes: 0, seen: 0, frontier: 0, best: best.v, line: best.rs, ms: Date.now() - t0 }); } }
