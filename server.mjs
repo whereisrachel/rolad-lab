@@ -44,6 +44,11 @@ const STEPS = {
     for (const B of (fs.existsSync('data/explore-confirm.txt') ? fs.readFileSync('data/explore-confirm.txt', 'utf8').split('\n').filter(Boolean) : []))
       addJob({ kind: 'pair', deckA: j.deckA, deckB: B, n: 300, scn: 'none,ash,imperm', macros: 300, title: 'Explorer find: ' + path.basename(B, '.ydk').replace(/^\d+-/, '').replace(/_/g, ' ') });
   },
+  async bench(j) { // line finder test on the guide hands, no helpers
+    j.stage = 'searching each guide hand from scratch';
+    const r = await run(['bench.mjs', String(j.minutes || 10)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
+    if (r.code || !fs.existsSync('reports/deep-bench.md')) throw new Error('bench failed: ' + r.out.slice(-400)); j.report = 'reports/deep-bench.md';
+  },
   async calibrate(j) {
     const dir = `results/cal-${j.id}`; fs.mkdirSync(dir, { recursive: true }); const T = JSON.parse(fs.readFileSync('data/guide_tests.json', 'utf8'));
     for (let i = 0; i < T.length; i++) { j.stage = 'guide hand ' + (i + 1) + '/' + T.length; await run(['guidecheck.mjs', 'decks/ROLAD-L2.ydk', '22'], { ONLY: T[i].id, MAC: '800', PAT: '400', JSONOUT: `${dir}/cal.jsonl` }); j.progress = Math.round(100 * (i + 1) / T.length); }

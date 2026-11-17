@@ -151,6 +151,11 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   const sigOf = (d) => boardView(S, seat) + '|' + d.options.map(o => o.label).join(';');
   // branch diversity: every opening branch (incl. each choice at its first sub-decisions) gets explored a few steps before the search narrows on whatever looks best right away
   let CUR_BR = null, nBr = 0; const bexp = {}; const eff = (n) => n.pri + div / (1 + (bexp[n.br] || 0));
+  // light frontier: positions waiting to be expanded are kept as the moves that reach them (a few KB), not engine memory (~0.5 MB);
+  // expanding one replays those moves from the start of the turn
+  const LIGHT = !!process.env.LIGHT; let ROOT = null;
+  const restoreAny = (s) => { if (!s.light) return restore(s); restore(ROOT); for (const r of s.rsp) if (!push(S, { ...r })) { if (process.env.CHK) console.log('REPLAY FAIL'); return false; }
+    if (s.chk) { const d = decision(S, seat); const now = d ? canonSig(d) : ''; if (now !== s.chk) console.log('REPLAY MISMATCH'); } return true; };
   const seen = new Set(); const frontier = []; let best = { v: -1 }; let macros = 0, nodes = 0; let minPri = -Infinity;
   const t0 = Date.now(); let lastImp = 0; const timeUp = () => Date.now() - t0 > ms || macros >= maxMacros || macros - lastImp >= patience;
   // random playouts: judge an early position by the best end-of-turn board a few quick random games reach from it (lookahead for long combos)
@@ -178,7 +183,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     let snap = null;
     if (roll > 0 && depth >= 1 && depth <= rollDepth) { snap = snapshot(); let rv = -1; for (let k = 0; k < roll; k++) { restore(snap); rv = Math.max(rv, rollout()); macros += 0.25; } restore(snap); if (process.env.DBGR) console.log("ROLL", depth, v.toFixed(2), "best rollout", rv.toFixed(2), game.responses.slice(rootLen).map(r => r.label || "").filter(l => /Selected|Special Summon it|Normal Summon|Activate/.test(l)).slice(-3).join(" > ").slice(0, 160)); if (rv > v) pri += 0.9 * (rv - v); }
     if (frontier.length >= frontierCap && pri <= minPri) return; // would be pruned at once: skip the snapshot and the sort
-    frontier.push({ snap: snap || snapshot(), v, depth, pri, br: CUR_BR === null ? nBr++ : CUR_BR });
+    frontier.push({ snap: snap || (LIGHT && ROOT ? { light: true, rsp: game.responses.slice(ROOT.n).map(r => ({ ...r })), chk: process.env.CHK ? canonSig(d) : null } : snapshot()), v, depth, pri, br: CUR_BR === null ? nBr++ : CUR_BR });
     if (frontier.length > frontierCap) { frontier.sort((a, b) => eff(b) - eff(a)); frontier.length = frontierCap; }
     if (frontier.length >= frontierCap) { let mn = Infinity; for (const x of frontier) if (x.pri < mn) mn = x.pri; minPri = mn; }
   }
@@ -283,16 +288,16 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     while (!timeOver()) { rounds++; seenI.clear(); cut = false; restore(root); rec(0, B); if (onProgress) onProgress({ macros: states, nodes: leaves, seen: seenI.size, frontier: -B, best: best.v, line: best.rs, ms: Date.now() - t0 }); if (!cut) { complete = true; break; } B *= 2; }
     return { score: best.v, raw: best.raw, line: best.rs, board: best.board, nodes: leaves, macros: states, states, complete, ms: Date.now() - t0, prof: PROF };
   }
-  consider(0); const rootSnap = frontier[0].snap;
+  ROOT = snapshot(); consider(0); const rootSnap = frontier[0].snap;
   while (frontier.length && !timeUp()) {
     frontier.sort((a, b) => eff(b) - eff(a)); const node = frontier.shift(); CUR_BR = node.depth === 0 ? null : node.br; bexp[node.br] = (bexp[node.br] || 0) + 1;
     if (onProgress && macros - (searchT1._lp || 0) >= 50) { searchT1._lp = macros; onProgress({ macros, nodes, seen: seen.size, frontier: frontier.length, best: best.v, line: best.rs, ms: Date.now() - t0 }); }
-    restore(node.snap); const d = decision(S, seat); if (!d) continue;
+    let nsnap = node.snap; if (nsnap.light) { if (restoreAny(nsnap) === false) continue; nsnap = snapshot(); } else restore(nsnap); const d = decision(S, seat); if (!d) continue;
     if (process.env.DBG) console.log('EXPAND', node.depth, d.options.map(o => o.label.slice(0, 50)).join(' | '));
     const okI = process.env.CANON ? new Set(idleOpts(d)) : null;
     for (let i = 0; i < d.options.length && !timeUp(); i++) {
       const o = d.options[i]; if (/Battle Phase|End Phase/.test(o.label)) continue; if (okI && !okI.has(i)) continue;
-      restore(node.snap); const dd = decision(S, seat);
+      restore(nsnap); const dd = decision(S, seat);
       if (!push(S, { seat, resp: dd.options[i].resp, label: dd.options[i].label })) { if (process.env.DBG) console.log('PUSHFAIL', dd.options[i].label, JSON.stringify(S.errors && S.errors.slice(-1))); continue; }
       macro(node.depth, null, i);
     }

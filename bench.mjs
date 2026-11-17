@@ -1,16 +1,17 @@
-// node bench.mjs [nhands] [macros]  -> deterministic scores + timing + profile
-import fs from 'fs'; import path from 'path';
-import { parseYdk, ROOT } from './src/cards.mjs';
-import { searchT1 } from './src/searchplayer.mjs';
-import { disruption } from './src/disrupt.mjs';
-let MAXO=0; const N=+process.argv[2]||6, MAC=+process.argv[3]||200;
-const OPP=parseYdk(fs.readFileSync(path.join(ROOT,'decks','oppHT.ydk'),'utf8')); const deck=parseYdk(fs.readFileSync(path.join(ROOT,'decks','ROLAD-L2.ydk'),'utf8'));
-const GS=13039848; let sc=[],tt=0; const P={snap:0,rest:0,ns:0,nr:0,pages:0};
-for(let h=0;h<N;h++){
- const hidx=[...Array(deck.main.length).keys()].sort((a,b)=>((a*7919+h*104729)%1009)-((b*7919+h*104729)%1009)).slice(0,5);
- const hand=hidx.map(i=>deck.main[i]), rest=deck.main.filter((_,i)=>!hidx.includes(i)); const op=OPP.main.slice(),oh=[]; while(oh.length<5){const i=op.indexOf(GS);oh.push(op.splice(i,1)[0]);}
- const g={id:'b',seed:String(h+1),first:0,lab:true,seats:{0:{name:'A',deck:{...deck,main:[...hand,...rest]},hand},1:{name:'o',deck:{...OPP,main:[...oh,...op]},hand:oh}},responses:[],cursor:{0:0,1:0},goldfish:[1],bot:{},script:{1:[]},stopAfterTurn:null};
- const t=Date.now(); const r=await searchT1(g,{ms:90000,maxMacros:MAC,guideW:0.3,patience:+process.argv[4]||Infinity,altCap:+(process.env.ALT||4),maxMacro:+(process.env.MM||25),frontierCap:400,evalFn:(S,s)=>disruption(S,s)}); const d=Date.now()-t; tt+=d; sc.push(+(r.score||0).toFixed(3));
- for(const k in P) P[k]+=r.prof[k]||0; MAXO=Math.max(MAXO,r.prof.maxo); console.log(h,r.score?.toFixed(3),r.nodes,r.macros,d+'ms');
-}
-console.log('maxo',MAXO);console.log('SCORES',sc.join(','),'TOTAL',tt+'ms','snap',P.snap|0,'rest',P.rest|0,'ns',P.ns,'nr',P.nr,'pages/snap',(P.pages/P.ns).toFixed(1));
+// node bench.mjs [minutesPerHand] [parallel] -> the line finder on every guide test hand with NO helpers (no guide lines, no saved lines),
+// against what the lab reached WITH helpers (which reproduces the guide's lines). Pass: within 0.5 of it, or better, on 80% of hands.
+import fs from 'fs'; import os from 'os'; import { spawn } from 'child_process';
+const MIN = +(process.argv[2] || 10); const memPar = Math.max(1, Math.floor(os.freemem() / 1.3e9));
+const PAR = Math.min(+(process.argv[3] || Math.max(1, os.cpus().length - 1)), memPar);
+const cal = JSON.parse(fs.readFileSync('reports/calibration.json', 'utf8')).rows.filter(r => !process.env.ONLY || process.env.ONLY.split(',').includes(r.id)); const OD = 'results/deep'; fs.rmSync(OD, { recursive: true, force: true }); fs.mkdirSync(OD, { recursive: true });
+console.log(`bench: ${cal.length} hands, ${MIN} min each, ${PAR} at a time`);
+let done = 0; const q = cal.slice();
+const runOne = (row) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deep.mjs', row.id, String(MIN)], { env: { ...process.env, LIGHT: '1', CANON: '1', FC: '3000', OUTDIR: OD }, stdio: 'ignore' }); p.on('close', () => { done++; console.log(`${done}/${cal.length}`); ok(); }); });
+await Promise.all(Array.from({ length: PAR }, async () => { while (q.length) await runOne(q.shift()); }));
+const rows = cal.map(r => { const t = fs.existsSync(`${OD}/${r.id}.log`) ? fs.readFileSync(`${OD}/${r.id}.log`, 'utf8') : ''; const f = /FINAL ([\d.]+)/.exec(t); const at = /BESTAT ([\d.]+)/.exec(t); const ln = /LINE (.*)/.exec(t);
+  const v = f ? +f[1] : 0; return { ...r, deep: v, at: at ? +at[1] : null, pass: v >= r.lab - 0.5, line: ln ? ln[1].split(' > ').filter(l => /Summon|Activate/.test(l)).slice(0, 25).join(' > ') : '' }; });
+const np = rows.filter(r => r.pass).length; const need = Math.ceil(rows.length * 0.8);
+let md = `# Line finder test: no helpers vs the lab with the guide's lines\n${new Date().toISOString()} · ${MIN} min per hand\n\n**${np >= need ? 'PASS' : 'FAIL'}**: within 0.5 of (or above) the with-helpers score on ${np}/${rows.length} hands (need ${need}). Mean no-helpers ${(rows.reduce((s, r) => s + r.deep, 0) / rows.length).toFixed(2)}, with helpers ${(rows.reduce((s, r) => s + r.lab, 0) / rows.length).toFixed(2)}.\n\n| hand | starter | with guide lines | no helpers | found after (min) | |\n|---|---|---|---|---|---|\n`;
+for (const r of rows) md += `| ${r.id} | ${(r.hand || []).join(', ')} | ${r.lab.toFixed(2)} | ${r.deep.toFixed(2)} | ${r.at ?? '-'} | ${r.pass ? 'ok' : 'BELOW'} |\n`;
+md += '\n## Lines found\n'; for (const r of rows) md += `\n**${r.id}** (${r.deep.toFixed(2)}): ${r.line}\n`;
+fs.mkdirSync('reports', { recursive: true }); fs.writeFileSync('reports/deep-bench.md', md); console.log(md.split('\n').slice(0, 4).join('\n'));
