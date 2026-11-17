@@ -3,8 +3,12 @@
 import { OcgCoreInternal } from 'ocgcore-wasm';
 import zlib from 'zlib';
 const ZS = !!process.env.ZSNAP;
-import { resetLib, simulate, push, decision, answer, boardView, teamOf, seatOf, M, R, L } from './engine.mjs';
-import { autoAdvance } from './auto.mjs';
+import { resetLib, simulate, push as push0, decision as decision0, answer, boardView as boardView0, teamOf, seatOf, M, R, L, QFLAGS } from './engine.mjs';
+import { autoAdvance as autoAdvance0 } from './auto.mjs';
+// optional timing of every engine call (PROF2=1): where search time goes
+export const T2 = { push: 0, npush: 0, dec: 0, ndec: 0, bv: 0, nbv: 0, eval: 0, neval: 0, auto: 0, nauto: 0, sig: 0, nsig: 0, replay: 0, nreplay: 0, replaySteps: 0 };
+const tm = (k, f) => function (...a) { if (!process.env.PROF2) return f(...a); const t = process.hrtime.bigint(); try { return f(...a); } finally { T2[k] += Number(process.hrtime.bigint() - t) / 1e6; T2['n' + k]++; } };
+const push = tm('push', push0), decision = tm('dec', decision0), boardView = tm('bv', boardView0), autoAdvance = tm('auto', autoAdvance0);
 import { cardDB, name } from './cards.mjs';
 
 const PAGE = 4096;
@@ -13,10 +17,22 @@ export const DEAD = {};
 // --- canonical positions: the same board reached in a different order / different zone counts once ---
 const ZN = /\b(M[1-5]|EMZ-[LR]|S[1-5]|FZ|PZ-[LR])\b/g;
 export const normLabel = (l) => String(l).replace(ZN, (z) => z.startsWith('EMZ') ? 'EMZ' : z[0]);
+const AR = { '↖': 0x40, '↑': 0x80, '↗': 0x100, '←': 0x8, '→': 0x20, '↙': 0x1, '↓': 0x2, '↘': 0x4 };
+const ZIDX = { M1: 0, M2: 1, M3: 2, M4: 3, M5: 4, 'EMZ-L': 5, 'EMZ-R': 6 };
+export function pointsTo(z, mk) { const out = []; if (z <= 4) { if (mk & 0x8 && z > 0) out.push(z - 1); if (mk & 0x20 && z < 4) out.push(z + 1); for (const [b, dc] of [[0x40, -1], [0x80, 0], [0x100, 1]]) if (mk & b) { const cc = z + dc; if (cc === 1) out.push(5); if (cc === 3) out.push(6); } }
+  else { const c0 = z === 5 ? 1 : 3; for (const [b, dc] of [[0x1, -1], [0x2, 0], [0x4, 1]]) if (mk & b) { const cc = c0 + dc; if (cc >= 0 && cc <= 4) out.push(cc); } } return out; }
+// columns 0-1 sit only under the left Extra Monster Zone's reach, 3-4 only under the right one, 2 under both
+const COLCLASS = ['L', 'L', 'C', 'R', 'R'];
 export function canonBoard(bv) {
   return String(bv).split('\n').map(line => {
     let m;
-    if ((m = /^(\s*(?:Monsters|Spell\/Trap): )(.*)$/.exec(line))) return m[1] + m[2].split(' || ').map(x => normLabel(x.replace(/^(M[1-5]|EMZ-[LR]|S[1-5]|FZ|PZ-[LR]):\s*/, (z) => z.startsWith('EMZ') ? 'EMZ:' : ''))).sort().join(' || ');
+    if ((m = /^(\s*Monsters: )(.*)$/.exec(line))) {
+      const ents = m[2].split(' || ').map(x => { const k = /^(M[1-5]|EMZ-[LR]):\s*(.*)$/.exec(x.trim()); if (!k) return null; const ar = /\bL\d([↖↑↗←→↙↓↘]+)/.exec(k[2]); let mk = 0; if (ar) for (const ch of ar[1]) mk |= AR[ch] || 0;
+        return { z: ZIDX[k[1]], txt: k[2].replace(/\s+\d+\/[\d-]+.*$/, '').trim(), mk, link: !!ar }; }).filter(Boolean);
+      const at = {}; for (const e of ents) at[e.z] = e;
+      return m[1] + ents.map(e => { if (e.link) { const p = pointsTo(e.z, e.mk); return (e.z >= 5 ? 'EMZ:' : 'M:') + e.txt + '->[' + p.map(z => at[z] ? at[z].txt : '_').sort().join(',') + ']'; } return (e.z >= 5 ? 'EMZ:' : COLCLASS[e.z] + ':') + e.txt; }).sort().join(' || ');
+    }
+    if ((m = /^(\s*Spell\/Trap: )(.*)$/.exec(line))) return m[1] + m[2].split(' || ').map(x => normLabel(x.replace(/^(S[1-5]|FZ|PZ-[LR]):\s*/, ''))).sort().join(' || ');
     if ((m = /^(\s*(?:GY|Banished|Hand): )(.*)$/.exec(line))) return m[1] + m[2].split(', ').sort().join(', ');
     return line;
   }).join('\n');
@@ -36,7 +52,7 @@ export function evalBoard(S, seat) {
   return v;
 }
 
-export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48, onProgress = null, dfs = false, probe = 0, nsOnly = null } = {}) {
+export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48, onProgress = null, dfs = false, probe = 0, nsOnly = null, listRoot = false, rootOnly = null, nrpa = 0 } = {}) {
   searchT1._lp = 0; resetLib(); const S = autoAdvance(await simulate(game));
   S.ev = function () {}; S.events.length = 0; // no event log during search
   const mod = S.lb[OcgCoreInternal].module; const me = teamOf(game, seat);
@@ -141,13 +157,19 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   const nsBlocked = (l) => { if (nsOnly === null) return false; const m = /^Normal Summon (.+?) \(/.exec(l); return !!m && m[1] !== nsOnly; };
   const idleOpts = (d) => { const seenL = new Set(), ix = []; d.options.forEach((o, i) => { if (/Battle Phase|End Phase/.test(o.label)) return; if (!setOk(o.label) || nsBlocked(o.label)) return; const k = normLabel(o.label); if (seenL.has(k)) return; seenL.add(k); ix.push(i); }); return ix; };
   // first turn: never chain your own hand trap (an effect that only answers the opponent) to your own play
-  const HTX = new Map(); const handTrap = (lbl) => { const m = /^Activate (.+?) \(hand\)/.exec(lbl); if (!m) return false; if (!HTX.has(m[1])) { const D = cardDB(); let t = ''; for (const [code] of D.data) if (name(code) === m[1]) { t = (D.text.get(code) || {}).desc || ''; break; } HTX.set(m[1], /Quick Effect/i.test(t) && /(negate|your opponent|opponent.s)/i.test(t) && !/Special Summon this card/i.test(t)); } return HTX.get(m[1]); };
-  const subCands = (d) => { let cs = cands(d); if (d.kind === 'place') return cs.slice(0, 1);
+  const HTX = new Map(); const handTrap = (lbl) => { const m = /^Activate (.+?) \(hand\)/.exec(lbl); if (!m) return false; if (!HTX.has(m[1])) { const D = cardDB(); let t = ''; for (const [code] of D.data) if (name(code) === m[1]) { t = (D.text.get(code) || {}).desc || ''; break; } HTX.set(m[1], (/\(Quick Effect\): You can (discard|send) this card/i.test(t) && !/Special Summon this card/i.test(t)) || (/Quick Effect/i.test(t) && /(negate|your opponent|opponent.s)/i.test(t) && !/Special Summon this card/i.test(t))); } return HTX.get(m[1]); };
+  const placeCands = (d) => { // zones decide Link arrows, so offer the zones that differ, once each
+    if (!d.options.every(o => o.place && o.place.location === L.MZONE)) return [{ kind: 'text', t: '1' }];
+    const mz = S.lb.duelQueryLocation(S.h, { flags: QFLAGS, controller: d.options[0].place.player, location: L.MZONE });
+    const ptBy = (z) => { const r = []; mz.forEach((c, zz) => { if (c && c.code && c.link && pointsTo(zz, c.link.marker || 0).includes(z)) r.push(zz); }); return r.join(','); };
+    const seenK = new Set(), out = []; d.options.forEach((o, i) => { const z = o.place.sequence; if (o.place.player !== d.options[0].place.player) return; const k = z >= 5 ? 'EMZ' + z : COLCLASS[z] + '|' + ptBy(z); if (seenK.has(k)) return; seenK.add(k); out.push({ kind: 'text', t: String(i + 1) }); });
+    return out.length ? out : [{ kind: 'text', t: '1' }]; };
+  const subCands = (d) => { let cs = cands(d); if (d.kind === 'place') return (d.min || 1) === 1 ? placeCands(d) : cs.slice(0, 1);
     if (d.kind === 'pick' && d.options.every(o => /^face-/.test(o.label))) return cs.slice(0, 1); // battle position: irrelevant first turn
     if (d.type === M.SELECT_CHAIN) cs = cs.filter(c => c.kind !== 'pick' || d.options[c.i].pass || !handTrap(d.options[c.i].label)); const seenL = new Set(), out = [];
     for (const c of cs) { let k; if (c.kind === 'pick') k = normLabel(d.options[c.i].label); else if (c.kind === 'text' && d.options && /^[0-9 ]+$/.test(c.t)) k = c.t.split(' ').map(n => normLabel(d.options[+n - 1]?.label || n)).sort().join('|'); else k = JSON.stringify(c); if (seenL.has(k)) continue; seenL.add(k); out.push(c); }
     return out; };
-  const canonSig = (d) => canonBoard(boardView(S, seat)) + '|' + [...new Set(d.options.map(o => normLabel(o.label)))].sort().join(';');
+  const canonSig = tm('sig', (d) => canonBoard(boardView(S, seat)) + '|' + [...new Set(d.options.map(o => normLabel(o.label)))].sort().join(';'));
   const isIdle = () => S.pending && S.pending.type === M.SELECT_IDLECMD && dseat() === seat && S.turn === 1;
   const sigOf = (d) => boardView(S, seat) + '|' + d.options.map(o => o.label).join(';');
   // branch diversity: every opening branch (incl. each choice at its first sub-decisions) gets explored a few steps before the search narrows on whatever looks best right away
@@ -155,8 +177,9 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   // light frontier: positions waiting to be expanded are kept as the moves that reach them (a few KB), not engine memory (~0.5 MB);
   // expanding one replays those moves from the start of the turn
   const LIGHT = !!process.env.LIGHT; let ROOT = null;
-  const restoreAny = (s) => { if (!s.light) return restore(s); restore(ROOT); for (const r of s.rsp) if (!push(S, { ...r })) { if (process.env.CHK) console.log('REPLAY FAIL'); return false; }
-    if (s.chk) { const d = decision(S, seat); const now = d ? canonSig(d) : ''; if (now !== s.chk) console.log('REPLAY MISMATCH'); } return true; };
+  const restoreAny = tm('replay', (s) => { if (!s.light) return restore(s); restore(ROOT); for (const r of s.rsp) if (!push(S, { ...r })) { if (process.env.CHK) console.log('REPLAY FAIL'); return false; }
+    if (s.chk) { const d = decision(S, seat); const now = d ? canonSig(d) : ''; if (now !== s.chk) console.log('REPLAY MISMATCH'); } return true; });
+  const BEAM = +(process.env.BEAM || 0);
   const seen = new Set(); const frontier = []; let best = { v: -1 }; let macros = 0, nodes = 0; let minPri = -Infinity;
   const t0 = Date.now(); let lastImp = 0; const timeUp = () => Date.now() - t0 > ms || macros >= maxMacros || macros - lastImp >= patience;
   // random playouts: judge an early position by the best end-of-turn board a few quick random games reach from it (lookahead for long combos)
@@ -170,14 +193,14 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
       const cs = cands(d); if (!cs.length) break; if (!apply(d, cs[Math.floor(rnd() * Math.min(cs.length, 4))])) break;
     }
     if (!(isIdle() || S.turn !== 1)) return -1;
-    const v = (evalFn || evalBoard)(S, seat);
+    const v = tm('eval', evalFn || evalBoard)(S, seat);
     if (v > best.v && isIdle()) { lastImp = macros; best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) }; }
     return v;
   }
   function consider(depth) {
     const d = decision(S, seat); if (!d) return;
     const sig = process.env.CANON ? canonSig(d) : sigOf(d); if (seen.has(sig)) return; seen.add(sig);
-    const v = (evalFn || evalBoard)(S, seat); nodes++;
+    const v = tm('eval', evalFn || evalBoard)(S, seat); nodes++;
     if (v > best.v) lastImp = macros, best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) };
     const gv = guideW ? guideW * evalBoard(S, seat) : 0;
     let pri = v + gv + 0.15 * depth + (nodes % 7) * 0.001;
@@ -289,15 +312,48 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     while (!timeOver()) { rounds++; seenI.clear(); cut = false; restore(root); rec(0, B); if (onProgress) onProgress({ macros: states, nodes: leaves, seen: seenI.size, frontier: -B, best: best.v, line: best.rs, ms: Date.now() - t0 }); if (!cut) { complete = true; break; } B *= 2; }
     return { score: best.v, raw: best.raw, line: best.rs, board: best.board, nodes: leaves, macros: states, states, complete, ms: Date.now() - t0, prof: PROF };
   }
+  if (nrpa) { // Nested Rollout Policy Adaptation: play whole turns to the end, learn which moves appear in the best whole turns, steer toward them.
+    // Only finished turns are judged (best point of each turn), so long set-up lines are not cut off for looking weak half-way.
+    const ROOTF = snapshot(); const N = +(process.env.NRPA_N || 60), LV = nrpa, ALPHA = 1;
+    const ckey = (d, c) => { if (c.kind === 'pick') return normLabel(d.options[c.i].label); if (c.kind === 'text' && d.options && /^[0-9 ]+$/.test(c.t)) return c.t.split(' ').map(n => normLabel(d.options[+n - 1]?.label || n)).sort().join('|'); return JSON.stringify(c); };
+    const pkey = (d) => String(d.prompt || d.kind || '').replace(/[0-9]+/g, '#').slice(0, 80);
+    let playouts = 0; const BR = searchT1.BR = { ended: 0, nopending: 0, turn: 0, oppdecides: 0, nodec: 0, noidle: 0, nocands: 0, apply1: 0, gofail: 0, dbg: 0 };
+    const playout = (pol) => {
+      restore(ROOTF); playouts++; const steps = []; let bv = -1, blen = 0;
+      for (let g = 0; g < 800; g++) {
+        autoAdvance(S); if (S.ended || !S.pending || S.turn !== 1 || dseat() !== seat) { BR[S.ended ? 'ended' : !S.pending ? 'nopending' : S.turn !== 1 ? 'turn' : 'oppdecides']++; break; }
+        const d = decision(S, seat); if (!d) { BR.nodec++; break; } let moves;
+        if (isIdle()) { const v = (evalFn || evalBoard)(S, seat); if (v > bv) { bv = v; blen = steps.length; }
+          if (v > best.v) best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) };
+          const ix = idleOpts(d); if (!ix.length) { BR.noidle++; if (process.env.DBGN && steps.length > 2 && BR.dbg++ < 4) console.error('NOIDLE', steps.length, steps.map(x => x.k).join(' > '), JSON.stringify(d.options.map(o => o.label)).slice(0, 600)); break; } moves = ix.map(i => ({ key: 'I:' + normLabel(d.options[i].label), go: () => push(S, { seat, resp: d.options[i].resp, label: d.options[i].label }) })); }
+        else { const cs = subCands(d); if (!cs.length) { BR.nocands++; BR['nc:' + d.kind] = (BR['nc:' + d.kind] || 0) + 1; break; } if (cs.length === 1) { if (!apply(d, cs[0])) { BR.apply1++; break; } continue; } const pk = pkey(d); moves = cs.map(c => ({ key: 'S:' + pk + '|' + ckey(d, c), go: () => apply(d, c) })); }
+        let z = 0; const w = moves.map(m => { const e = Math.exp(pol.get(m.key) || 0); z += e; return e; }); let r = rnd() * z, ci = 0; while (ci < w.length - 1 && (r -= w[ci]) > 0) ci++;
+        steps.push({ keys: moves.map(m => m.key), k: moves[ci].key }); if (!moves[ci].go()) { BR.gofail++; BR['gf:' + moves[ci].key.slice(0, 60)] = (BR['gf:' + moves[ci].key.slice(0, 60)] || 0) + 1; break; }
+      }
+      return { v: bv, seq: steps.slice(0, blen) };
+    };
+    const adapt = (pol, seq) => { const p = new Map(pol); for (const st of seq) { let z = 0; const e = st.keys.map(k => { const x = Math.exp(pol.get(k) || 0); z += x; return x; }); p.set(st.k, (p.get(st.k) || 0) + ALPHA); st.keys.forEach((k, i) => p.set(k, (p.get(k) || 0) - ALPHA * e[i] / z)); } return p; };
+    const run = (lv, pol) => { if (lv === 0 || timeUp()) return playout(pol); let b = { v: -1, seq: [] }; for (let i = 0; i < N && !timeUp(); i++) { const r = run(lv - 1, pol); if (r.v >= b.v) b = r; pol = adapt(pol, b.seq); } return b; };
+    let lastP = 0;
+    while (!timeUp()) { run(LV, new Map()); if (onProgress && playouts - lastP >= 200) { lastP = playouts; onProgress({ macros: playouts, nodes: 0, seen: 0, frontier: 0, best: best.v, line: best.rs, ms: Date.now() - t0 }); } }
+    return { score: best.v, raw: best.raw, line: best.rs, board: best.board, nodes: playouts, macros: playouts, ms: Date.now() - t0, prof: PROF };
+  }
+  if (listRoot) { const d = decision(S, seat); return { root: d && isIdle() ? idleOpts(d).map(i => normLabel(d.options[i].label)) : [] }; }
   ROOT = snapshot(); consider(0); const rootSnap = frontier[0].snap;
   while (frontier.length && !timeUp()) {
-    frontier.sort((a, b) => eff(b) - eff(a)); const node = frontier.shift(); CUR_BR = node.depth === 0 ? null : node.br; bexp[node.br] = (bexp[node.br] || 0) + 1;
+    let node;
+    if (BEAM) { // step-by-step beam: finish every position at the shallowest step before going deeper, keeping only the best BEAM per step
+      let md = Infinity; for (const x of frontier) if (x.depth < md) md = x.depth;
+      const lvl = frontier.filter(x => x.depth === md).sort((a, b) => eff(b) - eff(a));
+      if (lvl.length > BEAM) { const drop = new Set(lvl.slice(BEAM)); for (let i = frontier.length - 1; i >= 0; i--) if (drop.has(frontier[i])) frontier.splice(i, 1); }
+      node = lvl[0]; frontier.splice(frontier.indexOf(node), 1);
+    } else { frontier.sort((a, b) => eff(b) - eff(a)); node = frontier.shift(); } CUR_BR = node.depth === 0 ? null : node.br; bexp[node.br] = (bexp[node.br] || 0) + 1;
     if (onProgress && macros - (searchT1._lp || 0) >= 50) { searchT1._lp = macros; onProgress({ macros, nodes, seen: seen.size, frontier: frontier.length, best: best.v, line: best.rs, ms: Date.now() - t0 }); }
     let nsnap = node.snap; if (nsnap.light) { if (restoreAny(nsnap) === false) continue; nsnap = snapshot(); } else restore(nsnap); const d = decision(S, seat); if (!d) continue;
     if (process.env.DBG) console.log('EXPAND', node.depth, d.options.map(o => o.label.slice(0, 50)).join(' | '));
     const okI = process.env.CANON ? new Set(idleOpts(d)) : null;
     for (let i = 0; i < d.options.length && !timeUp(); i++) {
-      const o = d.options[i]; if (/Battle Phase|End Phase/.test(o.label)) continue; if (okI && !okI.has(i)) continue;
+      const o = d.options[i]; if (/Battle Phase|End Phase/.test(o.label)) continue; if (okI && !okI.has(i)) continue; if (rootOnly && node.depth === 0 && normLabel(o.label) !== rootOnly) continue;
       restore(nsnap); const dd = decision(S, seat);
       if (!push(S, { seat, resp: dd.options[i].resp, label: dd.options[i].label })) { if (process.env.DBG) console.log('PUSHFAIL', dd.options[i].label, JSON.stringify(S.errors && S.errors.slice(-1))); continue; }
       macro(node.depth, null, i);
