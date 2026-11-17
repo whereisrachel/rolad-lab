@@ -83,6 +83,7 @@ http.createServer(async (req, res) => {
     if (p === '/api/jobs') return send(res, 200, jobs.slice(-60).reverse().map(({ proc, ...j }) => j));
     if (p === '/api/deck' && req.method === 'POST') { const b = await body(req); const f = `decks/user/${(b.name || 'list').replace(/[^A-Za-z0-9_-]+/g, '_')}-${Date.now()}.txt`; fs.writeFileSync(f, b.text || ''); return send(res, 200, { path: f }); }
     if (p === '/api/run' && req.method === 'POST') { const b = await body(req); if (!STEPS[b.kind]) return send(res, 400, { error: 'unknown job' }); if (b.kind === 'explore' && !b.deckA) { const last = [...jobs].reverse().find(j => j.kind === 'explore' && j.deckA); b.deckA = (last && last.deckA) || 'decks/L2-vand3.ydk'; } return send(res, 200, addJob(b)); }
+    if (p === '/api/restart' && req.method === 'POST') { if (current) return send(res, 409, { error: 'a job is running' }); send(res, 200, { ok: true }); setTimeout(() => process.exit(42), 300); return; }
     if (p === '/api/cancel' && req.method === 'POST') { const b = await body(req); const j = jobs.find(x => x.id === b.id); if (j) { if (j === current && current.proc) { j.status = 'cancelled'; current.proc.kill(); } else if (j.status === 'queued') j.status = 'cancelled'; save(); } return send(res, 200, { ok: true }); }
     send(res, 404, { error: 'not found' });
   } catch (e) { send(res, 500, { error: String(e.message) }); }
