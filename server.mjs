@@ -60,6 +60,11 @@ const STEPS = {
     const r = await run(['decktest.mjs', '--deck', A, '--id', String(j.id), '--hands', String(j.hands || 22), '--min', String(j.min || 2), '--scn', j.htscn || 'none', '--variants', JSON.stringify(j.variants || [])], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/^deck test/.test(l)) j.diag = l; });
     const out = `reports/decktest-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('deck test failed: ' + r.out.slice(-400)); j.report = out;
   },
+  async findlist(j) { // every stage by itself: noise, candidates, rounds, new list, fresh-hand check, report
+    j.stage = 'finding a better list'; const A = await resolveDeck(j.deckA); const args = ['findlist.mjs', '--deck', A, '--id', String(j.id)]; if (j.mini) args.push('--mini');
+    const r = await run(args, {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/^(stage|noise|candidates|Extra Deck use|findlist)/.test(l)) { if (/^stage/.test(l)) j.stage = l; j.diag = (j.diag ? j.diag + ' | ' : '') + l; } });
+    const out = `reports/findlist-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('find a better list failed: ' + r.out.slice(-400)); j.report = out;
+  },
   async calibrate(j) {
     const dir = `results/cal-${j.id}`; fs.mkdirSync(dir, { recursive: true }); const T = JSON.parse(fs.readFileSync('data/guide_tests.json', 'utf8'));
     for (let i = 0; i < T.length; i++) { j.stage = 'guide hand ' + (i + 1) + '/' + T.length; await run(['guidecheck.mjs', 'decks/ROLAD-L2.ydk', '22'], { ONLY: T[i].id, MAC: '800', PAT: '400', JSONOUT: `${dir}/cal.jsonl` }); j.progress = Math.round(100 * (i + 1) / T.length); }

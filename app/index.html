@@ -78,9 +78,9 @@
 </section>
 <section id="explorer">
   <div class="card">
-    <b>The explorer finds missing pieces by itself.</b> It plays fresh hands with your list, finds the ones that fail, works out what they were missing (no starter, too few bodies, dead cards, Theorealize Medius stuck in hand), searches every legal card for ones that supply it, replays the failing hands with each, learns which kinds of cards help, and queues full tests for its best finds. It runs every night if you set up the nightly task (see "Set up nightly runs.bat").
-    <label>Baseline list</label><select id="exDeck"></select>
-    <button class="btn" id="exGo">Run the explorer now</button> <span id="exMsg" class="small"></span>
+    <b>Find a better list.</b> Runs by itself from start to finish. It measures its own noise, tests -1 and +1 of every card in your list plus the best-connected new Main and Extra Deck cards (from every legal card), narrows down in rounds, builds a new list from the changes that clearly win, and checks it against your list on fresh hands. Every game is played from scratch by the line finder on the same shuffles, with the opponent holding none / Ash / Imperm / Droll in rotation.
+    <label>Your list</label><select id="exDeck"></select>
+    <button class="btn" id="flGo">Find a better list (about 6 to 7 hours)</button> <button class="btn" id="flMini">Quick check that it works (about 20 minutes)</button> <span id="exMsg" class="small"></span>
   </div>
   <div class="card" id="exLive"></div>
   <div class="card" id="exLearn"></div>
@@ -117,7 +117,7 @@ $('go').onclick = async () => { try { const m = $('mode').value; const scn = [..
   if (m === 'pair') Object.assign(j, { kind: 'pair', deckB: await pasted('B') });
   else { const c = $('cands').value.split('\n').map(x => x.trim()).filter(Boolean); if (!c.length) throw new Error('List at least one card.'); Object.assign(j, { kind: 'screen', cands: c.join('\n'), slot: (m === 'ed' ? 'ED:' : '') + $('slot').value.trim(), n: Math.min(j.n, 60), scn: scn.split(',').slice(0, 2).join(',') }); }
   const r = await api('/api/run', j); $('goMsg').innerHTML = `<span class="good">Queued as job ${r.id}. Follow it under Jobs.</span>`; } catch (e) { $('goMsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } };
-const NAME = { pair: 'Compare lists', screen: 'Card test', explore: 'Explorer', calibrate: 'Calibration', bench: 'Line finder test', deepscreen: 'Deep card screen' };
+const NAME = { pair: 'Compare lists', screen: 'Card test', explore: 'Explorer', calibrate: 'Calibration', bench: 'Line finder test', deepscreen: 'Deep card screen', decktest: 'Deck test', findlist: 'Find a better list' };
 async function loadJobs() { const js = await api('/api/jobs');
   $('jobsList').innerHTML = js.length ? '<table><tr><th>Job</th><th>What</th><th>Status</th><th></th></tr>' + js.map(j => `<tr><td>${j.id}</td><td><b>${esc(j.title || NAME[j.kind])}</b><div class="small mute">${esc(j.kind === 'pair' ? j.deckA + ' vs ' + j.deckB : j.kind === 'screen' ? (j.cands || '').split('\n').length + ' cards, slot ' + j.slot : j.kind === 'explore' ? j.deckA : '')}${j.stage ? ' · ' + esc(j.stage) : ''}${j.diag ? '<br>' + esc(j.diag) : ''}</div></td><td class="${j.status === 'done' ? 'good' : j.status === 'failed' ? 'bad' : j.status === 'running' ? 'warn' : 'mute'}">${esc(j.status)}${j.status === 'running' ? ' ' + (j.progress || 0) + '%' : ''}${j.error ? '<div class="small">' + esc(j.error.slice(0, 200)) + '</div>' : ''}</td><td>${j.report ? `<a href="#" data-r="${esc(j.report)}">report</a>` : ''} ${/queued|running/.test(j.status) ? `<a href="#" data-c="${j.id}">cancel</a>` : ''}</td></tr>`).join('') + '</table>' : '<span class="mute">No jobs yet.</span>';
   $('jobsList').querySelectorAll('a[data-r]').forEach(a => a.onclick = (e) => { e.preventDefault(); document.querySelector('nav button[data-t=results]').click(); showReport(a.dataset.r); });
@@ -177,5 +177,6 @@ async function loadExplorer() { loadLive();
     $('exLearn').innerHTML = `<b>Learned from ${L.runs} run(s), ${tried.length} cards tried.</b><div class="small" style="margin-top:6px">Kinds of card that help most: ${tw.slice(0, 6).map(([t, w]) => `${esc(t.replace(/_/g, ' '))} <span class="good">×${w.toFixed(2)}</span>`).join(', ')}<br>Help least: ${tw.slice(-4).map(([t, w]) => `${esc(t.replace(/_/g, ' '))} <span class="bad">×${w.toFixed(2)}</span>`).join(', ')}</div><div class="small" style="margin-top:8px">Best cards so far (failing hands rescued / times tried): ${tried.slice(0, 10).map(([n, h]) => `${esc(n)} ${h.rescued}/${h.tests}`).join(', ')}</div>`;
   } catch { $('exLearn').innerHTML = '<span class="mute">Nothing learned yet: the first explorer run has not finished.</span>'; }
   try { const rs = (await api('/api/reports')).filter(r => /explore-/.test(r.p)); $('exLast').innerHTML = rs.length ? mdToHtml(await file(rs[0].p)) : '<span class="mute">No explorer report yet.</span>'; } catch {} }
-$('exGo').onclick = async () => { try { const r = await api('/api/run', { kind: 'explore', deckA: $('exDeck').value, macros: 150 }); $('exMsg').innerHTML = `<span class="good">Queued as job ${r.id}. On this computer the full run takes about 7 to 9 hours; live results show on this tab once card testing starts.</span>`; } catch (e) { $('exMsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } };
+const flRun = async (mini) => { try { const r = await api('/api/run', { kind: 'findlist', deckA: $('exDeck').value, mini, title: mini ? 'Find a better list: quick check' : 'Find a better list' }); $('exMsg').innerHTML = `<span class="good">Queued as job ${r.id}. Live results show on this tab; the report goes to Results.</span>`; } catch (e) { $('exMsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } };
+$('flGo').onclick = () => flRun(false); $('flMini').onclick = () => flRun(true);
 </script></body></html>

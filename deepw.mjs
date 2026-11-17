@@ -16,7 +16,7 @@ const divs = String(t.divs || '6,1.5').split(',').map(Number); let best = { scor
 // opening lanes: every legal first move gets an equal share of the time (the search builds long lines well once the opening is fixed,
 // but left alone it keeps chasing whatever adds board value fastest); then one open search with the rest of the time
 const OPEN = process.env.OPEN === '1';
-if (process.env.NRPA !== '0') { process.env.NRPA_N ||= '30'; const r = await searchT1(mk(), { ms: t.minutes * 60000, nrpa: +(process.env.NRPA || 3), evalFn: (S, s) => disruption(S, s) }); best = r; t.minutes = 0; if (process.env.PROF2) console.error('playouts ' + r.macros + ' ' + JSON.stringify(Object.entries(searchT1.BR).sort((a,b)=>b[1]-a[1]).slice(0,12))); }
+if (process.env.NRPA !== '0') { process.env.NRPA_N ||= '30'; const r = await searchT1(mk(), { ms: t.minutes * 60000, nrpa: +(process.env.NRPA || 3), seed: t.sseed || 1, evalFn: (S, s) => disruption(S, s) }); best = r; t.minutes = 0; if (process.env.PROF2) console.error('playouts ' + r.macros + ' ' + JSON.stringify(Object.entries(searchT1.BR).sort((a,b)=>b[1]-a[1]).slice(0,12))); }
 const roots = OPEN ? ((await searchT1(mk(), { listRoot: true, evalFn: (S, s) => disruption(S, s) })).root || []) : [];
 if (roots.length > 1) { const share = t.minutes * 60000 * 0.8 / roots.length;
   for (const rt of roots) { const r = await searchT1(mk(), { ms: share, maxMacros: Infinity, patience: Infinity, guideW: 0.3, altCap: 8, maxMacro: 80, frontierCap: +(process.env.FC || 3000), div: 1.5, rootOnly: rt, evalFn: (S, s) => disruption(S, s) }); if ((r.score || 0) > (best.score || 0)) best = r; }
