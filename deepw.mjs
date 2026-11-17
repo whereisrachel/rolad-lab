@@ -11,4 +11,4 @@ const divs = String(t.divs || '6,1.5').split(',').map(Number); let best = { scor
 for (const dv of divs) { const r = await searchT1(mk(), { ms: t.minutes * 60000 / divs.length, maxMacros: Infinity, patience: Infinity, guideW: 0.3, altCap: 8, maxMacro: 80, frontierCap: 3000, div: dv, evalFn: (S, s) => disruption(S, s) }); if ((r.score || 0) > (best.score || 0)) best = r; }
 const hl = (String(best.board || '').match(/\n\s*Hand: ([^\n]*)/g) || []).pop() || ''; const left = hl.replace(/^\s*Hand: /, '').split(', ').map(x => x.trim());
 const used = (best.line || []).join(' | ');
-console.log('RESULT ' + JSON.stringify({ v: best.score || 0, line: (best.line || []).filter(l => /Summon|Activate|Selected/.test(l)).slice(0, 60), used: t.hand.map(n => used.includes(n)), left }));
+console.log('RESULT ' + JSON.stringify({ v: best.score || 0, board: (String(best.board || '').split('YOU:')[1] || ''), line: (best.line || []).filter(l => /Summon|Activate|Selected/.test(l)).slice(0, 60), used: t.hand.map(n => used.includes(n)), left }));

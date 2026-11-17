@@ -7,12 +7,16 @@ const LINK = 0x4000000;
 let HT = 1; export const setHT = (w) => { HT = w; }; // weight of a hand trap kept in hand (1 = counts as an interruption; 0 = board-only comparison)
 let PROG = 0; export const setProgress = (w) => { PROG = w; }; // search-guidance credit for Ritual-wing progress (not part of the reported board value when 0)
 export function disruption(S, seat, detail = false) {
-  const { lb, h } = S; const me = teamOf(S.game, seat); const D = cardDB().data;
+  const { lb, h } = S; const me = teamOf(S.game, seat);
+  const mz = lb.duelQueryLocation(h, { flags: QFLAGS, controller: me, location: L.MZONE });
   const q = (loc) => lb.duelQueryLocation(h, { flags: 0x1 | 0x2 | 0x200, controller: me, location: loc }).filter(c => c && c.code);
-  const mons = q(L.MZONE), st = q(L.SZONE), hand = q(L.HAND);
-  // which of my monster zones each Link Monster points to (Main Monster Zones 0-4, Extra Monster Zones 5 = above column 1, 6 = above column 3)
-  const mz = lb.duelQueryLocation(h, { flags: QFLAGS, controller: me, location: L.MZONE }); const occ = (z) => !!(mz[z] && mz[z].code);
-  const pointed = (c) => { const z = mz.indexOf(c); const mk = c.link?.marker || 0; const out = []; const col = (cc) => (cc >= 0 && cc <= 4 ? cc : null);
+  return scoreBoard({ mz: mz.map((c, z) => c && c.code ? { code: c.code, z, marker: c.link?.marker || 0 } : null), st: q(L.SZONE).map(c => ({ code: c.code, position: c.position })), hand: q(L.HAND).map(c => ({ code: c.code })) }, detail);
+}
+// the same scoring on a plain board (used for the guide's written end boards too): mz = 7 slots (0-4 Main, 5 = Extra Monster Zone above column 1, 6 = above column 3)
+export function scoreBoard(B, detail = false) {
+  const D = cardDB().data; const mons = B.mz.filter(Boolean), st = B.st, hand = B.hand;
+  const occ = (z) => !!B.mz[z];
+  const pointed = (c) => { const z = c.z; const mk = c.marker || 0; const out = []; const col = (cc) => (cc >= 0 && cc <= 4 ? cc : null);
     if (z >= 0 && z <= 4) { if (mk & 0x8 && z > 0) out.push(z - 1); if (mk & 0x20 && z < 4) out.push(z + 1); for (const [b, dc] of [[0x40, -1], [0x80, 0], [0x100, 1]]) if (mk & b) { const cc = z + dc; if (cc === 1) out.push(5); if (cc === 3) out.push(6); } }
     else if (z === 5 || z === 6) { const c0 = z === 5 ? 1 : 3; for (const [b, dc] of [[0x1, -1], [0x2, 0], [0x4, 1]]) if (mk & b) { const cc = col(c0 + dc); if (cc !== null) out.push(cc); } }
     return out.filter(occ).length; };
