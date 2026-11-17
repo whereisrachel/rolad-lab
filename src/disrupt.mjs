@@ -10,7 +10,8 @@ export function disruption(S, seat, detail = false) {
   const { lb, h } = S; const me = teamOf(S.game, seat);
   const mz = lb.duelQueryLocation(h, { flags: QFLAGS, controller: me, location: L.MZONE });
   const q = (loc) => lb.duelQueryLocation(h, { flags: 0x1 | 0x2 | 0x200, controller: me, location: loc }).filter(c => c && c.code);
-  return scoreBoard({ mz: mz.map((c, z) => c && c.code ? { code: c.code, z, marker: c.link?.marker || 0 } : null), st: q(L.SZONE).map(c => ({ code: c.code, position: c.position })), hand: q(L.HAND).map(c => ({ code: c.code })) }, detail);
+  const deckNames = new Set(q(L.DECK).map(c => name(c.code)));
+  return scoreBoard({ mz: mz.map((c, z) => c && c.code ? { code: c.code, z, marker: c.link?.marker || 0 } : null), st: q(L.SZONE).map((c, i) => ({ code: c.code, position: c.position })), hand: q(L.HAND).map(c => ({ code: c.code })), gy: q(L.GRAVE).map(c => ({ code: c.code })), blsInDeck: deckNames.has('Black Luster Soldier - Soldier of Light and Darkness') }, detail);
 }
 // the same scoring on a plain board (used for the guide's written end boards too): mz = 7 slots (0-4 Main, 5 = Extra Monster Zone above column 1, 6 = above column 3)
 export function scoreBoard(B, detail = false) {
@@ -22,46 +23,56 @@ export function scoreBoard(B, detail = false) {
     return out.filter(occ).length; };
   const credited = new Set(); // a second copy of the same card adds nothing: these effects are once per turn by name, or need the same setup twice
   const nm = (c) => name(c.code); const info = (c) => D.get(c.code) || {};
+  // Card-by-card audit (Nov 17): only what the board can do on the OPPONENT's turn counts. Bodies, ATK and own-turn effects score 0.
+  // Weights: board wipe 2; one solid interruption (negate / banish / destroy on their turn) 1; protection 0.3-0.75; extender on their turn 0.3; +0.5 per different kind of answer.
+  const has = (re) => mons.some(c => re.test(nm(c))); const stHas = (re) => st.some(c => re.test(nm(c)) && (c.position & 0x5));
   const ppLink = mons.some(c => /Power Patron/.test(nm(c)) && (info(c).type & LINK));
-  const races = new Set(mons.map(c => info(c).race)).size;
+  const races = new Set(mons.map(c => info(c).race)).size; const threeTypes = races >= 3;
+  const fusion = mons.some(c => info(c).type & 0x40);
+  const citrinitasOn = st.some(c => /Citrinitas/.test(nm(c)) && (c.position & 0x5)) && ppLink; // Ars Magna monster effects become Quick Effects
   const parts = []; const layers = new Set(); let v = 0;
   const add = (label, w, layer) => { v += w; parts.push(label + ' ' + w); if (layer && w >= 0.5) layers.add(layer); };
-  for (const c of mons) {
-    const n = nm(c); if (credited.has(n)) { parts.push(n + ' (2nd copy) 0'); continue; } credited.add(n);
-    // Medicurius: 1+ pointed = monster negate on YOUR turn only (no value on theirs); 2+ = unaffected by their effects; 3 = Quick Effect banish everything they control
-    if (/Medicurius|Mediclius/.test(n)) { const p = pointed(c); if (p >= 3) { add(n + ' points to 3: banish all', 2, 'wipe'); add(n + ' unaffected', 0.5, 'protect'); } else if (p === 2) add(n + ' points to 2: unaffected', 0.5, 'protect'); else parts.push(n + ' points to ' + p + ' 0'); }
-    // Ars Magna monsters: their banish effects are not Quick Effects (your turn only), so nothing on the opponent's turn
-    else if (/Ars Magna of Infinity|Ars Magna of Purification/.test(n)) parts.push(n + ' (own turn only) 0');
-    else if (/Diactorus/.test(n)) add(n, races >= 3 ? 1 : 0.3, 'negate');
-    else if (/Desirae/.test(n)) add(n, 1, 'negate');
-    else if (/Chaos Angel/.test(n)) add(n, 1, 'negate');
-    else if (/S:P Little Knight/.test(n)) add(n, 1, 'banish-monster');
-    else if (/^Nerva the Power Patron/.test(n)) { const trig = mons.some(m => /Non-Finito/.test(nm(m)) || (/Diactorus/.test(nm(m)) && races >= 3)); if (trig) add(n + ' (an Artmage Quick Effect can turn into destroy all)', 1, 'wipe'); else parts.push(n + ' (no Artmage Quick Effect to trigger it) 0'); }
-    else if (/^Junora the Power Patron/.test(n)) parts.push(n + ' (negate is on its own Synchro Summon only) 0');
-    else if (/Non-Finito/.test(n)) add(n, 0.5, 'negate');
-    // Ritual wing: MoDC = body unaffected by their activated effects + protects our S/T from destroy/banish; BLS/Black Chaos = unaffected bodies (their banish happens on our turn / on summon)
-    else if (/Magician of Dark Chaos/.test(n)) add(n, 1, 'protect');
-    else if (/Black Luster Soldier/.test(n)) add(n, 0.5, 'protect');
-    else if (/^Black Chaos$/.test(n)) add(n, 0.5, 'protect');
-    else { const g = genericCredit(c.code, 'mon'); if (g) add(n + ' (text)', g[0], g[1]); }
-  }
-  // Mind Shuffle on their turn: return a Lv7+ body, Special Summon a LADR monster from hand -> its summon effect banishes (BLS: banish 1; MoDC: banish 1 face-down). Needs MS on field + a Lv7+ body + the monster in hand.
-  if (st.some(c => /Mind Shuffle/.test(nm(c))) && mons.some(c => (info(c).level || 0) >= 7)) {
-    const hb = hand.filter(c => /Black Luster Soldier|Magician of Dark Chaos/.test(nm(c))); if (hb.length) add('MS swap -> ' + nm(hb[0]) + ' banish', 1, 'banish-monster');
+  const zero = (label) => parts.push(label + ' 0');
+  // with two copies, the better-placed one is the one that counts (e.g. the Medicurius that points to 3)
+  const order = mons.slice().sort((a, b) => (/Medicurius|Mediclius/.test(nm(b)) ? pointed(b) : 0) - (/Medicurius|Mediclius/.test(nm(a)) ? pointed(a) : 0));
+  for (const c of order) {
+    const n = nm(c); if (credited.has(n)) { zero(n + ' (2nd copy)'); continue; } credited.add(n);
+    if (/Medicurius|Mediclius/.test(n)) { const p = pointed(c); if (p >= 3) { add(n + ' points to 3: Quick Effect banish all their cards', 2, 'wipe'); add(n + ' unaffected', 0.5, 'protect'); } else if (p === 2) add(n + ' points to 2: unaffected only', 0.5, 'protect'); else zero(n + ' points to ' + p + ' (1+ negate is your turn only)'); }
+    else if (/Ars Magna of Infinity/.test(n)) citrinitasOn ? add(n + ' (Citrinitas + Power Patron Link: Quick Effect banish 1 monster)', 1, 'banish-monster') : zero(n + ' (banish is your turn only without Citrinitas)');
+    else if (/Ars Magna of Purification/.test(n)) citrinitasOn ? add(n + ' (Citrinitas + Power Patron Link: Quick Effect banish Spells/Traps)', 1, 'banish-st') : zero(n + ' (banish is your turn only without Citrinitas)');
+    else if (/Diactorus/.test(n)) threeTypes ? add(n + ' (3 Types: negate + destroy)', 1, 'negate') : zero(n + ' (needs 3 Monster Types)');
+    else if (/Desirae/.test(n)) { const eq = st.filter(e => /Fiendsmith's (Requiem|Sequence)/.test(nm(e))).reduce((r, e) => r + (/Sequence/.test(nm(e)) ? 2 : 1), 0); eq ? add(n + ' (negates ' + eq + ')', 1 + 0.5 * (eq - 1), 'negate') : zero(n + ' (no equipped Link: negates 0)'); }
+    else if (/S:P Little Knight/.test(n)) add(n + ' (Quick Effect banish 2 face-up)', 1, 'banish-monster');
+    else if (/^Nerva the Power Patron/.test(n)) { const trig = has(/Non-Finito/) || (has(/Diactorus/) && threeTypes) || (has(/Artmage Finmel/) && threeTypes); trig ? add(n + ' (Artmage Quick Effect -> destroy all)', 1, 'wipe') : zero(n + ' (no Artmage Quick Effect to trigger it)'); }
+    else if (/Non-Finito/.test(n)) add(n + ' (Quick Effect Fusion on their turn)', 0.5, 'negate');
+    else if (/Artmage Finmel/.test(n)) threeTypes ? add(n + ' (3 Types: Quick Effect negate their monsters)', 1, 'negate') : zero(n + ' (needs 3 Monster Types)');
+    else if (/Magician of Dark Chaos/.test(n)) add(n + ' (unaffected; your Spells/Traps cannot be destroyed or banished)', 0.75, 'protect');
+    else if (/Black Luster Soldier/.test(n)) add(n + ' (unaffected unless targeted)', 0.3, 'protect');
+    else if (/^Black Chaos$/.test(n)) add(n + ' (unaffected; its banish is your Main Phase only)', 0.3, 'protect');
+    else if (/Chaos Angel/.test(n)) add(n + ' (protection only; banish is on summon)', 0.3, 'protect');
+    else if (/Purification Power Patron/.test(n)) mons.some(m => m !== c && info(m).attribute === 0x20 && info(m).race === 0x4) ? add(n + ' (Quick Effect Link Summon on their turn)', 0.3, null) : zero(n + ' (no other DARK Fairy)');
+    else if (/Fiendsmith's Requiem/.test(n)) add(n + ' (Quick Effect: Special Summon a Fiendsmith)', 0.3, null);
+    else if (/^Junora the Power Patron/.test(n)) zero(n + ' (negate is on its own Synchro Summon)');
+    else if (/Medius|Dark Magician of Destruction|Apprentice Illusion|Fiendsmith's Sequence|Fiendsmith Engraver|Lacrima|Skull Archfiend|Griffoh|Power Patron$|Theorealize Medius/.test(n)) zero(n + ' (nothing on their turn)');
+    else { const g = genericCredit(c.code, 'mon'); g ? add(n + ' (text)', g[0], g[1]) : zero(n); }
   }
   for (const c of st) {
     const n = nm(c);
-    if (/Impasto/.test(n)) add(n, 1, 'negate');
+    if (/Impasto/.test(n)) fusion ? add(n + ' (negate; banishes a Fusion you control)', 1, 'negate') : zero(n + ' (no Fusion Monster to banish)');
     else if (/Infinite Impermanence/.test(n)) add(n, 1, 'negate');
-    else if (/Mind Shuffle/.test(n)) add(n, 1, 'protect');
-    else if (/Theorealize Liberation/.test(n)) add(n, 0.5, 'protect');
-    else if (/Citrinitas/.test(n)) add(n, 0.3);
-    else if (!(info(c).type & 0x1000000)) { const g = genericCredit(c.code, 'st'); add('set ' + n + (g ? ' (text)' : ''), g ? g[0] : 0.2, g ? g[1] : undefined); } // unknown backrow (not pendulum scale)
+    else if (/Mind Shuffle/.test(n)) { const body = mons.some(m => (info(m).level || 0) >= 7 && !(info(m).type & LINK)); const bls = hand.some(h => /Black Luster Soldier/.test(nm(h))) || B.blsInDeck !== false;
+      body && bls ? add(n + ' (swap a Lv7+ for Black Luster Soldier: banish 1)', 1, 'banish-monster') : add(n + ' (search only)', 0.2, null); }
+    else if (/Theorealize Liberation/.test(n)) has(/^Medius the Pure$/) ? add(n + ' (Quick-Play: Special Summon a 300/200 on their turn)', 0.3, null) : zero(n + ' (needs Medius on field)');
+    else if (/Fiendsmith's Sequence/.test(n)) add(n + ' (equip: cannot be targeted)', 0.2, null);
+    else if (/Citrinitas|Requiem|Vandalism|Dark Magical Circle|Vidolia|Past Lull|Terminus|Treasure|Small World|Light and Darkness Ritual|Tract/.test(n)) zero(n + ' (nothing on their turn by itself)');
+    else if (info(c).type & 0x1000000) zero(n + ' (Pendulum Zone)');
+    else { const t = info(c).type; const trapOrQP = (t & 4) || ((t & 2) && (t & 0x10000)); const g = genericCredit(c.code, 'st'); g ? add('set ' + n + ' (text)', g[0], g[1]) : (trapOrQP ? add('set ' + n, 0.2) : zero(n)); }
   }
+  for (const c of (B.gy || [])) { const n = nm(c); if (/^Lacrima the Crimson Tears$/.test(n) && (B.gy || []).some(g => /Fiendsmith's (Requiem|Sequence)/.test(nm(g)))) { add('GY ' + n + ' (their turn: Special Summon a Fiendsmith Link)', 0.3, null); break; } }
   for (const c of hand) {
     const n = nm(c);
-    if (/Ash Blossom|Droll|Nibiru|Ghost/.test(n)) add('hand ' + n, HT, 'handtrap');
-    else if (/Infinite Impermanence/.test(n)) add('hand ' + n, HT, 'handtrap');
+    if (/Ash Blossom|Droll|Nibiru|Ghost|Infinite Impermanence|Effect Veiler|Mulcharmy|Maxx/.test(n)) add('hand ' + n, HT, 'handtrap');
+    else if (/^Griffoh$/.test(n) && !st.some(s => /Mind Shuffle/.test(nm(s)))) add('hand Griffoh (their turn: Set Mind Shuffle and use it)', 0.5, null);
     else add('hand ' + n, 0.15);
   }
   if (HT === 0) layers.delete('handtrap'); const lay = 0.5 * layers.size; v += lay;
