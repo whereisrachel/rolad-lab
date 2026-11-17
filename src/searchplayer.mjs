@@ -33,17 +33,24 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   function snapshot() {
     const _t = process.hrtime.bigint(); try { return snapshot0(); } finally { PROF.snap += Number(process.hrtime.bigint() - _t) / 1e6; PROF.ns++; }
   }
+  // Engine memory snapshots are stored as the pages that differ from a reference copy ("base").
+  // Speed: compare in 64 KB blocks first (most are unchanged), and re-anchor: when snapshots grow large
+  // (the turn has drifted far from the reference), the current memory becomes a new reference, so later
+  // snapshots only hold what changed since then. Old snapshots keep a pointer to the reference they used.
+  const BLK = 16 * PAGE; const bases = [base]; let recent = 0, recentN = 0;
   function snapshot0() {
     const cur = heap();
-    if (cur.length > base.length) { const nb = Buffer.alloc(cur.length); base.copy(nb); base = nb; }
+    let bi = bases.length - 1; let B = bases[bi];
+    if (cur.length > B.length) { const nb = Buffer.alloc(cur.length); B.copy(nb); bases[bi] = B = nb; }
     const lim0 = Math.min(cur.length, LIM); const full = (PROF.ns % 40 === 0);
-    if (full) { for (let o = lim0; o < cur.length; o += PAGE) { const e = Math.min(o + PAGE, cur.length); if (cur.compare(base, o, e, o, e) !== 0) throw new Error('engine memory used beyond scan limit at ' + o + '; raise LIM'); } }
-    // dirty pages -> merged runs, copied into ONE buffer (few allocations)
+    if (full) { for (let o = lim0; o < cur.length; o += PAGE) { const e = Math.min(o + PAGE, cur.length); if (cur.compare(B, o, e, o, e) !== 0) throw new Error('engine memory used beyond scan limit at ' + o + '; raise LIM'); } }
     const runs = []; let tot = 0;
-    for (let o = 0; o < lim0; o += PAGE) { const e = Math.min(o + PAGE, lim0); if (cur.compare(base, o, e, o, e) !== 0) { const L = runs.length; if (L && runs[L - 2] + runs[L - 1] === o) runs[L - 1] += e - o; else runs.push(o, e - o); tot += e - o; if (o > PROF.maxo) PROF.maxo = o; } }
+    for (let b = 0; b < lim0; b += BLK) { const be = Math.min(b + BLK, lim0); if (cur.compare(B, b, be, b, be) === 0) continue;
+      for (let o = b; o < be; o += PAGE) { const e = Math.min(o + PAGE, be); if (cur.compare(B, o, e, o, e) !== 0) { const L = runs.length; if (L && runs[L - 2] + runs[L - 1] === o) runs[L - 1] += e - o; else runs.push(o, e - o); tot += e - o; } } }
     const data = Buffer.allocUnsafe(tot); let w = 0; for (let i = 0; i < runs.length; i += 2) { cur.copy(data, w, runs[i], runs[i] + runs[i + 1]); w += runs[i + 1]; }
-    const pages = { runs, data };
-    PROF.pages += pages.data.length / PAGE;
+    const pages = { runs, data, bi };
+    PROF.pages += tot / PAGE; recent += tot / PAGE; recentN++;
+    if (recentN >= 30) { if (process.env.REBASE && recent / recentN > 96 && bases.length < 12) { bases.push(Buffer.from(cur.subarray(0, Math.max(lim0, cur.length)))); } recent = 0; recentN = 0; }
     const st = {}; for (const k of FIELDS) st[k] = structuredClone(S[k]);
     return { pages, st, n: game.responses.length, rsp: game.responses.map(r => ({ seat: r.seat, label: r.label, auto: r.auto, resp: r.resp })) };
   }
@@ -51,7 +58,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const _t = process.hrtime.bigint(); try { return restore0(s); } finally { PROF.rest += Number(process.hrtime.bigint() - _t) / 1e6; PROF.nr++; }
   }
   function restore0(s) {
-    const cur = heap(); cur.set(base.subarray(0, Math.min(base.length, cur.length, LIM)));
+    const cur = heap(); const B = bases[s.pages.bi || 0]; cur.set(B.subarray(0, Math.min(B.length, cur.length, LIM)));
     { const r = s.pages.runs, d = s.pages.data; let w = 0; for (let i = 0; i < r.length; i += 2) { d.copy(cur, r[i], w, w + r[i + 1]); w += r[i + 1]; } }
     for (const k of FIELDS) S[k] = structuredClone(s.st[k]);
     game.responses.length = 0; for (const r of s.rsp) game.responses.push({ ...r });
@@ -181,10 +188,11 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
       if (process.env.DBG3) console.log('SCR', k, d1.kind, String(d1.msg||d1.prompt||'').slice(0,60), '|', d1.options.slice(0,12).map(o=>o.label.slice(0,110)).join(' ; '));
       if (hit >= 0 && (d1.kind === 'pick' || d1.kind === 'unselect')) { const o1 = d1.options[hit]; if (!push(S, { seat, resp: o1.resp, label: o1.label })) break; k++; continue; }
       if (k < res.length && (d1.kind === 'multi' || d1.kind === 'sum')) { const mi = d1.options.map((o, i) => res[k].test(o.label) ? i + 1 : 0).filter(Boolean); if (mi.length) { const mx = d1.max || 1; const r2 = answer(S, seat, mi.slice(0, Math.max(mx, 1)).join(' ')); if (r2 && !r2.error && r2.resps && r2.resps.every(r => push(S, { seat, resp: r.resp, label: r.label }))) { k++; continue; } } }
-      if (isIdle()) { if (k >= res.length) break; console.log('SCRIPT STUCK at', k, script[k], '| idle options:', d1.options.map(o => o.label).join(' ; ')); break; }
+      if (isIdle()) { if (k >= res.length) break; if (process.env.DBG3) console.log('SCRIPT STUCK at', k, script[k], '| idle options:', d1.options.map(o => o.label).join(' ; ')); break; }
       const c1 = cands(d1); if (!c1.length || !apply(d1, c1[0])) break;
     }
-    if (k < res.length) console.log('SCRIPT ended early at', k, '/', res.length);
+    if (k < res.length && process.env.DBG3) console.log('SCRIPT ended early at', k, '/', res.length);
+    if (k === 0 && !process.env.KEEP_STUCK) return { score: 0, skipped: true, line: [], board: '', nodes: 0, macros: 0, ms: Date.now() - t0, prof: PROF }; // opening never applied: this pass would just repeat the free search
   }
   if (enumOnly) { // automatic openers: every first action x each option at its next enumDepth real choices -> label lists
     const out = []; const root = snapshot(); const d0 = decision(S, seat); if (!d0 || !isIdle()) return { openers: [] };

@@ -8,7 +8,7 @@ const CIT = ['Activate Ars Magna - "Citrinitas" \\(hand', 'Activate Ars Magna - 
 const PURIF = ['Activate Ars Magna of Purification and Corruption \\(hand', 'Citrinitas', ...CIT];
 const INF = ['Activate Ars Magna of Infinity and Finity \\(hand', 'Purification and Corruption', ...PURIF];
 // extra full-line scripts keyed by hand card name regex
-export const lineScripts = (hand) => { const o = [CORE_N]; const h = hand.join('|');
+export const lineScripts = (hand) => { const o = []; const h = hand.join('|'); if (/Medius the Pure/.test(h)) o.push(CORE_N);
   if (/Ars Magna of Infinity and Finity/.test(h)) o.push(INF);
   if (/Ars Magna of Purification and Corruption/.test(h)) o.push(PURIF);
   if (/Ars Magna - "Citrinitas"/.test(h)) o.push(CIT);
