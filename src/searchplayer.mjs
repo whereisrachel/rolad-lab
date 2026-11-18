@@ -52,7 +52,7 @@ export function evalBoard(S, seat) {
   return v;
 }
 
-export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48, onProgress = null, dfs = false, probe = 0, nsOnly = null, listRoot = false, rootOnly = null, nrpa = 0 } = {}) {
+export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48, onProgress = null, dfs = false, probe = 0, nsOnly = null, listRoot = false, rootOnly = null, nrpa = 0, hints = null } = {}) {
   searchT1._lp = 0; resetLib(); const S = autoAdvance(await simulate(game));
   S.ev = function () {}; S.events.length = 0; // no event log during search
   const mod = S.lb[OcgCoreInternal].module; const me = teamOf(game, seat);
@@ -328,6 +328,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const PRI = new Map(); const prior = (key) => { if (PRI.has(key)) return PRI.get(key); let p = 0; const m = /^I:Normal Summon (.+?) \(/.exec(key);
       if (m) { const D = cardDB(); let t = ''; for (const [code] of D.data) if (name(code) === m[1]) { t = (D.text.get(code) || {}).desc || ''; break; }
         if (/\(Quick Effect\): You can (discard|send) this card/i.test(t)) p = -3; else if (!/Normal Summoned|Normal or Special Summoned/i.test(t)) p = -1; }
+      if (hints && hints[key]) p += hints[key];
       PRI.set(key, p); return p; };
     let playouts = 0; const BR = searchT1.BR = { ended: 0, nopending: 0, turn: 0, oppdecides: 0, nodec: 0, noidle: 0, nocands: 0, apply1: 0, gofail: 0, dbg: 0 };
     const playout = (pol) => {
@@ -336,7 +337,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
         autoAdvance(S); if (S.ended || !S.pending || S.turn !== 1 || dseat() !== seat) { BR[S.ended ? 'ended' : !S.pending ? 'nopending' : S.turn !== 1 ? 'turn' : 'oppdecides']++; break; }
         const d = decision(S, seat); if (!d) { BR.nodec++; break; } let moves;
         if (isIdle()) { const v = (evalFn || evalBoard)(S, seat); if (v > bv) { bv = v; blen = steps.length; }
-          if (v > best.v) best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) };
+          if (v > best.v) best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat), keys: steps.map(x => x.k) };
           const ix = idleOpts(d); if (!ix.length) { BR.noidle++; if (process.env.DBGN && steps.length > 2 && BR.dbg++ < 4) console.error('NOIDLE', steps.length, steps.map(x => x.k).join(' > '), JSON.stringify(d.options.map(o => o.label)).slice(0, 600)); break; } moves = ix.map(i => ({ key: 'I:' + normLabel(d.options[i].label), go: () => push(S, { seat, resp: d.options[i].resp, label: d.options[i].label }) })); }
         else { const cs = subCands(d); if (!cs.length) { BR.nocands++; BR['nc:' + d.kind] = (BR['nc:' + d.kind] || 0) + 1; break; } if (cs.length === 1) { if (!apply(d, cs[0])) { BR.apply1++; break; } continue; } const pk = pkey(d); moves = cs.map(c => ({ key: 'S:' + pk + '|' + ckey(d, c), go: () => apply(d, c) })); }
         let z = 0; const w = moves.map(m => { const e = Math.exp((pol.get(m.key) || 0) + prior(m.key)); z += e; return e; }); let r = rnd() * z, ci = 0; while (ci < w.length - 1 && (r -= w[ci]) > 0) ci++;
@@ -348,7 +349,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const run = (lv, pol) => { if (lv === 0 || timeUp()) return playout(pol); let b = { v: -1, seq: [] }; for (let i = 0; i < N && !timeUp(); i++) { const r = run(lv - 1, pol); if (r.v >= b.v) b = r; pol = adapt(pol, b.seq); } return b; };
     let lastP = 0;
     while (!timeUp()) { run(LV, new Map()); if (onProgress && playouts - lastP >= 200) { lastP = playouts; onProgress({ macros: playouts, nodes: 0, seen: 0, frontier: 0, best: best.v, line: best.rs, ms: Date.now() - t0 }); } }
-    return { score: best.v, raw: best.raw, line: best.rs, board: best.board, nodes: playouts, macros: playouts, ms: Date.now() - t0, prof: PROF };
+    return { score: best.v, raw: best.raw, line: best.rs, board: best.board, keys: best.keys || [], nodes: playouts, macros: playouts, ms: Date.now() - t0, prof: PROF };
   }
   if (listRoot) { const d = decision(S, seat); return { root: d && isIdle() ? idleOpts(d).map(i => normLabel(d.options[i].label)) : [] }; }
   ROOT = snapshot(); consider(0); const rootSnap = frontier[0].snap;

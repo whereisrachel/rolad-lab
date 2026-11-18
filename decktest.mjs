@@ -20,7 +20,7 @@ fs.mkdirSync('decks/_explore', { recursive: true }); const deckFile = `decks/_ex
 const tasks = []; for (let hi = 0; hi < H; hi++) for (const ver of variants) { const perm = deal(ver, hi); tasks.push({ ver, hi, main: perm, hand: perm.slice(0, 5).map(c => name(c)) }); }
 console.log(`deck test ${ID}: ${variants.length} versions x ${H} hands, ${MIN} min each, opponent ${SCN}, ${PAR} at a time`);
 const res = []; let done = 0;
-const runOne = (t) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify({ deck: deckFile, main: t.main, hand: t.hand, minutes: MIN, seed: 7 + t.hi, scn: SCN })], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
+const runOne = (t) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify({ deck: deckFile, main: t.main, hand: t.hand, minutes: MIN, seed: 7 + t.hi, scn: SCN, hintsFile: 'data/hints-' + f('deck', 'decks/L2-vand3.ydk').replace(/^.*[\\/]/, '').replace(/\.ydk$/, '') + '.json' })], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
   p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; res.push({ ...t, ...r }); done++; console.log(`${done}/${tasks.length}`); ok(); }); });
 const q = tasks.slice(); await Promise.all(Array.from({ length: PAR }, async () => { while (q.length) await runOne(q.shift()); }));
 const crashes = res.filter(r => r.crash).length; const by = {}; for (const r of res) (by[r.ver] ||= {})[r.hi] = r;

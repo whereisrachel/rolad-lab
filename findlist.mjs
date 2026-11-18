@@ -7,7 +7,7 @@
 //  Every game: same shuffle for every version (an added card is shuffled in, a cut copy taken out), line finder from scratch, no guide lines.
 //  Hands rotate through opponent hand traps: none / Ash / Imperm / Droll (fired at the first legal moment).
 // node findlist.mjs --deck D [--min 2] [--h1 12] [--h2 24] [--h3 36] [--hv 60] [--adds 40] [--eds 10] [--keep2 20] [--keep3 6] [--mini] [--id X]
-import fs from 'fs'; import os from 'os'; import { spawn } from 'child_process';
+import fs from 'fs'; import os from 'os'; import path from 'path'; import { spawn } from 'child_process';
 import { parseYdk, findCard, name, banlist, cardDB } from './src/cards.mjs'; import { synergyScores } from './src/synergy.mjs';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; }; const MINI = a.includes('--mini');
 const ID = f('id', String(Date.now() % 100000)), MIN = +f('min', 2);
@@ -44,7 +44,8 @@ const toYdk = (v) => { const main = base.main.slice(); for (const c of v) { if (
 // ---------- games ----------
 const R = {}; // key -> { hi -> result }
 const store = `data/findlist-${ID}.json`;
-const play = (v, hi, sseed = 1) => new Promise(ok => { const perm = deal(v, hi); const t = { deck: deckFileFor(v), main: perm, hand: perm.slice(0, 5).map(c => name(c)), minutes: MIN, seed: 7 + hi, sseed, scn: scnOf(hi) };
+const HINTS = 'data/hints-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json';
+const play = (v, hi, sseed = 1) => new Promise(ok => { const perm = deal(v, hi); const t = { deck: deckFileFor(v), main: perm, hand: perm.slice(0, 5).map(c => name(c)), minutes: MIN, seed: 7 + hi, sseed, scn: scnOf(hi), hintsFile: HINTS };
   const once = (tries) => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify(t)], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
     p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); if (!m && tries < 1) return once(tries + 1); const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; ok({ v: r.v, crash: !!r.crash, line: r.line, board: r.board, hand: t.hand, scn: t.scn }); }); };
   once(0); });
@@ -61,6 +62,8 @@ const hands = (from, n) => Array.from({ length: n }, (_, i) => from + i);
 
 // ================= run =================
 log(`findlist ${ID}: list ${deckPath} (${base.main.length} Main / ${base.extra.length} Extra), ${MIN} min per game, ${PAR} games at a time${MINI ? ', MINI check' : ''}`);
+// 0) hints: if this list has no learned hints yet, learn them first (random hands, moves of the best lines)
+if (!fs.existsSync(HINTS) && !a.includes('--nohints')) { log('stage 0/5: learning hints for this list (first time only)'); await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'learn.mjs', '--deck', deckPath, '--hands', String(MINI ? 11 : 44), '--min', '1.5'], { stdio: ['ignore', 'pipe', 'ignore'] }); p.stdout.on('data', b => { for (const l of String(b).split('\n')) if (/^\d+\/\d+$/.test(l.trim())) console.log(l.trim()); else if (/learned from/.test(l)) log(l.trim()); }); p.on('close', ok); }); }
 // 1) noise + base games (also tells which Extra Deck card the list uses least)
 const r1 = hands(0, H1);
 await runGames([...r1.map(hi => ({ key: 'base', v: [], hi, sseed: 1 })), ...r1.map(hi => ({ key: 'base2', v: [], hi, sseed: 2 }))], 'stage 1/5: your list twice (noise)');

@@ -65,6 +65,11 @@ const STEPS = {
     const r = await run(args, {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/^(stage|noise|candidates|Extra Deck use|findlist)/.test(l)) { if (/^stage/.test(l)) j.stage = l; j.diag = (j.diag ? j.diag + ' | ' : '') + l; } });
     const out = `reports/findlist-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('find a better list failed: ' + r.out.slice(-400)); j.report = out;
   },
+  async learn(j) { // learn line hints for a list from its own games
+    j.stage = 'learning hints'; const A = await resolveDeck(j.deckA);
+    const r = await run(['learn.mjs', '--deck', A, '--hands', String(j.hands || 44), '--min', String(j.min || 1.5)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/learned from/.test(l)) j.diag = l; });
+    if (r.code) throw new Error('learning failed: ' + r.out.slice(-400));
+  },
   async calibrate(j) {
     const dir = `results/cal-${j.id}`; fs.mkdirSync(dir, { recursive: true }); const T = JSON.parse(fs.readFileSync('data/guide_tests.json', 'utf8'));
     for (let i = 0; i < T.length; i++) { j.stage = 'guide hand ' + (i + 1) + '/' + T.length; await run(['guidecheck.mjs', 'decks/ROLAD-L2.ydk', '22'], { ONLY: T[i].id, MAC: '800', PAT: '400', JSONOUT: `${dir}/cal.jsonl` }); j.progress = Math.round(100 * (i + 1) / T.length); }
