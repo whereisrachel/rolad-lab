@@ -52,7 +52,7 @@ export function evalBoard(S, seat) {
   return v;
 }
 
-export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48, onProgress = null, dfs = false, probe = 0, nsOnly = null, listRoot = false, rootOnly = null, nrpa = 0, hints = null, cardV = null, shapeFn = null, shapeObserve = false, maxPO = Infinity, turn: TURN = 1 } = {}) {
+export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48, onProgress = null, dfs = false, probe = 0, nsOnly = (process.env.NSONLY || null), listRoot = false, rootOnly = null, nrpa = 0, hints = null, cardV = null, shapeFn = null, shapeObserve = false, maxPO = Infinity, turn: TURN = 1 } = {}) {
   searchT1._lp = 0; resetLib(); const S = autoAdvance(await simulate(game));
   S.ev = function () {}; S.events.length = 0; // no event log during search
   const mod = S.lb[OcgCoreInternal].module; const me = teamOf(game, seat);

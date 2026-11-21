@@ -72,8 +72,11 @@ export function scoreBoard(B, detail = false) {
     else { const t = info(c).type; const trapOrQP = (t & 4) || ((t & 2) && (t & 0x10000)); const g = genericCredit(c.code, 'st'); g ? add('set ' + n + ' (text)', g[0], g[1]) : (trapOrQP ? add('set ' + n, 0.2) : zero(n)); }
   }
   for (const c of (B.gy || [])) { const n = nm(c); if (/^Lacrima the Crimson Tears$/.test(n) && (B.gy || []).some(g => /Fiendsmith's (Requiem|Sequence)/.test(nm(g)))) { add('GY ' + n + ' (their turn: Special Summon a Fiendsmith Link)', 0.3, null); break; } }
+  const htSeen = new Set(); // Ash, Droll, Ghost Ogre, Nibiru, Mulcharmy, Maxx "C": once per turn by name, so a 2nd copy in hand adds no interruption that turn
   for (const c of hand) {
     const n = nm(c);
+    if (/Ash Blossom|Droll|Nibiru|Ghost Ogre|Mulcharmy|Maxx/.test(n) && htSeen.has(n)) { add('hand ' + n + ' (2nd copy: once per turn, no extra interruption)', 0.15); continue; }
+    if (/Ash Blossom|Droll|Nibiru|Ghost Ogre|Mulcharmy|Maxx/.test(n)) htSeen.add(n);
     if (/Infinite Impermanence/.test(n) && HT > 0) add('hand ' + n + ' (negate from hand, hidden)', 1.25 * HT, 'negate'); // same negate as setting it, and hidden: setting it gains nothing
     else if (/Ash Blossom|Droll|Nibiru|Ghost|Infinite Impermanence|Effect Veiler|Mulcharmy|Maxx/.test(n)) add('hand ' + n, HT, 'handtrap');
     else if (/^Griffoh$/.test(n) && !st.some(s => /Mind Shuffle/.test(nm(s)))) add('hand Griffoh (their turn: Set Mind Shuffle and use it)', 0.5, null);
