@@ -59,7 +59,7 @@ const RESUME = a.includes('--resume') && fs.existsSync(store); if (RESUME) Objec
 const HINTS = 'data/hints-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json';
 const FROZEN = `data/hints-frozen-${ID}.json`; // this run's snapshot of what has been learned so far: every version plays with the same knowledge
 const CARDV = 'data/cardv-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json';
-const play = (v, hi, sseed = 1, key = '') => new Promise(ok => { const perm = deal(v, hi); const t = { deck: deckFileFor(v), main: perm, hand: perm.slice(0, 5).map(c => name(c)), minutes: MIN, seed: 7 + hi, sseed, scn: scnOf(hi), hintsFile: a.includes('--nohints') ? HINTS : FROZEN, learnLog: HINTS, hints: !a.includes('--nohints'), cardvFile: CARDV, rawOut: SHARE ? rawPath(key, hi) : undefined, ppm: PPM || undefined };
+const play = (v, hi, sseed = 1, key = '') => new Promise(ok => { const perm = deal(v, hi); const t = { deck: deckFileFor(v), main: perm, hand: perm.slice(0, 5).map(c => name(c)), minutes: MIN, seed: 7 + hi, sseed, scn: scnOf(hi), hintsFile: a.includes('--nohints') ? HINTS : FROZEN, learnLog: HINTS, hints: !a.includes('--nohints'), cardvFile: CARDV, rawOut: SHARE ? rawPath(key, hi) : undefined, ppm: PPM || undefined, smart: a.includes('--smart') || undefined };
   const once = (tries) => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify(t)], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
     p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); if (!m && tries < 1) return once(tries + 1); const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; ok({ v: r.v, crash: !!r.crash, line: r.line, board: r.board, hand: t.hand, scn: t.scn, ppm1: r.ppm1 }); }); };
   once(0); });
@@ -69,14 +69,21 @@ async function runGames(jobs, stage) { // jobs: [{ key, v, hi, sseed }], interle
   let k = 0, done = 0; const total = jobs.length; log(`${stage}: ${total} games`);
   await Promise.all(Array.from({ length: PAR }, async () => { while (k < total) { const j = jobs[k++]; const r = await play(j.v, j.hi, j.sseed, j.key); (R[j.key] ||= {})[j.hi] = r; done++; console.log(`${done}/${total}`); if (done % 11 === 0) { writeLive(stage, done, total); try { fs.writeFileSync(store, JSON.stringify(R)); } catch {} } } }));
   fs.writeFileSync(store, JSON.stringify(R)); if (SHARE) await shareHands([...new Set(jobs.map(j => j.hi))], stage); }
-async function shareHands(his, stage) { let k = 0, moved = 0, bad = 0; const list = his.slice();
+// line library (lines found on other machines / earlier runs, data/lib-<list>/): pulled at the start, matched per hand in shareHands
+const LIB = []; if (SHARE && !a.includes('--nolib')) { try { await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'libsync.mjs'], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => { if (o.trim()) log(o.trim()); ok(); }); }); } catch {}
+  const LD = `data/lib-${path.basename(deckPath, '.ydk')}`; if (fs.existsSync(LD)) for (const fn of fs.readdirSync(LD).filter(x => x.endsWith('.json'))) { try { const x = JSON.parse(fs.readFileSync(`${LD}/${fn}`, 'utf8')); LIB.push({ file: `${LD}/${fn}`, id: x.id, scn: x.scn, v: x.v, need: x.hand.filter((_, i) => x.used && x.used[i]) }); } catch {} }
+  if (LIB.length) log(`line library: ${LIB.length} stored lines available to every test hand`); }
+const libFor = (hand, scn, n = 4) => { const have = {}; for (const c of hand) have[c] = (have[c] || 0) + 1;
+  return LIB.filter(e => e.scn === scn && e.need.length && (() => { const h = { ...have }; for (const c of e.need) { if (!h[c]) return false; h[c]--; } return true; })()).sort((p, q) => q.v - p.v).slice(0, n)
+    .map(e => { try { const x = JSON.parse(fs.readFileSync(e.file, 'utf8')); return { key: 'lib:' + e.id, v: x.v, raw: x.raw, order: x.order, extra: x.extra, seed: x.seed, after: 0 }; } catch { return null; } }).filter(Boolean); };
+async function shareHands(his, stage) { let k = 0, moved = 0, bad = 0, libHits = 0; const list = his.slice();
   await Promise.all(Array.from({ length: PAR }, async () => { while (k < list.length) { const hi = list[k++]; const games = [];
-    for (const [key, byH] of Object.entries(R)) { const r = byH[hi]; if (!r) continue; const p = rawPath(key, hi); if (!fs.existsSync(p)) continue; try { const x = JSON.parse(fs.readFileSync(p, 'utf8')); games.push({ key, v: r.v0 ?? r.v, raw: x.raw, order: x.order, extra: x.extra, seed: x.seed }); } catch {} }
-    if (games.length < 2) continue; const jf = `${rawDir}/share-${hi}.json`; fs.writeFileSync(jf, JSON.stringify({ scn: scnOf(hi), games, top: 4 }));
+    for (const [key, byH] of Object.entries(R)) { const r = byH[hi]; if (!r) continue; const p = rawPath(key, hi); if (!fs.existsSync(p)) continue; try { const x = JSON.parse(fs.readFileSync(p, 'utf8')); games.push({ key, v: r.v0 ?? r.v, raw: x.raw, order: x.order, extra: x.extra, seed: x.seed, after: x.after || 0 }); } catch {} }
+    if (games.length < 2) continue; const jf = `${rawDir}/share-${hi}.json`; fs.writeFileSync(jf, JSON.stringify({ scn: scnOf(hi), games, top: 4, lines: libFor((R.base && R.base[hi] && R.base[hi].hand) || games[0].order.slice(0, 5).map(name), scnOf(hi)) }));
     const out = await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'share.mjs', jf], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => ok(o)); });
-    const m = /SHARE (.*)/.exec(out); if (!m) { bad++; continue; } const x = JSON.parse(m[1]); if (!x.ok) bad++;
+    const m = /SHARE (.*)/.exec(out); if (!m) { bad++; continue; } const x = JSON.parse(m[1]); if (!x.ok) bad++; libHits += x.libUsed || 0;
     for (const [key, y] of Object.entries(x.res)) { const r = R[key][hi]; r.v0 ??= r.v; if (y.from && y.v > r.v0) { r.v = y.v; r.from = y.from; moved++; } else r.v = r.v0; } } }));
-  fs.writeFileSync(store, JSON.stringify(R)); log(`${stage}: line sharing on ${list.length} hands -> ${moved} results improved by another version's legal line${bad ? `, ${bad} hands kept own results (replay check failed)` : ''}`); }
+  fs.writeFileSync(store, JSON.stringify(R)); log(`${stage}: line sharing on ${list.length} hands -> ${moved} results improved by another version's legal line${libHits ? ` (${libHits} of them from the line library)` : ''}${bad ? `, ${bad} hands kept own results (replay check failed)` : ''}`); }
 const stat = (key, baseKey = 'base', own = false) => { const b = R[baseKey] || {}, x = R[key] || {}; const V = (r) => own ? (r.v0 ?? r.v) : r.v; const d = Object.keys(x).filter(hi => b[hi]).map(hi => V(x[hi]) - V(b[hi]));
   const n = d.length, m = n ? d.reduce((s, y) => s + y, 0) / n : 0, sd = n > 1 ? Math.sqrt(d.reduce((s, y) => s + (y - m) ** 2, 0) / (n - 1)) : 0;
   const byS = {}; for (const hi of Object.keys(x).filter(hi => b[hi])) (byS[scnOf(+hi)] ||= []).push(x[hi].v - b[hi].v);

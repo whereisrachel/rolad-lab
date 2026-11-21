@@ -3,7 +3,7 @@ import { push, decision, answer, autoResponse, teamOf, seatOf, M, R } from './en
 import { policyAnswer, trapRegexes } from './bots.mjs';
 export function polOf(g, seat) {
   if (g.bot && g.bot[seat]) return { bot: g.bot[seat], script: trapRegexes((g.script || {})[seat]) };
-  if ((g.goldfish || []).includes(seat)) return { script: trapRegexes((g.script || {})[seat]) };
+  if ((g.goldfish || []).includes(seat)) return { script: trapRegexes((g.script || {})[seat]), after: (g.after || {})[seat] || 0 };
   return null;
 }
 function applyText(S, seat, t) {

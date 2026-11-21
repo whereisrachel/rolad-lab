@@ -11,7 +11,8 @@ const SCN = { ash: 'Ash Blossom & Joyous Spring', imperm: 'Infinite Impermanence
 const need = String(t.scn || 'none').split('+').filter(x => SCN[x]);
 const op = OPP.main.slice(), oh = []; for (const q of need) { const c = findCard(SCN[q]); const code = Array.isArray(c) ? c[0] : c; const i = op.findIndex(k => name(k) === name(code)); if (i >= 0) oh.push(op.splice(i, 1)[0]); }
 while (oh.length < 5) oh.push(op.splice(op.indexOf(GS), 1)[0]);
-let mk = () => ({ id: 'dw', seed: String(t.seed ?? 7), first: 0, lab: true, seats: { 0: { name: 'A', deck: { ...deck, main: [...h, ...pool] }, hand: h }, 1: { name: 'o', deck: { ...OPP, main: [...oh, ...op] }, hand: oh } }, responses: [], cursor: { 0: 0, 1: 0 }, goldfish: [1], bot: {}, script: { 1: need }, stopAfterTurn: null });
+let AFTER = +(t.after || 0); // smart opponent: hand traps held until you have activated AFTER effects (chosen adversarially below when t.smart)
+let mk = () => ({ after: { 1: AFTER }, id: 'dw', seed: String(t.seed ?? 7), first: 0, lab: true, seats: { 0: { name: 'A', deck: { ...deck, main: [...h, ...pool] }, hand: h }, 1: { name: 'o', deck: { ...OPP, main: [...oh, ...op] }, hand: oh } }, responses: [], cursor: { 0: 0, 1: 0 }, goldfish: [1], bot: {}, script: { 1: need }, stopAfterTurn: null });
 // optional forced opening (t.prefix: regexes matched against option labels, in order) -> the search starts after it
 if (Array.isArray(t.prefix) && t.prefix.length) { const E = await import('./src/engine.mjs'); const { autoAdvance } = await import('./src/auto.mjs'); E.resetLib(); const g0 = mk(); const S = autoAdvance(await E.simulate(g0));
   for (const rx of t.prefix) { autoAdvance(S); const d = E.decision(S, 0); if (!d) break; const re = new RegExp(rx); const i = d.options.findIndex(o => re.test(o.label)); if (i < 0) { console.error('prefix: no match for ' + rx + ' in ' + d.options.map(o => o.label).join(' | ').slice(0, 400)); break; }
@@ -51,6 +52,11 @@ if (cardRaw && process.env.COMPOSE === '1') { /* off by default: tested Nov 19, 
     hints = hc; if (process.env.PROF2) console.error('compose: ' + subs.join(', ')); } }
 // restarts (t.restarts / RESTARTS, hands with 2+ strong starters only): the same total budget split over K independent searches, best kept.
 // NRPA locks onto one plan early; several shorter searches cover more plans (Engraver + Medius at 2 min: 10.15 / 10.65 / 10.7 by seed).
+// smart opponent (t.smart): try holding the hand traps until you have activated 0..K effects (short searches), keep the timing that
+// leaves you the weakest board, then play the full search against that timing. A strong player waits for the card that matters.
+if (t.smart && need.length) { const K = +(t.smartK ?? 4), F = +(t.smartF ?? 0.12); const tried = [];
+  for (let k = 0; k <= K; k++) { AFTER = k; const rk = await searchT1(mk(), { ...BUD(TOT * F), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 77, hints, cardV: PRIOR, evalFn: (S, s) => disruption(S, s) }); tried.push([k, rk.score || 0]); }
+  tried.sort((p, q) => p[1] - q[1] || p[0] - q[0]); AFTER = tried[0][0]; globalThis.SMART = { after: AFTER, tried }; }
 const KR = STARTERS >= 2 ? +(t.restarts ?? process.env.RESTARTS ?? 1) : 1; let r = null;
 for (let q = 0; q < KR; q++) { const rq = await searchT1(mk(), { ...BUD(TOT / KR), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 1000 * q, hints, cardV: PRIOR, shapeFn, shapeObserve: true, evalFn: (S, s) => disruption(S, s) });
   if (!r || (rq.score || 0) > (r.score || 0)) { const sh0 = r && r.shaped; r = rq; if (sh0 && (!r.shaped || sh0.v > r.shaped.v)) r.shaped = sh0; } else if (rq.shaped && (!r.shaped || rq.shaped.v > r.shaped.v)) r.shaped = rq.shaped; }
@@ -77,6 +83,6 @@ const hl = (String(best.board || '').match(/\n\s*Hand: ([^\n]*)/g) || []).pop() 
 const used = (best.line || []).join(' | ');
 if (process.env.PROF2) { const { T2 } = await import('./src/searchplayer.mjs'); console.error('T2 ' + JSON.stringify(T2)); }
 // continuous learning: every finished game adds its best line to the list's learning log (unless this game is a test that must stay independent)
-if (t.rawOut) { try { fs.writeFileSync(t.rawOut, JSON.stringify({ hand: t.hand, v: best.score || 0, raw: best.raw || [], keys: best.keys || [], order: [...h, ...pool], extra: deck.extra, seed: t.seed ?? 7, used: t.hand.map(n => (best.line || []).join(' | ').includes(n)) })); } catch (e) { console.error('rawOut ' + e.message); } }
+if (t.rawOut) { try { fs.writeFileSync(t.rawOut, JSON.stringify({ hand: t.hand, v: best.score || 0, raw: best.raw || [], keys: best.keys || [], order: [...h, ...pool], extra: deck.extra, seed: t.seed ?? 7, after: AFTER, used: t.hand.map(n => (best.line || []).join(' | ').includes(n)) })); } catch (e) { console.error('rawOut ' + e.message); } }
 if (t.learn !== false) logGame(t.learnLog || HP, { v: best.score || 0, keys: best.keys || [] });
-console.log('RESULT ' + JSON.stringify({ v: best.score || 0, extra: best.extra || null, keys: best.keys || [], board: (String(best.board || '').split('YOU:')[1] || ''), line: (best.line || []).filter(l => /Summon|Activate|Selected/.test(l)).slice(0, 60), used: t.hand.map(n => used.includes(n)), left, po: searchT1.TOTPO || 0, ppm1: globalThis.RATE1 ?? null }));
+console.log('RESULT ' + JSON.stringify({ v: best.score || 0, extra: best.extra || null, keys: best.keys || [], board: (String(best.board || '').split('YOU:')[1] || ''), line: (best.line || []).filter(l => /Summon|Activate|Selected/.test(l)).slice(0, 60), used: t.hand.map(n => used.includes(n)), left, po: searchT1.TOTPO || 0, ppm1: globalThis.RATE1 ?? null, smart: globalThis.SMART ?? null }));

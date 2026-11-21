@@ -40,7 +40,9 @@ export function policyAnswer(S, seat, pol) {
   if (T === M.SELECT_CHAIN) {
     if (d.msg.forced) return '1';
     if (lastChainIsOwn(S, seat)) return find(/^Pass/);
-    const res = [...(pol.script || []), ...(bot ? bot.chain : [])];
+    // pol.after = k: hold the hand traps until the other player has activated k effects (a stronger player waits for the key card)
+    let scr = pol.script || []; if (pol.after > 0 && scr.length) { const acts = (G.responses || []).filter(r => r.seat !== seat && !r.auto && /^Activate /.test(r.label || '')).length; if (acts < pol.after) scr = []; }
+    const res = [...scr, ...(bot ? bot.chain : [])];
     return findAny(res) || find(/^Pass/) || '1';
   }
   if (T === M.SELECT_EFFECTYN || T === M.SELECT_YESNO) return bot ? '1' : '2';

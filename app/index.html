@@ -43,6 +43,7 @@
   <span id="cal" class="mute">Calibration: loading…</span>
 </header>
 <main>
+<div class="card md" id="summary" style="margin-bottom:12px">Loading the last 24 hours…</div>
 <section id="run" class="on">
   <div class="card">
     <label>What do you want to test?</label>
@@ -180,4 +181,7 @@ async function loadExplorer() { loadLive();
 const flRun = async (mini) => { try { const r = await api('/api/run', { kind: 'findlist', deckA: $('exDeck').value, mini, title: mini ? 'Find a better list: quick check' : 'Find a better list' }); $('exMsg').innerHTML = `<span class="good">Queued as job ${r.id}. Live results show on this tab; the report goes to Results.</span>`; } catch (e) { $('exMsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } };
 $('psGo').onclick = async () => { try { const r = await api('/api/run', { kind: 'poolscan', deckA: $('exDeck').value, title: 'Whole card pool screen' }); $('exMsg').innerHTML = `<span class="good">Queued as job ${r.id}. When it finishes, step 2 tests its top cards against your list.</span>`; } catch (e) { $('exMsg').innerHTML = '<span class="bad">' + esc(e.message) + '</span>'; } };
 $('flGo').onclick = () => flRun(false); $('flMini').onclick = () => flRun(true);
+
+// one-page summary of the last 24 h (jobs, failures, line library) at the top of the page
+fetch('/api/summary').then(r => r.text()).then(t => { document.getElementById('summary').innerHTML = mdToHtml(t); }).catch(() => { document.getElementById('summary').textContent = 'Summary unavailable.'; });
 </script></body></html>
