@@ -21,5 +21,5 @@ function one(n) { const r = rngOf(tagN ^ (n * 2654435761)); const perm = deck.ma
     p.stdout.on('data', b => o += b); p.on('close', () => { try { const x = JSON.parse(fs.readFileSync(raw + '.tmp', 'utf8')); x.scn = scn; x.id = id; x.list = LIST; x.when = new Date().toISOString(); fs.writeFileSync(raw, JSON.stringify(x)); fs.unlinkSync(raw + '.tmp'); ok(x.v); } catch { ok(null); } }); }); }
 log(`line library: ${LIST}, ${MIN} min per hand, ${PAR} at a time, saving to ${OUT}`);
 let done = 0, t0 = Date.now();
-await Promise.all(Array.from({ length: PAR }, async () => { for (;;) { const n = seq++; fs.writeFileSync(`${OUT}/seq-${TAG}`, String(seq)); const v = await one(n); done++;
+await Promise.all(Array.from({ length: PAR }, async () => { for (;;) { const n = seq++; fs.writeFileSync(`${OUT}/seq-${TAG}`, String(seq)); const v = await one(n); done++; if (v === null) { log(`hand ${n} failed (no result)`); await new Promise(r => setTimeout(r, 30000)); }
   if (done % 10 === 0) log(`${done} hands this session (${(done / ((Date.now() - t0) / 3600000)).toFixed(1)}/h), last ${v}`); } }));
