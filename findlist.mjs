@@ -9,7 +9,10 @@
 // node findlist.mjs --deck D [--min 2] [--h1 12] [--h2 24] [--h3 36] [--hv 60] [--adds 40] [--eds 10] [--keep2 20] [--keep3 6] [--mini] [--id X]
 import fs from 'fs'; import os from 'os'; import path from 'path'; import { spawn } from 'child_process';
 import { parseYdk, findCard, name, banlist, cardDB } from './src/cards.mjs'; import { synergyScores } from './src/synergy.mjs';
-const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; }; const MINI = a.includes('--mini');
+const a = process.argv.slice(2); const f0 = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
+// --versions may also be an object { versions: [...], h1, h2, h3, hv, ... }: the extra keys act as command-line options
+const VOBJ = (() => { try { const v = JSON.parse(f0('versions', 'null')); return v && !Array.isArray(v) ? v : null; } catch { return null; } })();
+const f = (k, d) => k === 'versions' ? (VOBJ ? JSON.stringify(VOBJ.versions) : f0(k, d)) : VOBJ && VOBJ[k] !== undefined ? String(VOBJ[k]) : f0(k, d); const MINI = a.includes('--mini');
 const ID = f('id', String(Date.now() % 100000)), MIN = +f('min', 2);
 const H1 = +f('h1', MINI ? 11 : 12), H2 = +f('h2', MINI ? 0 : 24), H3 = +f('h3', MINI ? 0 : 36), HV = +f('hv', MINI ? 11 : 60);
 const NADD = +f('adds', MINI ? 2 : 40), NED = +f('eds', MINI ? 1 : 10), KEEP2 = +f('keep2', 20), KEEP3 = +f('keep3', 6);
@@ -63,8 +66,8 @@ const play = (v, hi, sseed = 1, key = '') => new Promise(ok => { const perm = de
   const once = (tries) => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify(t)], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
     p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); if (!m && tries < 1) return once(tries + 1); const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; const res = { v: r.v, crash: !!r.crash, line: r.line, board: r.board, hand: t.hand, scn: t.scn, ppm1: r.ppm1 };
       // --t2 o_ss,o_despia: also play the opponent's turn into this board (oppturn.mjs); t2 = what you still have minus what they end on
-      if (T2.length && t.rawOut && fs.existsSync(t.rawOut)) { const q = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'oppturn.mjs', JSON.stringify({ line: t.rawOut, opp: `decks/${T2[hi % T2.length]}.ydk`, oppSeed: 1000 + hi, minutes: +f('t2min', 0.5) })], { stdio: ['ignore', 'pipe', 'ignore'] }); let o2 = '';
-        q.stdout.on('data', b => o2 += b); q.on('close', () => { const m2 = /OPPTURN (.*)/.exec(o2); if (m2) { const z = JSON.parse(m2[1]); res.t2 = +(z.ourBoardLeft - z.theirBoard).toFixed(2); res.t2opp = T2[hi % T2.length]; } ok(res); }); return; }
+      if (T2.length && t.rawOut && fs.existsSync(t.rawOut)) { const q = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'oppturn.mjs', JSON.stringify({ line: t.rawOut, opp: `decks/${T2[hi % T2.length]}.ydk`, oppSeed: 1000 + hi, minutes: +f('t2min', 0.5), hands: +f('t2hands', 1), par: 2 })], { stdio: ['ignore', 'pipe', 'ignore'] }); let o2 = '';
+        q.stdout.on('data', b => o2 += b); q.on('close', () => { const m2 = /OPPTURN (.*)/.exec(o2); if (m2) { const z = JSON.parse(m2[1]); res.t2 = z.margin ?? +(z.ourBoardLeft - z.theirBoard).toFixed(2); res.t2otk = z.otk || 0; res.t2opp = T2[hi % T2.length]; } ok(res); }); return; }
       ok(res); }); };
   once(0); });
 let liveRows = []; const writeLive = (stage, done, total) => { try { fs.writeFileSync('data/explore-live.json', JSON.stringify({ run: 'findlist ' + ID + ' · ' + stage, at: new Date().toISOString(), done, total, cardsDone: liveRows.length, cards: liveRows.length, control: null, rows: liveRows.slice(0, 40) })); } catch {} };
@@ -145,7 +148,7 @@ let versions = MINI ? [cuts.find(v => /Nervedo/.test(v[0].card)) || cuts[0], plu
 versions = versions.filter(Boolean); const K = (v) => label(v);
 { const custom = f('versions', null) ? JSON.parse(f('versions')) : null; // --versions '[[{"op":"cut","card":"X"},...]]': test exactly these (e.g. a whole package taken out)
   if (f('only', null)) { const want = f('only').split(';').map(x => x.trim().toLowerCase()); versions = versions.filter(v => want.some(w => label(v).toLowerCase().includes(w))); } else if (custom) versions = [];
-  if (custom) versions.push(...custom); } // --only "Pilgrim;Masquerena": only versions whose name contains one of these
+  if (custom) versions.push(...custom.map(v => { let k = 0; const room = Math.max(0, 15 - base.extra.length); return v.map(c => c.op === 'ed' && c.out === 'auto' ? { ...c, out: k < room ? (k++, null) : edOrder[(k++) - room] } : c); })); } // out:'auto' = replace your least-used Extra Deck card // --only "Pilgrim;Masquerena": only versions whose name contains one of these
 log(`candidates: ${cuts.length} cuts, ${plus.length} +1s, ${adds.length} new Main Deck cards, ${eds.length} new Extra Deck cards, ${pkgs.length} packages -> testing ${versions.length} versions (connected cards come from ${syn.length} of all legal cards)`);
 const rank = (vs) => vs.map(v => ({ v, s: stat(K(v)) })).sort((p, q) => q.s.m - p.s.m);
 const setLive = (vs) => { liveRows = rank(vs).map(x => ({ name: K(x.v), zone: x.v[0].op === 'ed' ? 'ed' : x.v[0].op, done: x.s.n, of: x.s.n, rescued: x.s.better, gain: +x.s.m.toFixed(2) })); };

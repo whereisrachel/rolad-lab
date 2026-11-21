@@ -44,6 +44,11 @@ const STEPS = {
     for (const B of (fs.existsSync('data/explore-confirm.txt') ? fs.readFileSync('data/explore-confirm.txt', 'utf8').split('\n').filter(Boolean) : []))
       addJob({ kind: 'pair', deckA: j.deckA, deckB: B, n: 300, scn: 'none,ash,imperm', macros: 300, title: 'Explorer find: ' + path.basename(B, '.ydk').replace(/^\d+-/, '').replace(/_/g, ' ') });
   },
+  async oppboards(j) { // opponent's turn into the top library boards, several opponent hands each, battle phase included
+    j.stage = "opponent's turn into your top boards"; const L = path.basename(j.deckA || 'decks/L2-vand3.ydk', '.ydk');
+    const r = await run(['oppboards.mjs', L, String(j.n || 8), String(j.hands || 6), String(j.minutes || 0.5)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
+    if (r.code || !fs.existsSync(`reports/oppboards-${L}.md`)) throw new Error('oppboards failed: ' + r.out.slice(-400)); j.report = `reports/oppboards-${L}.md`; j.last = 'done -> ' + j.report;
+  },
   async robbench(j) { // which line to play when you don't know their hand trap, on the guide hands
     j.stage = 'robust lines on the guide hands'; const L = path.basename(j.deckA || 'decks/L2-vand3.ydk', '.ydk');
     const r = await run(['robbench.mjs', j.deckA || 'decks/L2-vand3.ydk', String(j.minutes || 1)], j.only ? { ONLY: j.only } : {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
@@ -66,7 +71,7 @@ const STEPS = {
     const out = `reports/decktest-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('deck test failed: ' + r.out.slice(-400)); j.report = out;
   },
   async findlist(j) { // every stage by itself: noise, candidates, rounds, new list, fresh-hand check, report
-    j.stage = 'finding a better list'; const A = await resolveDeck(j.deckA); const args = ['findlist.mjs', '--deck', A, '--id', String(j.resume || j.id)]; if (j.resume) args.push('--resume'); if (j.mini) args.push('--mini'); if (j.cuts !== undefined) args.push('--cuts', String(j.cuts)); if (j.noplus) args.push('--noplus'); if (j.fixed) args.push('--fixed'); if (j.smart) args.push('--smart'); if (j.t2) args.push('--t2', String(j.t2)); if (j.t2min) args.push('--t2min', String(j.t2min)); if (j.only) args.push('--only', String(j.only)); if (j.retest) args.push('--retest'); if (j.versions) args.push('--versions', typeof j.versions === 'string' ? j.versions : JSON.stringify(j.versions)); if (j.noshare) args.push('--noshare'); for (const k of ['h1', 'h2', 'h3', 'hv', 'adds', 'eds', 'keep2', 'keep3', 'min']) if (j[k] !== undefined) args.push('--' + k, String(j[k]));
+    j.stage = 'finding a better list'; const A = await resolveDeck(j.deckA); const args = ['findlist.mjs', '--deck', A, '--id', String(j.resume || j.id)]; if (j.resume) args.push('--resume'); if (j.mini) args.push('--mini'); if (j.cuts !== undefined) args.push('--cuts', String(j.cuts)); if (j.noplus) args.push('--noplus'); if (j.fixed) args.push('--fixed'); if (j.smart) args.push('--smart'); if (j.t2) args.push('--t2', String(j.t2)); if (j.t2min) args.push('--t2min', String(j.t2min)); if (j.t2hands) args.push('--t2hands', String(j.t2hands)); if (j.only) args.push('--only', String(j.only)); if (j.retest) args.push('--retest'); if (j.versions) args.push('--versions', typeof j.versions === 'string' ? j.versions : JSON.stringify(j.versions)); if (j.noshare) args.push('--noshare'); for (const k of ['h1', 'h2', 'h3', 'hv', 'adds', 'eds', 'keep2', 'keep3', 'min']) if (j[k] !== undefined) args.push('--' + k, String(j[k]));
     const r = await run(args, {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/^(stage|noise|candidates|Extra Deck use|findlist)/.test(l)) { if (/^stage/.test(l)) j.stage = l; j.diag = (j.diag ? j.diag + ' | ' : '') + l; } });
     const out = `reports/findlist-${j.resume || j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('find a better list failed: ' + r.out.slice(-400)); j.report = out;
   },
