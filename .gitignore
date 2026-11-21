@@ -3,5 +3,5 @@ decks/_built/
 decks/_explore/
 decks/cand/
 decks/crashtest.ydk
-node_modules/
+node_modules
 results/
