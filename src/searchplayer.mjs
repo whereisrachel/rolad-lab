@@ -52,7 +52,7 @@ export function evalBoard(S, seat) {
   return v;
 }
 
-export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48, onProgress = null, dfs = false, probe = 0, nsOnly = null, listRoot = false, rootOnly = null, nrpa = 0, hints = null, cardV = null, shapeFn = null, shapeObserve = false, maxPO = Infinity } = {}) {
+export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altCap = 3, maxMacro = 10, frontierCap = 250, seed = 1, maxMacros = Infinity, guideW = 0, patience = Infinity, script = null, div = +(process.env.DIV ?? 1.5), roll = +(process.env.ROLL ?? 0), rollDepth = +(process.env.ROLLD ?? 2), enumOnly = false, enumDepth = 2, enumCap = 48, onProgress = null, dfs = false, probe = 0, nsOnly = null, listRoot = false, rootOnly = null, nrpa = 0, hints = null, cardV = null, shapeFn = null, shapeObserve = false, maxPO = Infinity, turn: TURN = 1 } = {}) {
   searchT1._lp = 0; resetLib(); const S = autoAdvance(await simulate(game));
   S.ev = function () {}; S.events.length = 0; // no event log during search
   const mod = S.lb[OcgCoreInternal].module; const me = teamOf(game, seat);
@@ -176,7 +176,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     for (const c of cs) { let k; if (c.kind === 'pick') k = normLabel(d.options[c.i].label); else if (c.kind === 'text' && d.options && /^[0-9 ]+$/.test(c.t)) k = c.t.split(' ').map(n => normLabel(d.options[+n - 1]?.label || n)).sort().join('|'); else k = JSON.stringify(c); if (seenL.has(k)) continue; seenL.add(k); out.push(c); }
     return out; };
   const canonSig = tm('sig', (d) => canonBoard(boardView(S, seat)) + '|' + [...new Set(d.options.map(o => normLabel(o.label)))].sort().join(';'));
-  const isIdle = () => S.pending && S.pending.type === M.SELECT_IDLECMD && dseat() === seat && S.turn === 1;
+  const isIdle = () => S.pending && S.pending.type === M.SELECT_IDLECMD && dseat() === seat && S.turn === TURN;
   const sigOf = (d) => boardView(S, seat) + '|' + d.options.map(o => o.label).join(';');
   // branch diversity: every opening branch (incl. each choice at its first sub-decisions) gets explored a few steps before the search narrows on whatever looks best right away
   let CUR_BR = null, nBr = 0; const bexp = {}; const eff = (n) => n.pri + div / (1 + (bexp[n.br] || 0));
@@ -192,13 +192,13 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   let rs0 = (seed * 2654435761) >>> 0 || 1; const rnd = () => { rs0 ^= rs0 << 13; rs0 >>>= 0; rs0 ^= rs0 >>> 17; rs0 ^= rs0 << 5; rs0 >>>= 0; return rs0 / 4294967296; };
   function rollout() {
     for (let k = 0; k < 120; k++) {
-      autoAdvance(S); if (S.ended || !S.pending || S.turn !== 1 || dseat() !== seat) break;
+      autoAdvance(S); if (S.ended || !S.pending || S.turn !== TURN || dseat() !== seat) break;
       const d = decision(S, seat); if (!d) break;
       if (isIdle()) { const op = d.options.map((o, i) => i).filter(i => !/Battle Phase|End Phase/.test(d.options[i].label)); if (!op.length || rnd() < 0.04) break;
         const i = op[Math.floor(rnd() * op.length)]; if (!push(S, { seat, resp: d.options[i].resp, label: d.options[i].label })) break; continue; }
       const cs = cands(d); if (!cs.length) break; if (!apply(d, cs[Math.floor(rnd() * Math.min(cs.length, 4))])) break;
     }
-    if (!(isIdle() || S.turn !== 1)) return -1;
+    if (!(isIdle() || S.turn !== TURN)) return -1;
     const v = tm('eval', evalFn || evalBoard)(S, seat);
     if (v > best.v && isIdle()) { lastImp = macros; best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat) }; }
     return v;
@@ -224,7 +224,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const play = () => {
       for (let guard = 0; guard < 400; guard++) {
         autoAdvance(S);
-        if (S.ended || !S.pending || S.turn !== 1) { DEAD['end:' + (S.ended ? 'ended' : !S.pending ? 'nopending' : 'turn' + S.turn)] = (DEAD['end:' + (S.ended ? 'ended' : !S.pending ? 'nopending' : 'turn' + S.turn)] || 0) + 1; return; }
+        if (S.ended || !S.pending || S.turn !== TURN) { DEAD['end:' + (S.ended ? 'ended' : !S.pending ? 'nopending' : 'turn' + S.turn)] = (DEAD['end:' + (S.ended ? 'ended' : !S.pending ? 'nopending' : 'turn' + S.turn)] || 0) + 1; return; }
         if (dseat() !== seat) { DEAD['otherseat:' + S.pending.type] = (DEAD['otherseat:' + S.pending.type] || 0) + 1; return; }
         if (isIdle()) { consider(depth + 1); return; }
         const d = decision(S, seat); if (!d) return;
@@ -283,7 +283,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
   if (probe) { // Knuth estimate of the game-tree size: random walks, product of branching factors along the way
     const root = snapshot(); const ests = []; const depths = [];
     for (let k = 0; k < probe; k++) { restore(root); let w = 1, tot = 1, dep = 0;
-      for (let g = 0; g < 3000; g++) { autoAdvance(S); if (S.ended || !S.pending || S.turn !== 1 || dseat() !== seat) break; const d = decision(S, seat); if (!d) break;
+      for (let g = 0; g < 3000; g++) { autoAdvance(S); if (S.ended || !S.pending || S.turn !== TURN || dseat() !== seat) break; const d = decision(S, seat); if (!d) break;
         if (isIdle()) { const ix = process.env.RAW ? d.options.map((o, i) => i).filter(i => !/Battle Phase|End Phase/.test(d.options[i].label)) : idleOpts(d); if (!ix.length) break; { const T = (searchT1._tally ||= {}); const e = (T['IDLE'] ||= { n: 0, b: 0, ex: '' }); e.n++; e.b += ix.length; const kinds = (T['IDLEKIND'] ||= {}); for (const i of ix) { const k = d.options[i].label.split(' ')[0] + (/\(hand\)/.test(d.options[i].label) ? '(hand)' : ''); kinds[k] = (kinds[k] || 0) + 1; } } w *= ix.length; tot += w; dep++; const i = ix[Math.floor(rnd() * ix.length)]; if (!push(S, { seat, resp: d.options[i].resp, label: d.options[i].label })) break; continue; }
         const cs = process.env.RAW ? cands(d) : subCands(d); if (!cs.length) break; if (cs.length > 1) { w *= cs.length; tot += w; const key = d.kind + ':' + String(d.msg || d.prompt || '').replace(/[0-9]+/g, '#').slice(0, 70); const T = (searchT1._tally ||= {}); const e = (T[key] ||= { n: 0, b: 0, ex: '' }); e.n++; e.b += cs.length; if (!e.ex) e.ex = d.options.slice(0, 6).map(o => o.label.slice(0, 40)).join(' ; '); } if (!apply(d, cs[Math.floor(rnd() * cs.length)])) break; }
       ests.push(tot); depths.push(dep); }
@@ -299,7 +299,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     let cut = false;
     const rec = (depth, bud) => {
       if (timeOver()) { complete = false; cut = true; return; }
-      for (let g = 0; g < 400; g++) { autoAdvance(S); if (S.ended || !S.pending || S.turn !== 1 || dseat() !== seat) { leaves++; return; }
+      for (let g = 0; g < 400; g++) { autoAdvance(S); if (S.ended || !S.pending || S.turn !== TURN || dseat() !== seat) { leaves++; return; }
         const d = decision(S, seat); if (!d) return;
         if (isIdle()) { const sig = canonSig(d); if (seenI.has(sig)) return; seenI.add(sig); states++; macros++; record(); bud -= 1;
           if (onProgress && states - lastP >= 500) { lastP = states; onProgress({ macros: states, nodes: leaves, seen: seenI.size, frontier: depth, best: best.v, line: best.rs, ms: Date.now() - t0 }); }
@@ -336,7 +336,7 @@ export async function searchT1(game, { evalFn = null, seat = 0, ms = 15000, altC
     const playout = (pol) => {
       restore(ROOTF); playouts++; PO++; searchT1.TOTPO = (searchT1.TOTPO || 0) + 1; const steps = []; let bv = -1, blen = 0;
       for (let g = 0; g < 800; g++) {
-        autoAdvance(S); if (S.ended || !S.pending || S.turn !== 1 || dseat() !== seat) { BR[S.ended ? 'ended' : !S.pending ? 'nopending' : S.turn !== 1 ? 'turn' : 'oppdecides']++; break; }
+        autoAdvance(S); if (S.ended || !S.pending || S.turn !== TURN || dseat() !== seat) { BR[S.ended ? 'ended' : !S.pending ? 'nopending' : S.turn !== TURN ? 'turn' : 'oppdecides']++; break; }
         const d = decision(S, seat); if (!d) { BR.nodec++; break; } let moves;
         if (isIdle()) { const v = (evalFn || evalBoard)(S, seat); const vs = shapeFn ? v + shapeFn(S, d) : v; if ((shapeObserve ? v : vs) > bv) { bv = shapeObserve ? v : vs; blen = steps.length; } const sb = +(vs - v).toFixed(2); if (sb > 0 && (sb > (bestS.b || 0) || (sb === bestS.b && steps.length < bestS.n))) bestS = { b: sb, n: steps.length, v: vs, real: v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), keys: steps.map(x => x.k) };
           if (v > best.v) best = { v, raw: game.responses.map(r => ({ ...r })), rs: game.responses.slice(rootLen).filter(r => r.seat === seat || !r.auto).map(r => r.label).filter(Boolean), board: boardView(S, seat), keys: steps.map(x => x.k) };

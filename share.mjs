@@ -6,7 +6,7 @@
 import fs from 'fs'; import path from 'path';
 import { parseYdk, findCard, name, ROOT } from './src/cards.mjs';
 import { replay } from './src/replay.mjs'; import { disruption, setHT } from './src/disrupt.mjs';
-setHT(0); process.env.CANON = '1'; process.env.LIGHT = '1';
+setHT(+(process.env.HTW ?? 1)); process.env.CANON = '1'; process.env.LIGHT = '1';
 const J = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
 const OPP = parseYdk(fs.readFileSync(path.join(ROOT, 'decks', 'oppHT.ydk'), 'utf8')); const GS = 13039848;
 const SCN = { ash: 'Ash Blossom & Joyous Spring', imperm: 'Infinite Impermanence', droll: 'Droll & Lock Bird' };

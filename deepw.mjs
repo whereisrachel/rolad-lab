@@ -2,7 +2,7 @@
 // task: { deck: path, hand: [names], minutes, divs: "6,1.5", seed }
 import fs from 'fs'; import path from 'path';
 import { parseYdk, findCard, name, ROOT } from './src/cards.mjs'; import { searchT1 } from './src/searchplayer.mjs'; import { disruption, setHT } from './src/disrupt.mjs';
-setHT(0); process.env.CANON = '1'; process.env.LIGHT = '1';
+setHT(+(process.env.HTW ?? 1)); /* hand traps still in hand count (1 = one interruption each): spending one for nothing now costs the line */ process.env.CANON = '1'; process.env.LIGHT = '1';
 const t = JSON.parse(process.argv[2]); const deck = parseYdk(fs.readFileSync(t.deck, 'utf8')); if (t.main) deck.main = t.main.slice(); /* exact Deck order when given */
 const OPP = parseYdk(fs.readFileSync(path.join(ROOT, 'decks', 'oppHT.ydk'), 'utf8')); const GS = 13039848;
 const pool = deck.main.slice(); const h = t.hand.map(n => { const c = findCard(n); const code = Array.isArray(c) ? c[0] : c; let i = pool.findIndex(k => name(k) === name(code)); if (i < 0) { pool.push(code); i = pool.length - 1; } return pool.splice(i, 1)[0]; });
@@ -80,9 +80,22 @@ if (roots.length > 1) { const share = t.minutes * 60000 * 0.8 / roots.length;
   t.minutes *= 0.2; }
 for (const dv of (t.minutes <= 0 ? [] : roots.length > 1 ? [6] : divs)) { const r = await searchT1(mk(), { ms: t.minutes * 60000 / divs.length, maxMacros: Infinity, patience: Infinity, guideW: 0.3, altCap: 8, maxMacro: 80, frontierCap: +(process.env.FC || 3000), div: dv, evalFn: (S, s) => disruption(S, s) }); if ((r.score || 0) > (best.score || 0)) best = r; }
 const hl = (String(best.board || '').match(/\n\s*Hand: ([^\n]*)/g) || []).pop() || ''; const left = hl.replace(/^\s*Hand: /, '').split(', ').map(x => x.trim());
+// Clean-up pass: try removing each action from the best line (latest first, with every prompt that belongs to it); if the line still
+// replays to the same board value without it, the action was doing nothing and is dropped. Only actions that matter stay in the line.
+if (best.raw && best.raw.length && t.prune !== false && process.env.PRUNE !== '0') { try {
+  const { replay } = await import('./src/replay.mjs');
+  const START = /^(Activate .*\((hand|S\d|M\d|EMZ-[LR]|GY|Field|FZ|banishment|PZ-[LR]|Deck|Extra Deck)\)|Normal Summon .*\(|Set (Spell\/Trap|monster)|Special Summon \(procedure\)|Link Summon|Synchro Summon|Xyz Summon|Tribute Summon|Ritual Summon|Fusion Summon)/;
+  const val = async (steps) => { let mx = -1; try { await replay(mk(), steps, (S) => { const v = disruption(S, 0); if (v > mx) mx = v; }); } catch {} return mx; };
+  let steps = best.raw.filter(e => e.seat === 0 && !e.auto && e.label); const base = await val(steps); let dropped = [];
+  if (base >= (best.score || 0) - 0.05) {
+    const blocks = () => { const b = []; steps.forEach((e, i) => { if (START.test(e.label) || !b.length) b.push([i, i]); else b[b.length - 1][1] = i; }); return b; };
+    for (let bi = blocks().length - 1; bi >= 0; bi--) { const B = blocks(); if (bi >= B.length) continue; const [a0, a1] = B[bi]; const trial = [...steps.slice(0, a0), ...steps.slice(a1 + 1)];
+      const v = await val(trial); if (v >= base - 0.01) { dropped.push(steps[a0].label); steps = trial; } }
+    if (dropped.length) { best.prunedFrom = (best.line || []).length; best.line = steps.map(e => e.label); best.raw = steps; best.dropped = dropped; } }
+} catch (e) { best.pruneError = String(e).slice(0, 200); } }
 const used = (best.line || []).join(' | ');
 if (process.env.PROF2) { const { T2 } = await import('./src/searchplayer.mjs'); console.error('T2 ' + JSON.stringify(T2)); }
 // continuous learning: every finished game adds its best line to the list's learning log (unless this game is a test that must stay independent)
 if (t.rawOut) { try { fs.writeFileSync(t.rawOut, JSON.stringify({ hand: t.hand, v: best.score || 0, raw: best.raw || [], keys: best.keys || [], order: [...h, ...pool], extra: deck.extra, seed: t.seed ?? 7, after: AFTER, used: t.hand.map(n => (best.line || []).join(' | ').includes(n)) })); } catch (e) { console.error('rawOut ' + e.message); } }
 if (t.learn !== false) logGame(t.learnLog || HP, { v: best.score || 0, keys: best.keys || [] });
-console.log('RESULT ' + JSON.stringify({ v: best.score || 0, extra: best.extra || null, keys: best.keys || [], board: (String(best.board || '').split('YOU:')[1] || ''), line: (best.line || []).filter(l => /Summon|Activate|Selected/.test(l)).slice(0, 60), used: t.hand.map(n => used.includes(n)), left, po: searchT1.TOTPO || 0, ppm1: globalThis.RATE1 ?? null, smart: globalThis.SMART ?? null }));
+console.log('RESULT ' + JSON.stringify({ dropped: best.dropped || [], v: best.score || 0, extra: best.extra || null, keys: best.keys || [], board: (String(best.board || '').split('YOU:')[1] || ''), line: (best.line || []).filter(l => /Summon|Activate|Selected/.test(l)).slice(0, 60), used: t.hand.map(n => used.includes(n)), left, po: searchT1.TOTPO || 0, ppm1: globalThis.RATE1 ?? null, smart: globalThis.SMART ?? null }));

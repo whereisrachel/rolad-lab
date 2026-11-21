@@ -1,7 +1,7 @@
 // Scripted players. A policy picks an answer string for the pending decision (same answer format as `act`).
 //   goldfish: never plays on its own turn (ends turns), optional hand-trap script at chain windows.
 //   bot:      plays its own turns from a priority list of regexes matched against option labels.
-import { decision, M, teamOf } from './engine.mjs';
+import { decision, M, teamOf, L } from './engine.mjs';
 
 // regex lists are matched case-insensitively against option labels, e.g. "Activate Branded Opening (hand): ..."
 export const BOTS = {
@@ -23,6 +23,7 @@ export const BOTS = {
 export const TRAPS = {
   ash: /Activate Ash Blossom/i, droll: /Activate Droll & Lock Bird/i, imperm: /Activate Infinite Impermanence/i, nibiru: /Activate Nibiru/i,
   fuwalos: /Activate Mulcharmy Fuwalos/i, purulia: /Activate Mulcharmy Purulia/i, belle: /Activate Ghost Belle/i, ogre: /Activate Ghost Ogre/i,
+  any: /^Activate /i, // defend with everything on board / in hand at the first legal chance (opponent's-turn test)
   maxx: /Activate Maxx/i, veiler: /Activate Effect Veiler/i, bandit: /Activate The Great Gallant Bandit/i,
 };
 export function trapRegexes(list) { return (list || []).map(n => TRAPS[n.toLowerCase()] || new RegExp('Activate ' + n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')); }
@@ -42,6 +43,13 @@ export function policyAnswer(S, seat, pol) {
     if (lastChainIsOwn(S, seat)) return find(/^Pass/);
     // pol.after = k: hold the hand traps until the other player has activated k effects (a stronger player waits for the key card)
     let scr = pol.script || []; if (pol.after > 0 && scr.length) { const acts = (G.responses || []).filter(r => r.seat !== seat && !r.auto && /^Activate /.test(r.label || '')).length; if (acts < pol.after) scr = []; }
+    if (process.env.DEFLOG && seat === 0) console.error('DEF ' + S.turn + ' ' + opts.map(o => o.label).join(' | '));
+    // defending on the opponent's turn: only real interruptions, best kind first; a full-board wipe waits until they have committed 3+ cards
+    if (pol.defense) { if (pol.after > 0) { const acts = (G.responses || []).filter(r => r.seat !== seat && !r.auto && /^Activate /.test(r.label || '')).length; if (acts < pol.after) return find(/^Pass/) || '1'; }
+      const oppN = (() => { try { const ot = 1 - teamOf(G, seat); return [L.MZONE, L.SZONE].reduce((n, loc) => n + S.lb.duelQueryLocation(S.h, { flags: 0x1, controller: ot, location: loc }).filter(c => c && c.code).length, 0); } catch { return 9; } })();
+      const rank = (l) => /negate the activation/i.test(l) ? 5 : /negate/i.test(l) ? 4 : /all cards the opponent controls/i.test(l) ? (oppN >= 3 ? 6 : -1) : /destroy|banish|send 1 card on the field|return .* hand|take control|change .* position/i.test(l) ? 3 : -1;
+      let bi = -1, br = 0; opts.forEach((o, i) => { if (!/^Activate /.test(o.label)) return; const r = rank(o.label); if (r > br) { br = r; bi = i; } });
+      return bi >= 0 ? String(bi + 1) : (find(/^Pass/) || '1'); }
     const res = [...scr, ...(bot ? bot.chain : [])];
     return findAny(res) || find(/^Pass/) || '1';
   }
@@ -62,6 +70,7 @@ export function policyAnswer(S, seat, pol) {
     if (bot) { const a = find(/^Attack with/); if (a && !(G.botCount['b' + key] > 40)) { G.botCount['b' + key] = (G.botCount['b' + key] || 0) + 1; return a; } }
     return find(/End Phase/) || find(/Main Phase 2/) || String(opts.length);
   }
+  if (pol.defense && (d.kind === 'multi' || d.kind === 'single' || T === M.SELECT_CARD)) { const idx = opts.map((o, i) => [/\(opp /.test(o.label) ? 0 : 1, i]).sort((p, q) => p[0] - q[0] || p[1] - q[1]).map(x => x[1] + 1); const n = Math.max(1, d.min || 1); if (idx.length >= n) return idx.slice(0, n).join(' '); }
   if (d.kind === 'multi' || d.kind === 'sum') return Array.from({ length: Math.max(1, d.min) }, (_, i) => i + 1).join(' ');
   if (d.kind === 'unselect') return find(/^Finish/) || '1';
   if (d.kind === 'place') return Array.from({ length: d.min }, (_, i) => i + 1).join(' ');

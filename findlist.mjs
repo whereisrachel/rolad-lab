@@ -49,7 +49,7 @@ const toYdk = (v) => { const main = base.main.slice(); for (const c of v) { if (
 const R = {}; // key -> { hi -> result }
 // line sharing (share.mjs): after each stage, the best lines found on a hand are replayed in every other version's game of that hand;
 // a version keeps the better of its own result and any line that is legal in its deck. Removes most search luck from the comparison.
-const SHARE = !a.includes('--noshare'); const rawDir = `data/flraw/${ID}`; if (SHARE) fs.mkdirSync(rawDir, { recursive: true }); const hkey = (k) => { let x = 2166136261; for (const ch of k) x = Math.imul(x ^ ch.charCodeAt(0), 16777619) >>> 0; return x.toString(36); };
+const SHARE = !a.includes('--noshare'); const T2 = f('t2', '') ? f('t2', '').split(',') : []; const rawDir = `data/flraw/${ID}`; if (SHARE) fs.mkdirSync(rawDir, { recursive: true }); const hkey = (k) => { let x = 2166136261; for (const ch of k) x = Math.imul(x ^ ch.charCodeAt(0), 16777619) >>> 0; return x.toString(36); };
 const rawPath = (key, hi) => `${rawDir}/${hi}-${hkey(key)}.json`;
 // fixed work budget (--fixed): playouts per minute, measured on this machine from the first games, then every game gets the same amount of search
 let PPM = +f('ppm', 0);
@@ -61,14 +61,20 @@ const FROZEN = `data/hints-frozen-${ID}.json`; // this run's snapshot of what ha
 const CARDV = 'data/cardv-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json';
 const play = (v, hi, sseed = 1, key = '') => new Promise(ok => { const perm = deal(v, hi); const t = { deck: deckFileFor(v), main: perm, hand: perm.slice(0, 5).map(c => name(c)), minutes: MIN, seed: 7 + hi, sseed, scn: scnOf(hi), hintsFile: a.includes('--nohints') ? HINTS : FROZEN, learnLog: HINTS, hints: !a.includes('--nohints'), cardvFile: CARDV, rawOut: SHARE ? rawPath(key, hi) : undefined, ppm: PPM || undefined, smart: a.includes('--smart') || undefined };
   const once = (tries) => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify(t)], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
-    p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); if (!m && tries < 1) return once(tries + 1); const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; ok({ v: r.v, crash: !!r.crash, line: r.line, board: r.board, hand: t.hand, scn: t.scn, ppm1: r.ppm1 }); }); };
+    p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); if (!m && tries < 1) return once(tries + 1); const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; const res = { v: r.v, crash: !!r.crash, line: r.line, board: r.board, hand: t.hand, scn: t.scn, ppm1: r.ppm1 };
+      // --t2 o_ss,o_despia: also play the opponent's turn into this board (oppturn.mjs); t2 = what you still have minus what they end on
+      if (T2.length && t.rawOut && fs.existsSync(t.rawOut)) { const q = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'oppturn.mjs', JSON.stringify({ line: t.rawOut, opp: `decks/${T2[hi % T2.length]}.ydk`, oppSeed: 1000 + hi, minutes: +f('t2min', 0.5) })], { stdio: ['ignore', 'pipe', 'ignore'] }); let o2 = '';
+        q.stdout.on('data', b => o2 += b); q.on('close', () => { const m2 = /OPPTURN (.*)/.exec(o2); if (m2) { const z = JSON.parse(m2[1]); res.t2 = +(z.ourBoardLeft - z.theirBoard).toFixed(2); res.t2opp = T2[hi % T2.length]; } ok(res); }); return; }
+      ok(res); }); };
   once(0); });
 let liveRows = []; const writeLive = (stage, done, total) => { try { fs.writeFileSync('data/explore-live.json', JSON.stringify({ run: 'findlist ' + ID + ' · ' + stage, at: new Date().toISOString(), done, total, cardsDone: liveRows.length, cards: liveRows.length, control: null, rows: liveRows.slice(0, 40) })); } catch {} };
 async function runGames(jobs, stage) { // jobs: [{ key, v, hi, sseed }], interleaved so every version gets the same machine conditions
   const had = jobs.length; jobs = jobs.filter(j => !(R[j.key] && R[j.key][j.hi])); if (had > jobs.length) log(`${stage}: ${had - jobs.length} games already played (resumed)`);
   let k = 0, done = 0; const total = jobs.length; log(`${stage}: ${total} games`);
   await Promise.all(Array.from({ length: PAR }, async () => { while (k < total) { const j = jobs[k++]; const r = await play(j.v, j.hi, j.sseed, j.key); (R[j.key] ||= {})[j.hi] = r; done++; console.log(`${done}/${total}`); if (done % 11 === 0) { writeLive(stage, done, total); try { fs.writeFileSync(store, JSON.stringify(R)); } catch {} } } }));
-  fs.writeFileSync(store, JSON.stringify(R)); if (SHARE) await shareHands([...new Set(jobs.map(j => j.hi))], stage); }
+  fs.writeFileSync(store, JSON.stringify(R)); if (SHARE) await shareHands([...new Set(jobs.map(j => j.hi))], stage);
+  if (T2.length) { const b = R.base || {}; const rows = Object.keys(R).filter(k => k !== 'base' && k !== 'base2').map(k => { const d = Object.keys(R[k]).filter(hi => b[hi] && R[k][hi].t2 != null && b[hi].t2 != null).map(hi => R[k][hi].t2 - b[hi].t2); if (d.length < 2) return null; const m = d.reduce((p, q) => p + q, 0) / d.length; const se = Math.sqrt(d.reduce((p, q) => p + (q - m) ** 2, 0) / (d.length - 1) / d.length); return `${k} ${m >= 0 ? '+' : ''}${m.toFixed(2)} ± ${se.toFixed(2)} (n ${d.length})`; }).filter(Boolean);
+    if (rows.length) log(`${stage}: after the opponent's turn (${T2.join('/')}; what you keep minus what they build), vs your list: ` + rows.join(' | ')); } }
 // line library (lines found on other machines / earlier runs, data/lib-<list>/): pulled at the start, matched per hand in shareHands
 const LIB = []; if (SHARE && !a.includes('--nolib')) { try { await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'libsync.mjs'], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => { if (o.trim()) log(o.trim()); ok(); }); }); } catch {}
   const LD = `data/lib-${path.basename(deckPath, '.ydk')}`; if (fs.existsSync(LD)) for (const fn of fs.readdirSync(LD).filter(x => x.endsWith('.json'))) { try { const x = JSON.parse(fs.readFileSync(`${LD}/${fn}`, 'utf8')); LIB.push({ file: `${LD}/${fn}`, id: x.id, scn: x.scn, v: x.v, need: x.hand.filter((_, i) => x.used && x.used[i]) }); } catch {} }

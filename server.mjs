@@ -46,8 +46,8 @@ const STEPS = {
   },
   async bench(j) { // line finder test on the guide hands, no helpers
     j.stage = 'searching each guide hand from scratch';
-    const r = await run(['bench.mjs', String(j.minutes || 10)], j.only ? { ONLY: j.only } : {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
-    if (r.code || !fs.existsSync('reports/deep-bench.md')) throw new Error('bench failed: ' + r.out.slice(-400)); j.report = 'reports/deep-bench.md';
+    const r = await run(['bench.mjs', String(j.minutes || 10)], { ...(j.only ? { ONLY: j.only } : {}), ...(j.deckA ? { DECK: j.deckA } : {}) }, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
+    const rep = j.deckA ? `reports/deep-bench-${path.basename(j.deckA, '.ydk')}.md` : 'reports/deep-bench.md'; if (r.code || !fs.existsSync(rep)) throw new Error('bench failed: ' + r.out.slice(-400)); j.report = rep;
   },
   async deepscreen(j) { // candidate cards get their own lines found (line finder), same hands as a control; optional planted-card check
     j.stage = 'finding lines for each candidate card'; const A = await resolveDeck(j.deckA);
@@ -61,7 +61,7 @@ const STEPS = {
     const out = `reports/decktest-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('deck test failed: ' + r.out.slice(-400)); j.report = out;
   },
   async findlist(j) { // every stage by itself: noise, candidates, rounds, new list, fresh-hand check, report
-    j.stage = 'finding a better list'; const A = await resolveDeck(j.deckA); const args = ['findlist.mjs', '--deck', A, '--id', String(j.resume || j.id)]; if (j.resume) args.push('--resume'); if (j.mini) args.push('--mini'); if (j.cuts !== undefined) args.push('--cuts', String(j.cuts)); if (j.noplus) args.push('--noplus'); if (j.fixed) args.push('--fixed'); if (j.smart) args.push('--smart'); if (j.only) args.push('--only', String(j.only)); if (j.retest) args.push('--retest'); if (j.versions) args.push('--versions', typeof j.versions === 'string' ? j.versions : JSON.stringify(j.versions)); if (j.noshare) args.push('--noshare'); for (const k of ['h1', 'h2', 'h3', 'hv', 'adds', 'eds', 'keep2', 'keep3', 'min']) if (j[k] !== undefined) args.push('--' + k, String(j[k]));
+    j.stage = 'finding a better list'; const A = await resolveDeck(j.deckA); const args = ['findlist.mjs', '--deck', A, '--id', String(j.resume || j.id)]; if (j.resume) args.push('--resume'); if (j.mini) args.push('--mini'); if (j.cuts !== undefined) args.push('--cuts', String(j.cuts)); if (j.noplus) args.push('--noplus'); if (j.fixed) args.push('--fixed'); if (j.smart) args.push('--smart'); if (j.t2) args.push('--t2', String(j.t2)); if (j.t2min) args.push('--t2min', String(j.t2min)); if (j.only) args.push('--only', String(j.only)); if (j.retest) args.push('--retest'); if (j.versions) args.push('--versions', typeof j.versions === 'string' ? j.versions : JSON.stringify(j.versions)); if (j.noshare) args.push('--noshare'); for (const k of ['h1', 'h2', 'h3', 'hv', 'adds', 'eds', 'keep2', 'keep3', 'min']) if (j[k] !== undefined) args.push('--' + k, String(j[k]));
     const r = await run(args, {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/^(stage|noise|candidates|Extra Deck use|findlist)/.test(l)) { if (/^stage/.test(l)) j.stage = l; j.diag = (j.diag ? j.diag + ' | ' : '') + l; } });
     const out = `reports/findlist-${j.resume || j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('find a better list failed: ' + r.out.slice(-400)); j.report = out;
   },

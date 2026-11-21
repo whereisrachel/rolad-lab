@@ -62,7 +62,7 @@ export function scoreBoard(B, detail = false) {
   for (const c of st) {
     const n = nm(c);
     if (/Impasto/.test(n)) fusion ? add(n + ' (negate + destroy; banishes a Fusion you control)', 1.5, 'negate') : zero(n + ' (no Fusion Monster to banish)');
-    else if (/Infinite Impermanence/.test(n)) add(n + ' (negate)', 1.25, 'negate');
+    else if (/Infinite Impermanence/.test(n)) add(n + ' (negate; set, so it is revealed and can be removed)', 1.2, 'negate');
     else if (/Mind Shuffle/.test(n)) { const body = mons.some(m => (info(m).level || 0) >= 7 && !(info(m).type & LINK)); const bls = hand.some(h => /Black Luster Soldier/.test(nm(h))) || B.blsInDeck !== false;
       body && bls ? add(n + ' (swap a Lv7+ for Black Luster Soldier: banish 1)', 0.75, 'banish-monster') : add(n + ' (search only)', 0.2, null); }
     else if (/Theorealize Liberation/.test(n)) has(/^Medius the Pure$/) ? add(n + ' (Quick-Play: Special Summon a 300/200 on their turn)', 0.3, null) : zero(n + ' (needs Medius on field)');
@@ -74,7 +74,8 @@ export function scoreBoard(B, detail = false) {
   for (const c of (B.gy || [])) { const n = nm(c); if (/^Lacrima the Crimson Tears$/.test(n) && (B.gy || []).some(g => /Fiendsmith's (Requiem|Sequence)/.test(nm(g)))) { add('GY ' + n + ' (their turn: Special Summon a Fiendsmith Link)', 0.3, null); break; } }
   for (const c of hand) {
     const n = nm(c);
-    if (/Ash Blossom|Droll|Nibiru|Ghost|Infinite Impermanence|Effect Veiler|Mulcharmy|Maxx/.test(n)) add('hand ' + n, HT, 'handtrap');
+    if (/Infinite Impermanence/.test(n) && HT > 0) add('hand ' + n + ' (negate from hand, hidden)', 1.25 * HT, 'negate'); // same negate as setting it, and hidden: setting it gains nothing
+    else if (/Ash Blossom|Droll|Nibiru|Ghost|Infinite Impermanence|Effect Veiler|Mulcharmy|Maxx/.test(n)) add('hand ' + n, HT, 'handtrap');
     else if (/^Griffoh$/.test(n) && !st.some(s => /Mind Shuffle/.test(nm(s)))) add('hand Griffoh (their turn: Set Mind Shuffle and use it)', 0.5, null);
     else add('hand ' + n, 0.15);
   }
