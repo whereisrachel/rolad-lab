@@ -35,13 +35,21 @@ async function vsThreat(c, threat, k) {
   if (!r || r.S.ended) return { v: mx, hit: false };
   const g = r.S.game; const hitAt = (g.responses || []).findIndex(e => e.seat === 1 && /^Activate /.test(e.label || ''));
   if (hitAt < 0) return { v: mx, hit: false }; // the hand trap never had a target in this line
-  if (r.S.turn !== 1 || !r.S.pending) return { v: mx, hit: true }; try { const a = await searchT1(JSON.parse(JSON.stringify(g)), { ms: AD * 60000, nrpa: 3, seed: 5, evalFn: (S2) => disruption(S2, 0) }); return { v: Math.max(mx, a.score || 0), hit: true, at: (g.responses.slice(0, hitAt).reverse().find(e => e.seat === 0 && /^Activate /.test(e.label || '')) || {}).label || '' }; }
-  catch { return { v: mx, hit: true }; } }
+  const at = (g.responses.slice(0, hitAt).reverse().find(e => e.seat === 0 && /^Activate /.test(e.label || '')) || {}).label || '';
+  // re-plan from the moment the hand trap is activated: replay only your steps up to the hit, then search from there
+  // (not from wherever the old line happened to stop, which can waste the cards you would re-route with)
+  const nBefore = g.responses.slice(0, hitAt).filter(e => e.seat === 0 && !e.auto && e.label).length; let m2 = -1;
+  const r2 = await replay(mk(c, threat, k), steps.slice(0, nBefore), (S) => { const v = disruption(S, 0); if (v > m2) m2 = v; });
+  const S0 = r2 && r2.S; if (!S0 || S0.ended || S0.turn !== 1 || !S0.pending) return { v: mx, hit: true, at, why: 'no decision left after the hit' };
+  if (process.env.RDBG) { const d = E.decision(S0, E.seatOf(S0.game, S0.pending.player)); console.error('DBG', threat, 'pending seat', E.seatOf(S0.game, S0.pending.player), 'type', S0.pending.type, 'opts', (d && d.options || []).slice(0, 8).map(o => o.label).join(' || '), '| responses', S0.game.responses.map(e => e.seat + ':' + (e.label || '').slice(0, 40)).join(' ; ')); }
+  try { const a = await searchT1(JSON.parse(JSON.stringify(S0.game)), { ms: AD * 60000, nrpa: 3, seed: 5, evalFn: (S2) => disruption(S2, 0) }); if (process.env.RDBG) console.error('DBG line', threat, JSON.stringify(Object.fromEntries(Object.entries(a).map(([k2, v2]) => [k2, typeof v2 === 'object' ? JSON.stringify(v2).slice(0, 200) : v2]))));
+    const v = Math.max(m2, a.score || 0); return { v, hit: true, at, why: 're-planned ' + (a.score || 0).toFixed(2) + ' (old line after the hit ' + mx.toFixed(2) + ')' }; }
+  catch (e) { return { v: Math.max(m2, 0), hit: true, at, why: 'adapt error: ' + String(e && e.message).slice(0, 120) }; } }
 // worker mode: evaluate one (candidate, hand trap, timing) and exit
 if (EV) { const c = JSON.parse(fs.readFileSync(EV.file, 'utf8')); const z = await vsThreat(c, EV.threat, EV.k); console.log('EVAL ' + JSON.stringify(z)); process.exit(0); }
 // all evaluations run in parallel worker processes
 const tasks = []; C.forEach((c, i) => { const f = path.join(tmp, `cand${i}.json`); fs.writeFileSync(f, JSON.stringify(c)); tasks.push({ i, file: f, threat: null, k: 0 }); for (const th of Object.keys(THREATS)) for (const k of KS) tasks.push({ i, file: f, threat: th, k }); });
-const evalOne = (x) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2000', 'robust.mjs', JSON.stringify({ ...t, evalOne: x })], { stdio: ['ignore', 'pipe', 'ignore'] });
+const evalOne = (x) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2000', 'robust.mjs', JSON.stringify({ ...t, evalOne: x })], { stdio: ['ignore', 'pipe', process.env.RDBG ? 'inherit' : 'ignore'] });
   let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => { const m = /EVAL (.*)/.exec(o); x.z = m ? JSON.parse(m[1]) : { v: 0, hit: true, failed: true }; ok(); }); });
 const q = tasks.slice(); await Promise.all(Array.from({ length: NP }, async () => { while (q.length) await evalOne(q.shift()); }));
 const rows = C.map((c, i) => { const mine = tasks.filter(x => x.i === i); const nz = mine.find(x => !x.threat).z; const row = { none: +Math.max(nz.v, 0).toFixed(2), line: c.line, threats: {}, from: c.scnFrom, cand: { raw: c.raw, order: c.order, extra: c.extra, seed: c.seed, used: c.used, keys: c.keys, hand: c.hand } }; let tot = W.none * row.none;
