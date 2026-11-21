@@ -44,6 +44,11 @@ const STEPS = {
     for (const B of (fs.existsSync('data/explore-confirm.txt') ? fs.readFileSync('data/explore-confirm.txt', 'utf8').split('\n').filter(Boolean) : []))
       addJob({ kind: 'pair', deckA: j.deckA, deckB: B, n: 300, scn: 'none,ash,imperm', macros: 300, title: 'Explorer find: ' + path.basename(B, '.ydk').replace(/^\d+-/, '').replace(/_/g, ' ') });
   },
+  async robbench(j) { // which line to play when you don't know their hand trap, on the guide hands
+    j.stage = 'robust lines on the guide hands'; const L = path.basename(j.deckA || 'decks/L2-vand3.ydk', '.ydk');
+    const r = await run(['robbench.mjs', j.deckA || 'decks/L2-vand3.ydk', String(j.minutes || 1)], j.only ? { ONLY: j.only } : {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
+    if (r.code || !fs.existsSync(`reports/robust-${L}.md`)) throw new Error('robust lines failed: ' + r.out.slice(-400)); j.report = `reports/robust-${L}.md`; j.last = 'done -> ' + j.report;
+  },
   async bench(j) { // line finder test on the guide hands, no helpers
     j.stage = 'searching each guide hand from scratch';
     const r = await run(['bench.mjs', String(j.minutes || 10)], { ...(j.only ? { ONLY: j.only } : {}), ...(j.deckA ? { DECK: j.deckA } : {}) }, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });

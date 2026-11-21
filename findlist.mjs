@@ -80,7 +80,7 @@ const LIB = []; if (SHARE && !a.includes('--nolib')) { try { await new Promise(o
   const LD = `data/lib-${path.basename(deckPath, '.ydk')}`; if (fs.existsSync(LD)) for (const fn of fs.readdirSync(LD).filter(x => x.endsWith('.json'))) { try { const x = JSON.parse(fs.readFileSync(`${LD}/${fn}`, 'utf8')); LIB.push({ file: `${LD}/${fn}`, id: x.id, scn: x.scn, v: x.v, need: x.hand.filter((_, i) => x.used && x.used[i]) }); } catch {} }
   if (LIB.length) log(`line library: ${LIB.length} stored lines available to every test hand`); }
 const libFor = (hand, scn, n = 4) => { const have = {}; for (const c of hand) have[c] = (have[c] || 0) + 1;
-  return LIB.filter(e => e.scn === scn && e.need.length && (() => { const h = { ...have }; for (const c of e.need) { if (!h[c]) return false; h[c]--; } return true; })()).sort((p, q) => q.v - p.v).slice(0, n)
+  return LIB.filter(e => (e.scn === scn || e.scn === 'robust') && e.need.length && (() => { const h = { ...have }; for (const c of e.need) { if (!h[c]) return false; h[c]--; } return true; })()).sort((p, q) => q.v - p.v).slice(0, n)
     .map(e => { try { const x = JSON.parse(fs.readFileSync(e.file, 'utf8')); return { key: 'lib:' + e.id, v: x.v, raw: x.raw, order: x.order, extra: x.extra, seed: x.seed, after: 0 }; } catch { return null; } }).filter(Boolean); };
 async function shareHands(his, stage) { let k = 0, moved = 0, bad = 0, libHits = 0; const list = his.slice();
   await Promise.all(Array.from({ length: PAR }, async () => { while (k < list.length) { const hi = list[k++]; const games = [];
