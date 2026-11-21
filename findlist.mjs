@@ -27,34 +27,57 @@ const isHandTrap = (n) => { const k = code(n); const t = (cardDB().text.get(k) |
 
 // ---------- versions ----------
 // a version = list of changes: { op: 'add'|'cut', card } on the Main Deck, { op: 'ed', card, out } on the Extra Deck
-const label = (v) => v.length ? v.map(c => c.op === 'add' ? '+1 ' + c.card : c.op === 'cut' ? '-1 ' + c.card : 'Extra Deck: ' + c.card + ' for ' + c.out).join(' & ') : 'your list';
+const label = (v) => v.length ? v.map(c => c.op === 'add' ? '+1 ' + c.card : c.op === 'cut' ? '-1 ' + c.card : 'Extra Deck: ' + c.card + (c.out ? ' for ' + c.out : ' (free slot)')).join(' & ') : 'your list';
 const rngOf = (seed) => { let x = seed >>> 0 || 1; return () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296; };
-const deal = (v, hi) => { const r = rngOf(1000 + hi * 7919); const perm = base.main.slice(); for (let k = perm.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [perm[k], perm[j]] = [perm[j], perm[k]]; }
+// blank slot: every version (your list included) is played as a 47-card list whose spare slot holds a vanilla card (--pad, default Petit Moth).
+// +1 X takes the blank's place, -1 Y is replaced by a blank, so deck size and card order never change between versions. Without this,
+// 47-card versions all shuffled alike after a search and your 46-card list differently, so every +1 looked ~0.1-0.25 better by deck-order luck.
+const PADN = a.includes('--nopad') ? null : f('pad', 'Petit Moth'); const PADC = PADN ? code(PADN) : null; if (PADN && !PADC) { console.error('pad card not found: ' + PADN); process.exit(1); }
+const deal = (v, hi) => { const r = rngOf(1000 + hi * 7919); const perm = base.main.slice(); if (PADC) perm.push(PADC); for (let k = perm.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [perm[k], perm[j]] = [perm[j], perm[k]]; }
   for (const c of v) { const r2 = rngOf(5000 + hi * 104729 + c.card.length * 31 + (c.op === 'cut' ? 7 : 0));
-    if (c.op === 'add') perm.splice(Math.floor(r2() * (perm.length + 1)), 0, code(c.card));
-    else if (c.op === 'cut') { const at = perm.map((k, i) => name(k) === c.card ? i : -1).filter(i => i >= 0); if (at.length) perm.splice(at[Math.floor(r2() * at.length)], 1); } }
+    if (c.op === 'add') { const pi = PADC ? perm.indexOf(PADC) : -1; if (pi >= 0) perm[pi] = code(c.card); else perm.splice(Math.floor(r2() * (perm.length + 1)), 0, code(c.card)); }
+    else if (c.op === 'cut') { const at = perm.map((k, i) => name(k) === c.card ? i : -1).filter(i => i >= 0); if (at.length) { const i = at[Math.floor(r2() * at.length)]; if (PADC) perm[i] = PADC; else perm.splice(i, 1); } } }
   return perm; };
 const deckFiles = new Map(); const deckFileFor = (v) => { const ed = v.filter(c => c.op === 'ed'); const key = ed.map(c => c.card + '>' + c.out).join('|') || 'base'; if (deckFiles.has(key)) return deckFiles.get(key);
-  const extra = base.extra.slice(); for (const c of ed) { const i = extra.findIndex(k => name(k) === c.out); if (i >= 0) extra[i] = code(c.card); }
+  const extra = base.extra.slice(); for (const c of ed) { if (!c.out) { if (extra.length < 15) extra.push(code(c.card)); continue; } const i = extra.findIndex(k => name(k) === c.out); if (i >= 0) extra[i] = code(c.card); }
   const p = `decks/_explore/fl-${ID}-${deckFiles.size}.ydk`; fs.writeFileSync(p, '#main\n' + base.main.join('\n') + '\n#extra\n' + extra.join('\n') + '\n!side\n'); deckFiles.set(key, p); return p; };
 const toYdk = (v) => { const main = base.main.slice(); for (const c of v) { if (c.op === 'add') main.push(code(c.card)); else if (c.op === 'cut') { const i = main.findIndex(k => name(k) === c.card); if (i >= 0) main.splice(i, 1); } }
-  const extra = base.extra.slice(); for (const c of v.filter(c => c.op === 'ed')) { const i = extra.findIndex(k => name(k) === c.out); if (i >= 0) extra[i] = code(c.card); }
+  const extra = base.extra.slice(); for (const c of v.filter(c => c.op === 'ed')) { if (!c.out) { if (extra.length < 15) extra.push(code(c.card)); continue; } const i = extra.findIndex(k => name(k) === c.out); if (i >= 0) extra[i] = code(c.card); }
   return '#main\n' + main.join('\n') + '\n#extra\n' + extra.join('\n') + '\n!side\n'; };
 
 // ---------- games ----------
 const R = {}; // key -> { hi -> result }
+// line sharing (share.mjs): after each stage, the best lines found on a hand are replayed in every other version's game of that hand;
+// a version keeps the better of its own result and any line that is legal in its deck. Removes most search luck from the comparison.
+const SHARE = !a.includes('--noshare'); const rawDir = `data/flraw/${ID}`; if (SHARE) fs.mkdirSync(rawDir, { recursive: true }); const hkey = (k) => { let x = 2166136261; for (const ch of k) x = Math.imul(x ^ ch.charCodeAt(0), 16777619) >>> 0; return x.toString(36); };
+const rawPath = (key, hi) => `${rawDir}/${hi}-${hkey(key)}.json`;
+// fixed work budget (--fixed): playouts per minute, measured on this machine from the first games, then every game gets the same amount of search
+let PPM = +f('ppm', 0);
 const store = `data/findlist-${ID}.json`;
+// --resume: continue a stopped run with the same id: games already played are kept and skipped, and the run's frozen knowledge is reused so every round plays with the same hints
+const RESUME = a.includes('--resume') && fs.existsSync(store); if (RESUME) Object.assign(R, JSON.parse(fs.readFileSync(store, 'utf8')));
 const HINTS = 'data/hints-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json';
-const play = (v, hi, sseed = 1) => new Promise(ok => { const perm = deal(v, hi); const t = { deck: deckFileFor(v), main: perm, hand: perm.slice(0, 5).map(c => name(c)), minutes: MIN, seed: 7 + hi, sseed, scn: scnOf(hi), hintsFile: HINTS };
+const FROZEN = `data/hints-frozen-${ID}.json`; // this run's snapshot of what has been learned so far: every version plays with the same knowledge
+const CARDV = 'data/cardv-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json';
+const play = (v, hi, sseed = 1, key = '') => new Promise(ok => { const perm = deal(v, hi); const t = { deck: deckFileFor(v), main: perm, hand: perm.slice(0, 5).map(c => name(c)), minutes: MIN, seed: 7 + hi, sseed, scn: scnOf(hi), hintsFile: a.includes('--nohints') ? HINTS : FROZEN, learnLog: HINTS, hints: !a.includes('--nohints'), cardvFile: CARDV, rawOut: SHARE ? rawPath(key, hi) : undefined, ppm: PPM || undefined };
   const once = (tries) => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify(t)], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
-    p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); if (!m && tries < 1) return once(tries + 1); const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; ok({ v: r.v, crash: !!r.crash, line: r.line, board: r.board, hand: t.hand, scn: t.scn }); }); };
+    p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); if (!m && tries < 1) return once(tries + 1); const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; ok({ v: r.v, crash: !!r.crash, line: r.line, board: r.board, hand: t.hand, scn: t.scn, ppm1: r.ppm1 }); }); };
   once(0); });
 let liveRows = []; const writeLive = (stage, done, total) => { try { fs.writeFileSync('data/explore-live.json', JSON.stringify({ run: 'findlist ' + ID + ' · ' + stage, at: new Date().toISOString(), done, total, cardsDone: liveRows.length, cards: liveRows.length, control: null, rows: liveRows.slice(0, 40) })); } catch {} };
 async function runGames(jobs, stage) { // jobs: [{ key, v, hi, sseed }], interleaved so every version gets the same machine conditions
+  const had = jobs.length; jobs = jobs.filter(j => !(R[j.key] && R[j.key][j.hi])); if (had > jobs.length) log(`${stage}: ${had - jobs.length} games already played (resumed)`);
   let k = 0, done = 0; const total = jobs.length; log(`${stage}: ${total} games`);
-  await Promise.all(Array.from({ length: PAR }, async () => { while (k < total) { const j = jobs[k++]; const r = await play(j.v, j.hi, j.sseed); (R[j.key] ||= {})[j.hi] = r; done++; console.log(`${done}/${total}`); if (done % 11 === 0) { writeLive(stage, done, total); try { fs.writeFileSync(store, JSON.stringify(R)); } catch {} } } }));
-  fs.writeFileSync(store, JSON.stringify(R)); }
-const stat = (key, baseKey = 'base') => { const b = R[baseKey] || {}, x = R[key] || {}; const d = Object.keys(x).filter(hi => b[hi]).map(hi => x[hi].v - b[hi].v);
+  await Promise.all(Array.from({ length: PAR }, async () => { while (k < total) { const j = jobs[k++]; const r = await play(j.v, j.hi, j.sseed, j.key); (R[j.key] ||= {})[j.hi] = r; done++; console.log(`${done}/${total}`); if (done % 11 === 0) { writeLive(stage, done, total); try { fs.writeFileSync(store, JSON.stringify(R)); } catch {} } } }));
+  fs.writeFileSync(store, JSON.stringify(R)); if (SHARE) await shareHands([...new Set(jobs.map(j => j.hi))], stage); }
+async function shareHands(his, stage) { let k = 0, moved = 0, bad = 0; const list = his.slice();
+  await Promise.all(Array.from({ length: PAR }, async () => { while (k < list.length) { const hi = list[k++]; const games = [];
+    for (const [key, byH] of Object.entries(R)) { const r = byH[hi]; if (!r) continue; const p = rawPath(key, hi); if (!fs.existsSync(p)) continue; try { const x = JSON.parse(fs.readFileSync(p, 'utf8')); games.push({ key, v: r.v0 ?? r.v, raw: x.raw, order: x.order, extra: x.extra, seed: x.seed }); } catch {} }
+    if (games.length < 2) continue; const jf = `${rawDir}/share-${hi}.json`; fs.writeFileSync(jf, JSON.stringify({ scn: scnOf(hi), games, top: 4 }));
+    const out = await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'share.mjs', jf], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => ok(o)); });
+    const m = /SHARE (.*)/.exec(out); if (!m) { bad++; continue; } const x = JSON.parse(m[1]); if (!x.ok) bad++;
+    for (const [key, y] of Object.entries(x.res)) { const r = R[key][hi]; r.v0 ??= r.v; if (y.from && y.v > r.v0) { r.v = y.v; r.from = y.from; moved++; } else r.v = r.v0; } } }));
+  fs.writeFileSync(store, JSON.stringify(R)); log(`${stage}: line sharing on ${list.length} hands -> ${moved} results improved by another version's legal line${bad ? `, ${bad} hands kept own results (replay check failed)` : ''}`); }
+const stat = (key, baseKey = 'base', own = false) => { const b = R[baseKey] || {}, x = R[key] || {}; const V = (r) => own ? (r.v0 ?? r.v) : r.v; const d = Object.keys(x).filter(hi => b[hi]).map(hi => V(x[hi]) - V(b[hi]));
   const n = d.length, m = n ? d.reduce((s, y) => s + y, 0) / n : 0, sd = n > 1 ? Math.sqrt(d.reduce((s, y) => s + (y - m) ** 2, 0) / (n - 1)) : 0;
   const byS = {}; for (const hi of Object.keys(x).filter(hi => b[hi])) (byS[scnOf(+hi)] ||= []).push(x[hi].v - b[hi].v);
   return { n, m, se: n ? sd / Math.sqrt(n) : 0, sd, better: d.filter(y => y >= 1).length, worse: d.filter(y => y <= -1).length, byS: Object.fromEntries(Object.entries(byS).map(([s, arr]) => [s, arr.reduce((p, q) => p + q, 0) / arr.length])) }; };
@@ -63,23 +86,54 @@ const hands = (from, n) => Array.from({ length: n }, (_, i) => from + i);
 // ================= run =================
 log(`findlist ${ID}: list ${deckPath} (${base.main.length} Main / ${base.extra.length} Extra), ${MIN} min per game, ${PAR} games at a time${MINI ? ', MINI check' : ''}`);
 // 0) hints: if this list has no learned hints yet, learn them first (random hands, moves of the best lines)
-if (!fs.existsSync(HINTS) && !a.includes('--nohints')) { log('stage 0/5: learning hints for this list (first time only)'); await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'learn.mjs', '--deck', deckPath, '--hands', String(MINI ? 11 : 44), '--min', '1.5'], { stdio: ['ignore', 'pipe', 'ignore'] }); p.stdout.on('data', b => { for (const l of String(b).split('\n')) if (/^\d+\/\d+$/.test(l.trim())) console.log(l.trim()); else if (/learned from/.test(l)) log(l.trim()); }); p.on('close', ok); }); }
+if (!fs.existsSync(HINTS) && !fs.existsSync(HINTS.replace(/\.json$/, '') + '.log.jsonl') && !a.includes('--nohints')) { log('stage 0/5: learning hints for this list (first time only)'); await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'learn.mjs', '--deck', deckPath, '--hands', String(MINI ? 11 : 44), '--min', '1.5'], { stdio: ['ignore', 'pipe', 'ignore'] }); p.stdout.on('data', b => { for (const l of String(b).split('\n')) if (/^\d+\/\d+$/.test(l.trim())) console.log(l.trim()); else if (/learned from/.test(l)) log(l.trim()); }); p.on('close', ok); }); }
+// 0b) card values: what each card (incl. the new cards to be tested) reaches alone with 4 blanks -> the line finder prefers searching strong cards.
+// Learned once per run for every card it will see, so your list and every version use the same values.
+{ const known = fs.existsSync(CARDV) ? Object.keys(JSON.parse(fs.readFileSync(CARDV, 'utf8')).v || {}) : []; const syn0 = synergyScores(base, LIM); const inL = new Set(base.main.map(k => name(k)));
+  const newCards = syn0.filter(x => x.zone === 'main' && !inL.has(x.name) && limitOf(x.code) > 0 && !isHandTrap(x.name)).slice(0, NADD).map(x => x.name);
+  const need = MINI ? [...inL, ...newCards].filter(n => !isHandTrap(n) && !known.includes(n)) : [...inL, ...newCards].filter(n => !isHandTrap(n)); // full runs refresh every value (averaged with what was learned before)
+  if (need.length && a.includes('--cardv')) { log(`stage 0b/5: learning card values (${need.length} cards)`); await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'cardvalue.mjs', '--deck', deckPath, '--min', MINI ? '0.75' : '1.5', '--passes', MINI ? '1' : '2', '--cards', newCards.join(';')], { stdio: ['ignore', 'pipe', 'ignore'] }); p.stdout.on('data', b => { for (const l of String(b).split('\n')) if (/^\d+\/\d+$/.test(l.trim())) console.log(l.trim()); else if (/saved|^\s+\d/.test(l)) log(l.trim()); }); p.on('close', ok); }); } }
+if (RESUME && fs.existsSync(FROZEN)) log(`resuming run ${ID}: ${Object.values(R).reduce((n, x) => n + Object.keys(x).length, 0)} games already played, same frozen knowledge as before`); else { const { freezeHints, gamesLogged } = await import('./src/hints.mjs'); const nk = freezeHints(HINTS, FROZEN); log(`knowledge for this run: ${nk} learned moves from ${gamesLogged(HINTS)} logged games (+ earlier learning); this run's games are added for next time`); }
+if (PADC) log(`blank slot: every version is played as a ${base.main.length + 1}-card list with ${PADN} in the spare slot (a +1 takes its place, a cut is replaced by it), so deck size and order match across versions`);
+// 0c) fixed work budget: measure this machine's search speed on a few throwaway hands (clock-based), then every game gets that many playouts
+if (a.includes('--fixed') && !PPM) { const cal = hands(900, PAR); const rs = await Promise.all(cal.map(hi => play([], hi, 1, ''))); const v = rs.map(r => r.ppm1).filter(Boolean).sort((p, q) => p - q);
+  PPM = v.length ? v[Math.floor(v.length / 2)] : 0; log(`fixed search budget: ${PPM} playouts per minute of search (measured on ${v.length} hands)`); }
 // 1) noise + base games (also tells which Extra Deck card the list uses least)
 const r1 = hands(0, H1);
 await runGames([...r1.map(hi => ({ key: 'base', v: [], hi, sseed: 1 })), ...r1.map(hi => ({ key: 'base2', v: [], hi, sseed: 2 }))], 'stage 1/5: your list twice (noise)');
-const noise = stat('base2'); log(`noise: same hands, different search luck -> per-hand spread ${noise.sd.toFixed(2)}, average ${noise.m >= 0 ? '+' : ''}${noise.m.toFixed(2)} ± ${noise.se.toFixed(2)}`);
+const noise = stat('base2', 'base', true); /* search luck on the same hands (own searches, before line sharing) */ log(`noise: same hands, different search luck -> per-hand spread ${noise.sd.toFixed(2)}, average ${noise.m >= 0 ? '+' : ''}${noise.m.toFixed(2)} ± ${noise.se.toFixed(2)}`);
 const baseMean = Object.values(R.base).reduce((s, r) => s + r.v, 0) / r1.length;
 const edUse = {}; for (const e of new Set(base.extra.map(k => name(k)))) edUse[e] = 0; for (const r of [...Object.values(R.base), ...Object.values(R.base2)]) for (const l of r.line || []) for (const e of Object.keys(edUse)) if (l.includes(e)) edUse[e]++;
 const leastEd = Object.entries(edUse).sort((p, q) => p[1] - q[1])[0][0]; log(`Extra Deck use in your list's games: least used = ${leastEd} (${edUse[leastEd]} uses)`);
 // 2) candidates
 const syn = synergyScores(base, LIM); const inList = new Set(Object.keys(count));
-const cuts = Object.keys(count).filter(n => !isHandTrap(n)).map(n => [{ op: 'cut', card: n }]);
-const plus = Object.keys(count).filter(n => !isHandTrap(n) && count[n] < limitOf(code(n))).map(n => [{ op: 'add', card: n }]);
-const adds = syn.filter(x => x.zone === 'main' && !inList.has(x.name) && limitOf(x.code) > 0 && !isHandTrap(x.name)).slice(0, NADD).map(x => [{ op: 'add', card: x.name, why: x.why }]);
-const eds = syn.filter(x => x.zone === 'ed' && limitOf(x.code) > 0).slice(0, NED).map(x => [{ op: 'ed', card: x.name, out: leastEd, why: x.why }]);
-let versions = MINI ? [cuts.find(v => /Nervedo/.test(v[0].card)) || cuts[0], plus.find(v => /Medius the Pure/.test(v[0].card)) || plus[0], ...adds, ...eds] : [...cuts, ...plus, ...adds, ...eds];
+const ONLYCUTS = f('cuts', null); // e.g. --cuts "Medius the Pure;Black Chaos": only these cuts (known-answer checks); --cuts none: no cuts
+const cuts = Object.keys(count).filter(n => !isHandTrap(n) && (ONLYCUTS === null || ONLYCUTS.split(';').includes(n))).map(n => [{ op: 'cut', card: n }]);
+const plus = a.includes('--noplus') ? [] : Object.keys(count).filter(n => !isHandTrap(n) && count[n] < limitOf(code(n))).map(n => [{ op: 'add', card: n }]);
+// candidates from the whole-pool screen (poolscan.mjs: every legal card, tested inside your own lines) when it has been run; else cards connected by text
+const PS = 'data/poolscan-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json'; const pool = !a.includes('--synergy') && fs.existsSync(PS) ? JSON.parse(fs.readFileSync(PS, 'utf8')) : null;
+if (pool) log(`candidates from the whole-pool screen of ${pool.at.slice(0, 10)}: ${pool.screened} cards screened, ${pool.live} usable in your lines, ${pool.ranked.length} value-tested`);
+const adds = pool ? [...pool.ranked.filter(x => x.zone === 'main' && x.kind !== 'standalone' && !inList.has(x.name) && limitOf(code(x.name)) > 0).slice(0, NADD - 5), ...pool.ranked.filter(x => x.zone === 'main' && x.kind === 'standalone' && limitOf(code(x.name)) > 0).slice(0, 5)].map(x => [{ op: 'add', card: x.name, why: [`pool screen ${x.gain >= 0 ? '+' : ''}${x.gain} in ${pool.lines[x.best.li].id}`] }])
+  : syn.filter(x => x.zone === 'main' && !inList.has(x.name) && limitOf(x.code) > 0 && !isHandTrap(x.name)).slice(0, NADD).map(x => [{ op: 'add', card: x.name, why: x.why }]);
+const eds = pool ? pool.ranked.filter(x => x.zone === 'ed' && limitOf(code(x.name)) > 0).slice(0, NED).map(x => [{ op: 'ed', card: x.name, out: base.extra.length < 15 ? null : leastEd, why: [`pool screen ${x.gain >= 0 ? '+' : ''}${x.gain}`] }])
+  : syn.filter(x => x.zone === 'ed' && limitOf(x.code) > 0).slice(0, NED).map(x => [{ op: 'ed', card: x.name, out: leastEd, why: x.why }]);
+// packages from the pool screen: cards that need each other (from the engine's scripts), added together; Extra Deck members take your least-used slots
+const edOrder = Object.entries(edUse).sort((p, q) => p[1] - q[1]).map(x => x[0]); const NPK = +f('pkgs', 10);
+const pkgs = pool && pool.packages ? pool.packages.filter(x => x.kind !== 'standalone').slice(0, NPK).map(x => [...x.members.main.map(n => ({ op: 'add', card: n })), ...x.members.ed.map((n, i) => ({ op: 'ed', card: n, out: base.extra.length + i < 15 ? null : edOrder[i - Math.max(0, 15 - base.extra.length)] }))]).filter(v => v.length) : [];
+// memory: what earlier runs already tested on this list is not tested again (unless --retest); ~20% of the new-card slots go to untried cards further down the screen
+const TESTED = 'data/tested-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json'; const tested = fs.existsSync(TESTED) && !a.includes('--retest') ? JSON.parse(fs.readFileSync(TESTED, 'utf8')) : {};
+const fresh = (vs) => vs.filter(v => !tested[label(v)]);
+const explore = (all, n) => { const rest = fresh(all); const keep = rest.slice(0, Math.ceil(n * 0.8)); const pool2 = rest.slice(keep.length); const r = rngOf(+ID || 7); while (keep.length < n && pool2.length) keep.push(pool2.splice(Math.floor(r() * pool2.length), 1)[0]); return keep; };
+const addsAll = pool ? pool.ranked.filter(x => x.zone === 'main' && x.kind === 'engine' && !inList.has(x.name) && limitOf(code(x.name)) > 0).map(x => [{ op: 'add', card: x.name, why: [`pool screen ${x.gain}`] }]) : [];
+if (pool) { const side = (k, n) => pool.ranked.filter(x => x.zone === 'main' && x.kind === k && !inList.has(x.name) && limitOf(code(x.name)) > 0).slice(0, n).map(x => [{ op: 'add', card: x.name, why: [`pool screen ${x.gain} (${k})`] }]);
+  adds.splice(0, adds.length, ...explore(addsAll, NADD - 8), ...fresh([...side('body', 3), ...side('draw', 2), ...side('standalone', 3)])); }
+const skipped = [...cuts, ...plus, ...eds, ...pkgs].filter(v => tested[label(v)]).length; if (skipped) log(`memory: ${skipped} changes already tested on this list in earlier runs are skipped (use --retest to test them again)`);
+let versions = MINI ? [cuts.find(v => /Nervedo/.test(v[0].card)) || cuts[0], plus.find(v => /Medius the Pure/.test(v[0].card)) || plus[0], ...adds, ...eds] : [...fresh(cuts), ...fresh(plus), ...adds, ...fresh(eds), ...fresh(pkgs)];
 versions = versions.filter(Boolean); const K = (v) => label(v);
-log(`candidates: ${cuts.length} cuts, ${plus.length} +1s, ${adds.length} new Main Deck cards, ${eds.length} new Extra Deck cards -> testing ${versions.length} versions (connected cards come from ${syn.length} of all legal cards)`);
+{ const custom = f('versions', null) ? JSON.parse(f('versions')) : null; // --versions '[[{"op":"cut","card":"X"},...]]': test exactly these (e.g. a whole package taken out)
+  if (f('only', null)) { const want = f('only').split(';').map(x => x.trim().toLowerCase()); versions = versions.filter(v => want.some(w => label(v).toLowerCase().includes(w))); } else if (custom) versions = [];
+  if (custom) versions.push(...custom); } // --only "Pilgrim;Masquerena": only versions whose name contains one of these
+log(`candidates: ${cuts.length} cuts, ${plus.length} +1s, ${adds.length} new Main Deck cards, ${eds.length} new Extra Deck cards, ${pkgs.length} packages -> testing ${versions.length} versions (connected cards come from ${syn.length} of all legal cards)`);
 const rank = (vs) => vs.map(v => ({ v, s: stat(K(v)) })).sort((p, q) => q.s.m - p.s.m);
 const setLive = (vs) => { liveRows = rank(vs).map(x => ({ name: K(x.v), zone: x.v[0].op === 'ed' ? 'ed' : x.v[0].op, done: x.s.n, of: x.s.n, rescued: x.s.better, gain: +x.s.m.toFixed(2) })); };
 // 3) rounds
@@ -89,7 +143,7 @@ let alive = versions;
 if (H2 > 0) { alive = rank(versions).slice(0, KEEP2).map(x => x.v); const r2 = hands(H1, H2); await runGames([...r2.map(hi => ({ key: 'base', v: [], hi, sseed: 1 })), ...jobsFor(alive, r2)], `stage 3/5: round 2 (top ${alive.length} x ${H2} more hands)`); setLive(versions); }
 if (H3 > 0) { alive = rank(alive).slice(0, KEEP3).map(x => x.v); const r3 = hands(H1 + H2, H3); await runGames([...r3.map(hi => ({ key: 'base', v: [], hi, sseed: 1 })), ...jobsFor(alive, r3)], `stage 4/5: round 3 (top ${alive.length} x ${H3} more hands)`); setLive(versions); }
 // a change counts only if it beats your list by more than 2.5x its error, and by more than the noise floor
-const clear = (s) => s.m > 0 && s.m > 2.5 * s.se && s.m > Math.max(0.15, 2 * noise.se);
+const clear = (s) => s.m > 0 && s.m > 2.5 * s.se && s.m > (SHARE ? 0.1 : Math.max(0.15, 2 * noise.se)); /* with line sharing, search luck is mostly gone from the paired difference; its SE carries what is left */
 const ranked = rank(versions); const winners = ranked.filter(x => x.v[0].op !== 'cut' && clear(x.s)).slice(0, 3).map(x => x.v[0]);
 const freeCuts = ranked.filter(x => x.v[0].op === 'cut' && x.s.m >= 0 && !winners.some(w => w.card === x.v[0].card)).slice(0, winners.filter(w => w.op === 'add').length).map(x => x.v[0]);
 const cutWins = ranked.filter(x => x.v[0].op === 'cut' && clear(x.s)).slice(0, 2).map(x => x.v[0]);
@@ -108,6 +162,7 @@ const best = verdicts.filter(x => x.s.m > 0 && x.s.m > 2.5 * x.s.se).sort((p, q)
 md += best ? `## Result: a better list was found\n**${label(best.c)}**: ${fx(best.s.m)} per hand (± ${best.s.se.toFixed(2)}) on ${best.s.n} fresh hands · by hand trap: ${byS(best.s)}. Saved as decks/findlist-${ID}.ydk.\n\n`
   : `## Result: nothing clearly beat your list\n${combos.length ? 'The best combination did not hold up on fresh hands.' : 'No single change beat your list by more than the noise.'} Your list averages ${baseMean.toFixed(2)} per hand here.\n\n`;
 if (best) fs.writeFileSync(`decks/findlist-${ID}.ydk`, toYdk(best.c));
+{ const T2 = fs.existsSync(TESTED) ? JSON.parse(fs.readFileSync(TESTED, 'utf8')) : {}; for (const x of ranked) T2[K(x.v)] = { gain: +x.s.m.toFixed(2), se: +x.s.se.toFixed(2), n: x.s.n, run: ID, at: new Date().toISOString().slice(0, 10) }; fs.writeFileSync(TESTED, JSON.stringify(T2)); }
 md += `## How reliable this is\n- Noise (your list, same hands, different search luck): per-hand spread ${noise.sd.toFixed(2)}, difference ${fx(noise.m)} ± ${noise.se.toFixed(2)} (should be near 0).\n- A change counts only if it beats your list by more than 2.5x its error and by more than the noise.\n- Limits: going first only; the opponent fires hand traps at the first legal moment (real players time them better); board values use the audited scorer; Ash/Imperm are not cut or added (a hand trap kept in hand scores 0 in a board comparison).\n\n`;
 if (verdicts.length) { md += `## New lists checked on ${HV} fresh hands\n| list | vs your list | ± | by hand trap | hands better / worse by 1+ |\n|---|---|---|---|---|\n`; for (const x of verdicts) md += `| ${label(x.c)} | ${fx(x.s.m)} | ${x.s.se.toFixed(2)} | ${byS(x.s)} | ${x.s.better}/${x.s.worse} of ${x.s.n} |\n`; md += '\n'; }
 md += `## Every change tested (vs your list on the same hands)\n| change | vs your list | ± | hands | by hand trap | better / worse by 1+ | clear win |\n|---|---|---|---|---|---|---|\n`;

@@ -6,7 +6,7 @@ const MIN = +(process.argv[2] || 10); const PAR = Math.min(Math.max(1, os.cpus()
 const T = JSON.parse(fs.readFileSync('data/guide_tests.json', 'utf8')).filter(t => !process.env.ONLY || process.env.ONLY.split(',').includes(t.id));
 const rows = T.map(t => ({ id: t.id, hand: t.hand.map(fullName), guide: guideBoardScore(t.board) }));
 console.log(`bench: ${rows.length} guide hands, ${MIN} min each, ${PAR} at a time`); let done = 0; const q = rows.slice();
-const runOne = (r) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify({ deck: process.env.DECK || 'decks/ROLAD-L2.ydk', hand: r.hand, minutes: MIN, divs: process.env.DIVS || '6,1.5' })], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
+const runOne = (r) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify({ deck: process.env.DECK || 'decks/ROLAD-L2.ydk', hand: r.hand, minutes: MIN, learn: false, divs: process.env.DIVS || '6,1.5' })], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
   p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); const x = m ? JSON.parse(m[1]) : { v: 0 }; r.deep = x.v; r.line = (x.line || []).filter(l => /Summon|Activate/.test(l)).slice(0, 30).join(' > '); r.board = x.board || ''; done++; console.log(`${done}/${rows.length}`); ok(); }); });
 await Promise.all(Array.from({ length: PAR }, async () => { while (q.length) await runOne(q.shift()); }));
 for (const r of rows) r.pass = r.deep >= r.guide - 0.5; const np = rows.filter(r => r.pass).length, need = Math.ceil(rows.length * 0.8);

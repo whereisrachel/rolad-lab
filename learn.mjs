@@ -13,7 +13,7 @@ const prev = fs.existsSync(out) ? JSON.parse(fs.readFileSync(out, 'utf8')) : { g
 console.log(`learning hints for ${deckPath}: ${H} hands, ${MIN} min each, ${PAR} at a time (already learned from ${prev.games} games)`);
 const res = []; let k = 0, done = 0;
 const play = (hi) => new Promise(ok => { const r = rngOf(SEED0 + hi * 7919); const perm = base.main.slice(); for (let i = perm.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
-  const t = { deck: deckPath, main: perm, hand: perm.slice(0, 5).map(c => name(c)), minutes: MIN, seed: 7 + hi, sseed: 1 + (hi % 3), hints: hi % 2 === 0 }; // half the games without hints, so learning isn't only self-confirming
+  const t = { deck: deckPath, main: perm, hand: perm.slice(0, 5).map(c => name(c)), minutes: MIN, seed: 7 + hi, sseed: 1 + (hi % 3), hints: hi % 2 === 0, learn: false }; // half the games without hints, so learning isn't only self-confirming
   const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify(t)], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = '';
   p.stdout.on('data', b => o += b); p.on('close', () => { const m = /RESULT (.*)/.exec(o); ok(m ? JSON.parse(m[1]) : null); }); });
 await Promise.all(Array.from({ length: PAR }, async () => { while (k < H) { const hi = k++; const r = await play(hi); if (r) res.push(r); done++; console.log(`${done}/${H}`); } }));

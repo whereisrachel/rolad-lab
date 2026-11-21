@@ -61,14 +61,24 @@ const STEPS = {
     const out = `reports/decktest-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('deck test failed: ' + r.out.slice(-400)); j.report = out;
   },
   async findlist(j) { // every stage by itself: noise, candidates, rounds, new list, fresh-hand check, report
-    j.stage = 'finding a better list'; const A = await resolveDeck(j.deckA); const args = ['findlist.mjs', '--deck', A, '--id', String(j.id)]; if (j.mini) args.push('--mini'); for (const k of ['h1', 'h2', 'h3', 'hv', 'adds', 'eds', 'keep2', 'keep3', 'min']) if (j[k] !== undefined) args.push('--' + k, String(j[k]));
+    j.stage = 'finding a better list'; const A = await resolveDeck(j.deckA); const args = ['findlist.mjs', '--deck', A, '--id', String(j.resume || j.id)]; if (j.resume) args.push('--resume'); if (j.mini) args.push('--mini'); if (j.cuts !== undefined) args.push('--cuts', String(j.cuts)); if (j.noplus) args.push('--noplus'); if (j.fixed) args.push('--fixed'); if (j.only) args.push('--only', String(j.only)); if (j.retest) args.push('--retest'); if (j.versions) args.push('--versions', typeof j.versions === 'string' ? j.versions : JSON.stringify(j.versions)); if (j.noshare) args.push('--noshare'); for (const k of ['h1', 'h2', 'h3', 'hv', 'adds', 'eds', 'keep2', 'keep3', 'min']) if (j[k] !== undefined) args.push('--' + k, String(j[k]));
     const r = await run(args, {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/^(stage|noise|candidates|Extra Deck use|findlist)/.test(l)) { if (/^stage/.test(l)) j.stage = l; j.diag = (j.diag ? j.diag + ' | ' : '') + l; } });
-    const out = `reports/findlist-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('find a better list failed: ' + r.out.slice(-400)); j.report = out;
+    const out = `reports/findlist-${j.resume || j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('find a better list failed: ' + r.out.slice(-400)); j.report = out;
   },
   async learn(j) { // learn line hints for a list from its own games
     j.stage = 'learning hints'; const A = await resolveDeck(j.deckA);
     const r = await run(['learn.mjs', '--deck', A, '--hands', String(j.hands || 44), '--min', String(j.min || 1.5)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/learned from/.test(l)) j.diag = l; });
     if (r.code) throw new Error('learning failed: ' + r.out.slice(-400));
+  },
+  async cardvalue(j) { // learn card values for a list (what each card alone with 4 blanks reaches), used to guide the line finder
+    j.stage = 'learning card values'; const A = await resolveDeck(j.deckA); let pass = '';
+    const r = await run(['cardvalue.mjs', '--deck', A, '--min', String(j.min || 1.5), '--passes', String(j.passes || 2)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/pass \d/.test(l)) j.stage = 'learning card values, ' + (/pass \d+\/\d+/.exec(l) || [''])[0]; else if (/saved/.test(l)) j.diag = l; });
+    if (r.code) throw new Error('card values failed: ' + r.out.slice(-400));
+  },
+  async poolscan(j) { // every legal card, tested inside the list's own lines
+    j.stage = 'recording your lines'; const A = await resolveDeck(j.deckA);
+    const r = await run(['poolscan.mjs', '--deck', A, '--id', String(j.id), ...(j.relines ? ['--relines'] : []), ...(j.pkgonly ? ['--pkgonly'] : []), ...(j.archonly ? ['--archonly'] : []), ...(j.tb ? ['--tb', String(j.tb)] : [])], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else if (/stage \d\/3/.test(l)) j.stage = l.replace(/^\[[^\]]*\]\s*/, ''); else if (/stage 1 done|whole pool/.test(l)) j.diag = l.replace(/^\[[^\]]*\]\s*/, ''); });
+    const out = `reports/poolscan-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('pool screen failed: ' + r.out.slice(-400)); j.report = out;
   },
   async calibrate(j) {
     const dir = `results/cal-${j.id}`; fs.mkdirSync(dir, { recursive: true }); const T = JSON.parse(fs.readFileSync('data/guide_tests.json', 'utf8'));

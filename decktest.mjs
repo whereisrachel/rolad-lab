@@ -12,15 +12,17 @@ const code = (n) => { const c = findCard(n); const k = Array.isArray(c) ? c[0] :
 const rngOf = (seed) => { let x = seed >>> 0 || 1; return () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296; };
 // one shuffle of the base list per hand; a variant applies its change to that same shuffle
 const deal = (v, hi) => { const r = rngOf(1000 + hi * 7919); const perm = base.main.slice(); for (let k = perm.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [perm[k], perm[j]] = [perm[j], perm[k]]; }
-  if (v !== 'base') { const sign = v[0], n = v.slice(1); const c = code(n); const r2 = rngOf(5000 + hi * 104729 + n.length * 31);
+  if (v !== 'base') for (const part of v.split(' & ')) { const sign = part[0], n = part.slice(1); const c = code(n); const r2 = rngOf(5000 + hi * 104729 + n.length * 31); /* combos: "+A & +B" */
     if (sign === '+') perm.splice(Math.floor(r2() * (perm.length + 1)), 0, c);
     else { const at = perm.map((k, i) => name(k) === n ? i : -1).filter(i => i >= 0); if (!at.length) throw new Error('not in list: ' + n); perm.splice(at[Math.floor(r2() * at.length)], 1); } }
   return perm; };
 fs.mkdirSync('decks/_explore', { recursive: true }); const deckFile = `decks/_explore/dt-${ID}.ydk`; fs.writeFileSync(deckFile, '#main\n' + base.main.join('\n') + '\n#extra\n' + base.extra.join('\n') + '\n!side\n');
+const HINTS = 'data/hints-' + f('deck', 'decks/L2-vand3.ydk').replace(/^.*[\\/]/, '').replace(/\.ydk$/, '') + '.json', FROZEN = `data/hints-frozen-dt${ID}.json`;
+{ const { freezeHints } = await import('./src/hints.mjs'); freezeHints(HINTS, FROZEN); } // same knowledge for every version in this test; its games still feed the log
 const tasks = []; for (let hi = 0; hi < H; hi++) for (const ver of variants) { const perm = deal(ver, hi); tasks.push({ ver, hi, main: perm, hand: perm.slice(0, 5).map(c => name(c)) }); }
 console.log(`deck test ${ID}: ${variants.length} versions x ${H} hands, ${MIN} min each, opponent ${SCN}, ${PAR} at a time`);
 const res = []; let done = 0;
-const runOne = (t) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify({ deck: deckFile, main: t.main, hand: t.hand, minutes: MIN, seed: 7 + t.hi, scn: SCN, hintsFile: 'data/hints-' + f('deck', 'decks/L2-vand3.ydk').replace(/^.*[\\/]/, '').replace(/\.ydk$/, '') + '.json' })], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
+const runOne = (t) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify({ deck: deckFile, main: t.main, hand: t.hand, minutes: MIN, seed: 7 + t.hi, scn: SCN === 'rot' ? ['none', 'ash', 'imperm', 'droll'][t.hi % 4] : SCN, hintsFile: FROZEN, learnLog: HINTS, cardvFile: 'data/cardv-' + f('deck', 'decks/L2-vand3.ydk').replace(/^.*[\\/]/, '').replace(/\.ydk$/, '') + '.json' })], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
   p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; res.push({ ...t, ...r }); done++; console.log(`${done}/${tasks.length}`); ok(); }); });
 const q = tasks.slice(); await Promise.all(Array.from({ length: PAR }, async () => { while (q.length) await runOne(q.shift()); }));
 const crashes = res.filter(r => r.crash).length; const by = {}; for (const r of res) (by[r.ver] ||= {})[r.hi] = r;
