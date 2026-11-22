@@ -28,6 +28,8 @@ const OPEN = process.env.OPEN === '1';
 const HP = t.hintsFile || ('data/hints-' + path.basename(t.deck).replace(/\.ydk$/, '') + '.json'); const { loadHints, logGame } = await import('./src/hints.mjs');
 if (process.env.NRPA !== '0') { process.env.NRPA_N ||= '30'; // learned hints: moves that appeared in the best lines of earlier games of this list (data/hints-<deck>.json), a soft head start
 let hints = null; try { if (t.hints !== false) hints = loadHints(HP); } catch {}
+// hand-designed lines (lines/designed/*.json, verified in the engine) steer the search: their moves get the top hint weight
+try { if (t.hints !== false && process.env.DESIGNED !== '0' && fs.existsSync('lines/designed')) { hints = hints || {}; for (const f of fs.readdirSync('lines/designed')) { if (!f.endsWith('.json')) continue; const L = JSON.parse(fs.readFileSync('lines/designed/' + f, 'utf8')); for (const k of L.keys || []) hints[k] = Math.max(hints[k] || 0, 2); } } } catch {}
 let cardV = null, cardRaw = null; try { if (t.cardv !== false) { const cp = t.cardvFile || ('data/cardv-' + path.basename(t.deck).replace(/\.ydk$/, '') + '.json'); if (fs.existsSync(cp)) { const cv = JSON.parse(fs.readFileSync(cp, 'utf8')); cardV = cv.bonus; cardRaw = {}; for (const [n, x] of Object.entries(cv.v || {})) if (x - cv.base > 0) cardRaw[n] = x - cv.base; } } } catch {}
 // search guidance only (the reported score is always the real board): a turn that has put a strong card into the hand (one that wasn't in the
 // opening hand) counts as part of the way there, by what that card alone is worth, while the Normal Summon is still free
