@@ -3,7 +3,8 @@
 // node oppboards.mjs [list=L2-vand3] [n=8] [hands=6] [minutes=0.5]  -> reports/oppboards-<list>.md + .json
 import fs from 'fs'; import path from 'path'; import { spawn } from 'child_process';
 const LIST = process.argv[2] || 'L2-vand3', N = +(process.argv[3] || 8), H = +(process.argv[4] || 6), MIN = +(process.argv[5] || 0.5);
-const OPPS = ['o_ss', 'o_despia']; const DEF = process.env.OB_DEFENSE || 'bottleneck', TAG = process.env.OB_TAG ? '-' + process.env.OB_TAG : '', IDS = process.env.OB_IDS ? process.env.OB_IDS.split(',') : null; // OB_DEFENSE=rule: the old defense (fire in order); OB_IDS: exactly these boards const dir = `data/lib-${LIST}`;
+// OB_DEFENSE=rule: the old defense (fire in order); OB_IDS: exactly these boards; OB_TAG: report name suffix
+const OPPS = ['o_ss', 'o_despia']; const DEF = process.env.OB_DEFENSE || 'bottleneck', TAG = process.env.OB_TAG ? '-' + process.env.OB_TAG : '', IDS = process.env.OB_IDS ? process.env.OB_IDS.split(',') : null; const dir = `data/lib-${LIST}`;
 const lib = []; for (const fn of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) { try { const x = JSON.parse(fs.readFileSync(`${dir}/${fn}`, 'utf8')); if ((x.scn === 'none' || x.scn === 'robust') && x.raw && x.order) lib.push({ file: `${dir}/${fn}`, id: fn.replace('.json', ''), v: x.v, hand: x.hand, board: x.board }); } catch {} }
 lib.sort((a, b) => b.v - a.v);
 // one board per distinct end board (same monsters and spells/traps on your field = same board), best value first
