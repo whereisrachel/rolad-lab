@@ -1,9 +1,12 @@
 // one deep line search: node deepw.mjs '<json task>' -> prints RESULT {json}
 // task: { deck: path, hand: [names], minutes, divs: "6,1.5", seed }
 import fs from 'fs'; import path from 'path';
-import { parseYdk, findCard, name, ROOT } from './src/cards.mjs'; import { searchT1 } from './src/searchplayer.mjs'; import { disruption, setHT } from './src/disrupt.mjs';
+import { parseYdk, findCard, name, ROOT } from './src/cards.mjs'; import { searchT1 } from './src/searchplayer.mjs'; import { disruption, setLearned, learnedTerm, setHT } from './src/disrupt.mjs';
 setHT(+(process.env.HTW ?? 1)); /* hand traps still in hand count (1 = one interruption each): spending one for nothing now costs the line */ process.env.CANON = '1'; process.env.LIGHT = '1';
 const t = JSON.parse(process.argv[2]); const deck = parseYdk(fs.readFileSync(t.deck, 'utf8')); if (t.main) deck.main = t.main.slice(); /* exact Deck order when given */
+// the learned survival term joins the search score once the learned model predicts survival better than the hand-set scoring (data/learned-<list>.json)
+{ const lf = `data/learned-${(t.deck || '').replace(/^.*[\\/]/, '').replace(/\.ydk$/, '')}.json`; if (process.env.LEARNED !== '0' && fs.existsSync(lf)) { try { const m = JSON.parse(fs.readFileSync(lf, 'utf8')); if (m.n >= 800 && m.cvCorr >= (m.oldCorr ?? 0) + 0.05) { m.mix = +(process.env.LEARNED_MIX || 1); setLearned(m); } } catch {} } }
+const EVALF = (S, s) => disruption(S, s) + learnedTerm(S, s);
 const OPP = parseYdk(fs.readFileSync(path.join(ROOT, 'decks', 'oppHT.ydk'), 'utf8')); const GS = 13039848;
 const pool = deck.main.slice(); const h = t.hand.map(n => { const c = findCard(n); const code = Array.isArray(c) ? c[0] : c; let i = pool.findIndex(k => name(k) === name(code)); if (i < 0) { pool.push(code); i = pool.length - 1; } return pool.splice(i, 1)[0]; });
 // opponent: goldfish, or holding hand traps it fires at the first legal moment (t.scn: none | ash | imperm | droll | any combination joined by +)
@@ -47,7 +50,7 @@ if (cardRaw && process.env.COMPOSE === '1') { /* off by default: tested Nov 19, 
   if (st.length >= 2) { const ashC = (() => { const c = findCard('Ash Blossom & Joyous Spring'); return Array.isArray(c) ? c[0] : c; })(); const hc = { ...(hints || {}) }; const subs = [];
     for (const sn of st.slice(0, 3)) { const hs = h.map(c => st.includes(name(c)) && name(c) !== sn ? ashC : c); const back = h.filter(c => st.includes(name(c)) && name(c) !== sn);
       const g = () => ({ ...mk(), seats: { ...mk().seats, 0: { name: 'A', deck: { ...deck, main: [...hs, ...pool, ...back] }, hand: hs } } });
-      const rs = await searchT1(g(), { ms: TOT * +(process.env.COMPOSE_T || 0.3), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 7, hints, evalFn: (S, s) => disruption(S, s) });
+      const rs = await searchT1(g(), { ms: TOT * +(process.env.COMPOSE_T || 0.3), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 7, hints, evalFn: EVALF });
       subs.push(sn + ' ' + (rs.score || 0).toFixed(2)); for (const k of rs.keys || []) hc[k] = Math.max(hc[k] || 0, 2); }
     hints = hc; if (process.env.PROF2) console.error('compose: ' + subs.join(', ')); } }
 // restarts (t.restarts / RESTARTS, hands with 2+ strong starters only): the same total budget split over K independent searches, best kept.
@@ -55,10 +58,10 @@ if (cardRaw && process.env.COMPOSE === '1') { /* off by default: tested Nov 19, 
 // smart opponent (t.smart): try holding the hand traps until you have activated 0..K effects (short searches), keep the timing that
 // leaves you the weakest board, then play the full search against that timing. A strong player waits for the card that matters.
 if (t.smart && need.length) { const K = +(t.smartK ?? 4), F = +(t.smartF ?? 0.12); const tried = [];
-  for (let k = 0; k <= K; k++) { AFTER = k; const rk = await searchT1(mk(), { ...BUD(TOT * F), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 77, hints, cardV: PRIOR, evalFn: (S, s) => disruption(S, s) }); tried.push([k, rk.score || 0]); }
+  for (let k = 0; k <= K; k++) { AFTER = k; const rk = await searchT1(mk(), { ...BUD(TOT * F), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 77, hints, cardV: PRIOR, evalFn: EVALF }); tried.push([k, rk.score || 0]); }
   tried.sort((p, q) => p[1] - q[1] || p[0] - q[0]); AFTER = tried[0][0]; globalThis.SMART = { after: AFTER, tried }; }
 const KR = STARTERS >= 2 ? +(t.restarts ?? process.env.RESTARTS ?? 1) : 1; let r = null;
-for (let q = 0; q < KR; q++) { const rq = await searchT1(mk(), { ...BUD(TOT / KR), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 1000 * q, hints, cardV: PRIOR, shapeFn, shapeObserve: true, evalFn: (S, s) => disruption(S, s) });
+for (let q = 0; q < KR; q++) { const rq = await searchT1(mk(), { ...BUD(TOT / KR), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 1000 * q, hints, cardV: PRIOR, shapeFn, shapeObserve: true, evalFn: EVALF });
   if (!r || (rq.score || 0) > (r.score || 0)) { const sh0 = r && r.shaped; r = rq; if (sh0 && (!r.shaped || sh0.v > r.shaped.v)) r.shaped = sh0; } else if (rq.shaped && (!r.shaped || rq.shaped.v > r.shaped.v)) r.shaped = rq.shaped; }
 best = r; globalThis.RATE1 = r.ms > 0 ? Math.round(r.macros / (r.ms / 60000)) : null;
 const P1 = shapeFn ? 0 : 1, EXTRA = +(process.env.EXTRA ?? t.extra ?? 1);
@@ -66,19 +69,19 @@ const P1 = shapeFn ? 0 : 1, EXTRA = +(process.env.EXTRA ?? t.extra ?? 1);
 // line after it was never finished): extra time, searching only from that point. Never replaces a better result, so it can't make a hand worse.
 if (P1 < 1 && EXTRA > 0) { // a short steered probe (prefers fetching high-value cards) whose only job is to find such a route; its own boards count too
   const PROBE = +(process.env.PROBE ?? 0.25); let sh = r.shaped;
-  if (PROBE > 0) { const rp = await searchT1(mk(), { ...BUD(TOT * PROBE), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 50, hints, cardV, shapeFn, evalFn: (S, s) => disruption(S, s) });
+  if (PROBE > 0) { const rp = await searchT1(mk(), { ...BUD(TOT * PROBE), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 50, hints, cardV, shapeFn, evalFn: EVALF });
     if ((rp.score || 0) > (best.score || 0)) best = rp; if (rp.shaped && rp.shaped.v > ((sh && sh.v) || 0)) sh = rp.shaped; }
   let g2 = null;
   if (sh && sh.raw && (sh.real + (sh.v - sh.real) / LAM) > (best.score || 0) + 1 && process.env.COMMIT !== '0') /* what that card is worth on its own, in full */ { const fixed = sh.raw; const mk0 = mk; g2 = () => { const g = mk0(); g.responses = fixed.map(x => ({ ...x })); return g; };
     try { const E = await import('./src/engine.mjs'); const { autoAdvance } = await import('./src/auto.mjs'); E.resetLib(); const S2 = autoAdvance(await E.simulate(g2())); const hc = S2.lb.duelQueryLocation(S2.h, { flags: 0x1, controller: TO(S2.game, 0), location: 0x02 }).filter(c => c && c.code).map(c => name(c.code)); openN.length = 0; openN.push(...hc); } catch { g2 = null; } }
-  if (g2) { const r2 = await searchT1(g2(), { ...BUD(TOT * EXTRA), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 100, hints, cardV: PRIOR, shapeFn, shapeObserve: true, evalFn: (S, s) => disruption(S, s) });
+  if (g2) { const r2 = await searchT1(g2(), { ...BUD(TOT * EXTRA), nrpa: +(process.env.NRPA || 3), seed: (t.sseed || 1) + 100, hints, cardV: PRIOR, shapeFn, shapeObserve: true, evalFn: EVALF });
   if ((r2.score || 0) > (best.score || 0)) { best = r2; best.line = [...(sh.rs || []), ...(r2.line || [])]; best.keys = [...(sh.keys || []), ...(r2.keys || [])]; } best.extra = { from: r.score || 0, to: r2.score || 0 }; if (process.env.PROF2) console.error('stage2 ' + (r.score || 0) + ' -> ' + (r2.score || 0) + ' at ' + sh.v + ' :: ' + (sh.rs || []).join(' > ')); } }
 t.minutes = 0; if (process.env.PROF2) console.error('playouts ' + r.macros + ' ' + JSON.stringify(Object.entries(searchT1.BR).sort((a,b)=>b[1]-a[1]).slice(0,12))); }
-const roots = OPEN ? ((await searchT1(mk(), { listRoot: true, evalFn: (S, s) => disruption(S, s) })).root || []) : [];
+const roots = OPEN ? ((await searchT1(mk(), { listRoot: true, evalFn: EVALF })).root || []) : [];
 if (roots.length > 1) { const share = t.minutes * 60000 * 0.8 / roots.length;
-  for (const rt of roots) { const r = await searchT1(mk(), { ms: share, maxMacros: Infinity, patience: Infinity, guideW: 0.3, altCap: 8, maxMacro: 80, frontierCap: +(process.env.FC || 3000), div: 1.5, rootOnly: rt, evalFn: (S, s) => disruption(S, s) }); if ((r.score || 0) > (best.score || 0)) best = r; }
+  for (const rt of roots) { const r = await searchT1(mk(), { ms: share, maxMacros: Infinity, patience: Infinity, guideW: 0.3, altCap: 8, maxMacro: 80, frontierCap: +(process.env.FC || 3000), div: 1.5, rootOnly: rt, evalFn: EVALF }); if ((r.score || 0) > (best.score || 0)) best = r; }
   t.minutes *= 0.2; }
-for (const dv of (t.minutes <= 0 ? [] : roots.length > 1 ? [6] : divs)) { const r = await searchT1(mk(), { ms: t.minutes * 60000 / divs.length, maxMacros: Infinity, patience: Infinity, guideW: 0.3, altCap: 8, maxMacro: 80, frontierCap: +(process.env.FC || 3000), div: dv, evalFn: (S, s) => disruption(S, s) }); if ((r.score || 0) > (best.score || 0)) best = r; }
+for (const dv of (t.minutes <= 0 ? [] : roots.length > 1 ? [6] : divs)) { const r = await searchT1(mk(), { ms: t.minutes * 60000 / divs.length, maxMacros: Infinity, patience: Infinity, guideW: 0.3, altCap: 8, maxMacro: 80, frontierCap: +(process.env.FC || 3000), div: dv, evalFn: EVALF }); if ((r.score || 0) > (best.score || 0)) best = r; }
 const hl = (String(best.board || '').match(/\n\s*Hand: ([^\n]*)/g) || []).pop() || ''; const left = hl.replace(/^\s*Hand: /, '').split(', ').map(x => x.trim());
 // Clean-up pass: try removing each action from the best line (latest first, with every prompt that belongs to it); if the line still
 // replays to the same board value without it, the action was doing nothing and is dropped. Only actions that matter stay in the line.

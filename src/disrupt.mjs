@@ -99,3 +99,8 @@ export function boardFeatures(S, seat) {
   add('#gy', q(L.GRAVE).length); add('#field', q(L.MZONE, QFLAGS).length + q(L.SZONE).length);
   return f;
 }
+
+// Learned survival term (learn.mjs): predicted margin after the opponent's turn for your end-of-turn-1 board.
+// Only the line finder adds it (deepw.mjs, when the learned model beats the hand-set scoring); results after their turn never use it.
+let LEARN = null; export const setLearned = (m) => { LEARN = m; };
+export function learnedTerm(S, seat) { if (!LEARN || seat !== 0) return 0; const f = boardFeatures(S, seat); let v = LEARN.bias; for (const [k, x] of Object.entries(f)) { const w = LEARN.w[k]; if (w) v += w * x; } return (LEARN.mix ?? 1) * v; }
