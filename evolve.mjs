@@ -115,4 +115,4 @@ md += tri.length ? `Effects the search had not used, tried on purpose (best resu
 for (const p of perOrd) { const w = p.cands[0]; if (!w) continue; md += `## Order ${p.ord}: best ${w.fit} (Sky Striker ${w.byOpp.o_ss_panama ?? '-'}, Elfnote ${w.byOpp.o_elfnote ?? '-'}, worst ${w.worst}) — from ${w.from}${w.followed != null ? ` (seed followed ${w.followed}/${w.of} steps)` : ''}\n`;
   md += `Others: ${p.cands.slice(1).map(c => `${c.from} ${c.fit}`).join(' · ')}\n\n${w.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nEnd board: ${w.board.replace(/\n/g, ' ')}\n\n`; }
 fs.mkdirSync('reports', { recursive: true }); fs.writeFileSync(`reports/evolve-${NAME}.md`, md); fs.writeFileSync(`reports/evolve-${NAME}.json`, JSON.stringify(perOrd));
-clearInterval(hsTimer); log(`done -> reports/evolve-${NAME}.md`);
+clearInterval(hsTimer); try { (await import('child_process')).execFileSync(process.execPath, ['--no-warnings', 'bridges.mjs'], { stdio: 'ignore', timeout: 60000 }); } catch {} log(`done -> reports/evolve-${NAME}.md`);
