@@ -61,3 +61,34 @@ Draft for Belal to review. Nothing goes into the guide until he approves it.
 - **P&C:** banish their Spells/Traps.
 - **Purification:** quick-Link.
 - **Citrinitas:** lets the Ars Magna effects be used as Quick Effects.
+
+## 5. Medius + 4 non-engine cards, bridging into ROLAD (file br1). Best so far.
+1. Normal Summon **Medius** → **Nervedo** → **Nerva**; Nervedo's Extra Deck trigger → **Junoldo** → **Junora**; Junoldo's Extra Deck trigger → **Nervedo** back to hand.
+2. Link **Medius + Junora** → **Purification Power Patron** → add **Theorealize Medius**.
+3. **Theorealize Medius** Special Summons itself → add **Theorealize Liberation**.
+4. **Medius from the GY**: shuffle Theorealize Medius into the Deck → Special Summon Medius.
+   - Liberation needs Medius on the field.
+5. **Liberation** → add **Griffoh** (300/200). *Bridge into ROLAD.*
+6. Discard **Griffoh** → Set **Mind Shuffle** from the Deck (it can be activated this turn).
+7. **Mind Shuffle** → add **Skull Archfiend**, discard it.
+   - Skull's trigger sends **LDR** to the GY → add **Magician of Dark Chaos**.
+8. **LDR from the GY** → add LDR + Skull to your hand.
+9. **Non-Finito**: discard LDR + Tribute Nervedo from your hand → Set **Impasto**.
+10. **Skull from your hand**: put Nervedo, Griffoh and Liberation on the bottom → Special Summon Skull.
+11. Set **Imperm**.
+
+**End board:** Nerva, Non-Finito, Medius, Skull Archfiend, Purification Power Patron, Mind Shuffle (face-up), Impasto + Imperm Set, with Magician of Dark Chaos + Ash + Droll + Ghost Ogre in hand.
+- Turn-1 board score: **10.4**.
+- No ROLAD card was in the opening hand.
+
+## Their-turn results (PC job 1070: 6 hands each, rule defense, after the Nov 22 fixes)
+| line | turn-1 | vs Sky Striker | vs Elfnote | overall |
+|---|---|---|---|---|
+| br1 Medius → ROLAD bridge | 10.4 | −0.30 | +0.78 | **+0.24** |
+| m1a Medius | 9.25 | +0.35 | −0.78 | −0.22 |
+| m1b Medius (keeps Theorealize Medius, shuffles Ghost Ogre) | 8.25 | −2.24 | +0.98 | −0.63 |
+| e3 Engraver + Medius | 7.93 | −0.52 | −0.94 | −0.73 |
+| bc1 Black Chaos + Medius | 8.69 | +0.11 | −2.29 (1 OTK) | −1.09 |
+| inf1 Ars Magna Infinity | 6.81 | −3.12 | −1.68 | −2.40 |
+
+Margin = our board left minus their board after their full turn. Higher is better.
