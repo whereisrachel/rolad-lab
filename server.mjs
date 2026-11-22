@@ -44,6 +44,12 @@ const STEPS = {
     for (const B of (fs.existsSync('data/explore-confirm.txt') ? fs.readFileSync('data/explore-confirm.txt', 'utf8').split('\n').filter(Boolean) : []))
       addJob({ kind: 'pair', deckA: j.deckA, deckB: B, n: 300, scn: 'none,ash,imperm', macros: 300, title: 'Explorer find: ' + path.basename(B, '.ydk').replace(/^\d+-/, '').replace(/_/g, ' ') });
   },
+  async choke(j) { // bottleneck cards of the opponent decks (what to stop), into one of your boards
+    const decks = (j.opps || 'o_ss,o_despia').split(','); let k = 0; for (const o of decks) { j.stage = `bottleneck cards: ${o}`;
+      const r = await run(['choke.mjs', o, j.line, String(j.hands || 8), String(j.minutes || 0.5)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, k * +m[2] + +m[1], decks.length * +m[2]); });
+      if (r.code || !fs.existsSync(`reports/choke-${o}.md`)) throw new Error('choke failed: ' + r.out.slice(-400)); k++; }
+    j.report = `reports/choke-${decks[0]}.md`; j.last = 'done -> ' + decks.map(o => `reports/choke-${o}.md`).join(', ');
+  },
   async oppboards(j) { // opponent's turn into the top library boards, several opponent hands each, battle phase included
     j.stage = "opponent's turn into your top boards"; const L = path.basename(j.deckA || 'decks/L2-vand3.ydk', '.ydk');
     const r = await run(['oppboards.mjs', L, String(j.n || 8), String(j.hands || 6), String(j.minutes || 0.5)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });

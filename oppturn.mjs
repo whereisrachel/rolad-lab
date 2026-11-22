@@ -27,6 +27,10 @@ for (let i = 0; i < 50 && S.pending && !S.ended && S.turn === 1; i++) { const d 
   const j = d.options.findIndex(o => /End Phase/.test(o.label)); E.push(S, { seat: 0, resp: d.options[j >= 0 ? j : d.options.length - 1].resp, label: d.options[j >= 0 ? j : d.options.length - 1].label }); autoAdvance(S); }
 // 2) their turn: you defend with every interruption at the first legal chance; they search for their best result
 const g2 = S.game; g2.goldfish = [0]; g2.script = { 0: [t.defense || 'any'] };
+// bottleneck defense (choke: data/choke-<deck>.json, from choke.mjs): only hit their key cards; must = always stop these
+const chokeFile = t.choke === false ? null : (t.choke || `data/choke-${(t.opp || 'decks/o_ss.ydk').replace(/^.*\//, '').replace(/\.ydk$/, '')}.json`);
+if (chokeFile && fs.existsSync(chokeFile) && (t.defense || 'any') === 'any') { const values = JSON.parse(fs.readFileSync(chokeFile, 'utf8')); const sorted = Object.values(values).sort((a, b) => b - a);
+  g2.choke = { 0: { values, must: t.must || ['Sky Striker Mobilize - Engage!', 'Sky Striker Ace - Kagari'], thr: Math.max(0.5, sorted[Math.min(3, sorted.length - 1)] ?? 0.5), top: Math.max(1, sorted[Math.min(1, sorted.length - 1)] ?? 1) } }; }
 // walk to the opponent's first open game state (their Main Phase 1): you defend by policy, they decline optional chains on the way
 for (let i = 0; i < 400 && S.pending && !S.ended; i++) { autoAdvance(S); if (!S.pending || S.ended) break; const sp = E.seatOf(g2, S.pending.player); if (sp !== 1) break;
   if (S.pending.type === E.M.SELECT_IDLECMD) break; const d = E.decision(S, 1); if (!d) break; const j = d.options.findIndex(o => /^Pass/.test(o.label)); const o = d.options[j >= 0 ? j : 0]; if (!E.push(S, { seat: 1, resp: o.resp, label: o.label })) break; }
@@ -35,7 +39,7 @@ const search = (gg, mins) => searchT1(JSON.parse(JSON.stringify(gg)), { seat: 1,
 const readOut = async (gg, rr) => { const g3 = JSON.parse(JSON.stringify(gg)); if (rr.raw) g3.responses = rr.raw.map(e => ({ ...e })); E.resetLib(); const S3 = autoAdvance(await E.simulate(g3)); return { S3, their: disruption(S3, 1), ours: disruption(S3, 0) }; };
 // smart defense: hold your interruptions until they have activated k effects; try k = 0..K with short searches, keep the k that leaves you best off
 let defK = 0, tried = [];
-if (t.smartDefense !== false) { for (let k = 0; k <= (t.defK ?? 4); k++) { g2.after = { 0: k }; const rk = await search(g2, (t.minutes || 1) * 0.25); const o = await readOut(g2, rk); tried.push([k, +(o.ours - o.their).toFixed(2)]); }
+if (t.smartDefense !== false && !g2.choke) { for (let k = 0; k <= (t.defK ?? 4); k++) { g2.after = { 0: k }; const rk = await search(g2, (t.minutes || 1) * 0.25); const o = await readOut(g2, rk); tried.push([k, +(o.ours - o.their).toFixed(2)]); }
   tried.sort((p, q) => q[1] - p[1] || p[0] - q[0]); defK = tried[0][0]; }
 g2.after = { 0: defK };
 const res = await search(g2, t.minutes || 1);

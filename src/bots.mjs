@@ -45,6 +45,18 @@ export function policyAnswer(S, seat, pol) {
     let scr = pol.script || []; if (pol.after > 0 && scr.length) { const acts = (G.responses || []).filter(r => r.seat !== seat && !r.auto && /^Activate /.test(r.label || '')).length; if (acts < pol.after) scr = []; }
     if (process.env.DEFLOG && seat === 0) console.error('DEF ' + S.turn + ' ' + opts.map(o => o.label).join(' | '));
     // defending on the opponent's turn: only real interruptions, best kind first; a full-board wipe waits until they have committed 3+ cards
+    // bottleneck defense: hold everything until they activate one of their key cards (from the bottleneck test, or the must-stop list), then hit it;
+    // a board wipe also goes off once they have committed 4+ cards (before they reach cards that can stop it)
+    if (pol.defense && pol.choke) { const ck = pol.choke; const oppIdx = (G.responses || []).map((r, i) => [r, i]).filter(([r]) => r.seat !== seat && !r.auto && /^Activate /.test(r.label || '')); const last = oppIdx.length ? oppIdx[oppIdx.length - 1][0].label : '';
+      const onChain = S.chain && S.chain.length && !lastChainIsOwn(S, seat); const X = onChain ? ((/^Activate (.+?) \(/.exec(last) || [])[1] || '') : ''; const must = (ck.must || []).some(m => X.includes(m)); const val = must ? 99 : ((ck.values || {})[X] ?? 0);
+      const oppN = (() => { try { const ot = 1 - teamOf(G, seat); return [L.MZONE, L.SZONE].reduce((n, loc) => n + S.lb.duelQueryLocation(S.h, { flags: 0x1, controller: ot, location: loc }).filter(c => c && c.code).length, 0); } catch { return 9; } })();
+      const isWipe = (l) => /all cards the opponent controls/i.test(l); const kind = (l) => /negate the activation/i.test(l) ? 5 : /negate/i.test(l) ? 4 : isWipe(l) ? (oppN >= 2 ? 3.5 : -1) : /destroy|banish|send 1 card on the field|return .* hand|take control|change .* position/i.test(l) ? 3 : -1;
+      const pick = (ok) => { let bi = -1, br = 0; opts.forEach((o, i) => { if (!/^Activate /.test(o.label) || !ok(o.label)) return; const r = kind(o.label); if (r > br) { br = r; bi = i; } }); return bi; };
+      // top targets get your strongest answer; lesser targets get the cheapest answer that still stops them (a hand trap before a board negate)
+      const cheapest = () => { let bi = -1, bc = 1e9; opts.forEach((o, i) => { if (!/^Activate /.test(o.label)) return; const r = kind(o.label); if (r < 4) return; const c = r + (/\(hand\)/.test(o.label) ? 0 : 2) + (isWipe(o.label) ? 5 : 0); if (c < bc) { bc = c; bi = i; } }); return bi; };
+      let bi = -1; if (X && val >= (ck.top ?? 1e9)) bi = pick(() => true); else if (X && val >= (ck.thr ?? 0.5)) { bi = cheapest(); if (bi < 0) bi = pick(l => !isWipe(l)); } else if (oppN >= 4) bi = pick(isWipe);
+      if (process.env.DEFLOG) console.error(`CHOKE vs ${X || '-'} (value ${val}) -> ${bi >= 0 ? opts[bi].label.slice(0, 60) : 'hold'}`);
+      return bi >= 0 ? String(bi + 1) : (find(/^Pass/) || '1'); }
     if (pol.defense) { if (pol.after > 0) { const acts = (G.responses || []).filter(r => r.seat !== seat && !r.auto && /^Activate /.test(r.label || '')).length; if (acts < pol.after) return find(/^Pass/) || '1'; }
       const oppN = (() => { try { const ot = 1 - teamOf(G, seat); return [L.MZONE, L.SZONE].reduce((n, loc) => n + S.lb.duelQueryLocation(S.h, { flags: 0x1, controller: ot, location: loc }).filter(c => c && c.code).length, 0); } catch { return 9; } })();
       const rank = (l) => /negate the activation/i.test(l) ? 5 : /negate/i.test(l) ? 4 : /all cards the opponent controls/i.test(l) ? (oppN >= 3 ? 6 : -1) : /destroy|banish|send 1 card on the field|return .* hand|take control|change .* position/i.test(l) ? 3 : -1;
