@@ -14,7 +14,8 @@ const log = (s) => console.log(new Date().toLocaleTimeString() + ' ' + s);
 log(`ROLAD helper "${NAME}": ${SLOTS} cores, code ${VER}, hub ${HUB.replace(/\/[^/]+$/, '/…')}${LIB ? ', library lines when idle' : ''}`);
 const hub = async (p, opt = {}) => { const r = await fetch(HUB + p, { ...opt, signal: AbortSignal.timeout(120000) }); if (!r.ok) throw new Error('hub HTTP ' + r.status); return r.json(); };
 const safe = (p) => { const n = path.normalize(p).replace(/\\/g, '/'); if (n.startsWith('..') || path.isAbsolute(n) || !/^(decks|data)\//.test(n)) throw new Error('bad path ' + p); return n; };
-const run = (script, args, ms) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', script, typeof args === 'string' ? args : JSON.stringify(args)], { stdio: ['ignore', 'pipe', 'ignore'] });
+const KIDS = new Set(); const track = (p) => { KIDS.add(p); p.on('close', () => KIDS.delete(p)); return p; };
+const run = (script, args, ms) => new Promise(ok => { const p = track(spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', script, typeof args === 'string' ? args : JSON.stringify(args)], { stdio: ['ignore', 'pipe', 'ignore'] }));
   let o = ''; p.stdout.on('data', b => o += b); const t = setTimeout(() => p.kill(), ms); p.on('close', (code) => { clearTimeout(t); ok({ code, stdout: o }); }); });
 let busy = 0, done = 0, libDone = 0, stop = false;
 async function doTask(t) {
@@ -31,7 +32,7 @@ async function doTask(t) {
 //  1 of 4: one hand-trap-aware library line (robust.mjs) on a common start, one core.
 let idleN = 0, evDone = 0; const tagOf = (slotI) => 'helper-' + NAME.replace(/[^\w-]/g, '').slice(0, 20) + '-s' + slotI;
 async function doRobustLine(slotI) { const tag = tagOf(slotI); const before = new Set(fs.existsSync('data/lib-L2-vand3') ? fs.readdirSync('data/lib-L2-vand3') : []);
-  await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'libbuild.mjs', '--deck', 'decks/L2-vand3.ydk', '--min', process.env.HELPER_MIN || '2', '--par', '1', '--hands', '1', '--tag', tag, '--robust-only'], { stdio: 'ignore', env: { ...process.env, ROBUST_PAR: '1' } }); p.on('close', ok); });
+  await new Promise(ok => { const p = track(spawn(process.execPath, ['--no-warnings', 'libbuild.mjs', '--deck', 'decks/L2-vand3.ydk', '--min', process.env.HELPER_MIN || '2', '--par', '1', '--hands', '1', '--tag', tag, '--robust-only'], { stdio: 'ignore', env: { ...process.env, ROBUST_PAR: '1' } })); p.on('close', ok); });
   for (const fn of fs.readdirSync('data/lib-L2-vand3').filter(x => x.endsWith('.json') && !before.has(x) && x.startsWith(tag))) {
     try { const x = JSON.parse(fs.readFileSync(`data/lib-L2-vand3/${fn}`, 'utf8')); await hub('/put-line', { method: 'POST', body: JSON.stringify(x) }); libDone++; } catch (e) { log('upload failed: ' + e.message); } } }
 async function doSurvival(slotI) { const dir = 'data/lib-L2-vand3'; if (!fs.existsSync(dir)) return new Promise(r => setTimeout(r, 30000));
@@ -53,5 +54,5 @@ if (LIB) { await pullLibrary(); setInterval(pullLibrary, 30 * 60000); }
 setInterval(() => log(`${done} test pieces done, ${evDone} opponent turns played for the learning data, ${libDone} library lines uploaded, ${busy}/${SLOTS} cores busy`), 10 * 60000);
 // new code: check GitHub every 30 min; if there is an update, finish the current work and restart (the .bat starts it again)
 setInterval(() => { try { const before = execSync('git rev-parse HEAD').toString().trim(); execSync('git pull -q', { stdio: 'ignore' }); const after = execSync('git rev-parse HEAD').toString().trim();
-  if (before !== after) { log('lab update downloaded: restarting after current work'); stop = true; const w = setInterval(() => { if (!busy) process.exit(3); }, 5000); } } catch {} }, 30 * 60000);
+  if (before !== after) { log('lab update downloaded: restarting now (unfinished pieces go back to the queue)'); stop = true; for (const p of KIDS) { try { p.kill(); } catch {} } if (process.platform === 'win32') for (const p of KIDS) { try { execSync(`taskkill /pid ${p.pid} /T /F`, { stdio: 'ignore' }); } catch {} } setTimeout(() => process.exit(3), 3000); } } catch {} }, 30 * 60000);
 await Promise.all(Array.from({ length: SLOTS }, (_, i) => slot(i)));
