@@ -45,10 +45,14 @@ async function doSurvival(slotI) { const dir = 'data/lib-L2-vand3'; if (!fs.exis
   try { await hub('/put-eval', { method: 'POST', body: JSON.stringify({ id: `${NAME.replace(/[^\w-]/g, '')}-${Date.now().toString(36)}-${slotI}`, list: 'L2-vand3', line: fn.replace('.json', ''), opp, seed, ver: VER, t1: z.t1, margin: z.margin, ourBoardLeft: z.ourBoardLeft, theirBoard: z.theirBoard, otk: z.otk, ourAfterT1: z.ourAfterT1, by: NAME }) }); evDone++; } catch (e) { log('upload failed: ' + e.message); } }
 // idle work is kept short (one opponent turn, about 1-2 min) so test pieces from the PC get a free core quickly; the slow hand-trap lines are left to the Oracle servers
 async function doLibrary(slotI) { idleN++; await doSurvival(slotI); }
+let lastTask = 0, idleBusy = 0;
 async function slot(i) {
   while (!stop) {
     let t = null; try { const r = await hub(`/claim?worker=${encodeURIComponent(NAME)}&n=1&slots=${SLOTS}&busy=${busy}&ver=${VER}`); t = (r.tasks || [])[0]; } catch { await new Promise(r => setTimeout(r, 30000)); continue; }
-    busy++; try { if (t) await doTask(t); else if (LIB) await doLibrary(i); else await new Promise(r => setTimeout(r, 15000)); } finally { busy--; }
+    // while the PC is sending test pieces (one came in the last 10 min), at most a quarter of the cores do idle work, so pieces are taken at once
+    if (t) lastTask = Date.now(); const pcActive = Date.now() - lastTask < 10 * 60000;
+    if (!t && pcActive && idleBusy >= Math.max(1, Math.floor(SLOTS / 4))) { await new Promise(r => setTimeout(r, 3000)); continue; }
+    busy++; try { if (t) await doTask(t); else if (LIB) { idleBusy++; try { await doLibrary(i); } finally { idleBusy--; } } else await new Promise(r => setTimeout(r, 15000)); } finally { busy--; }
   } }
 // keep a copy of the shared library (the helper steers toward hands the library has seen least, and re-solves common starts)
 let since = ''; async function pullLibrary() { try { const arr = await hub('/all?since=' + encodeURIComponent(since)); for (const x of arr) { if (!x.list || !x.id) continue; const d = `data/lib-${x.list}`; fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(`${d}/${x.id}.json`, JSON.stringify(x)); if ((x.when || '') > since) since = x.when; } log(`library copy: ${arr.length} new lines`); } catch (e) { log('library pull failed: ' + e.message); } }
