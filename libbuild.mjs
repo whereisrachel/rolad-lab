@@ -5,7 +5,7 @@
 import fs from 'fs'; import os from 'os'; import path from 'path'; import { spawn } from 'child_process';
 import { parseYdk, name } from './src/cards.mjs'; import { novelty, routeOf } from './src/novelty.mjs';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
-const DECK = f('deck', 'decks/L2-vand3.ydk'), MIN = +f('min', 2), PAR = +f('par', Math.max(1, os.cpus().length)), TAG = f('tag', os.hostname()), ROB = +f('robust', 1), HANDS = +f('hands', 0), ROBONLY = a.includes('--robust-only'); // --hands N: stop after N hands (helper PCs); --robust-only: only hand-trap-aware lines
+const DECK = f('deck', 'decks/L2-vand3.ydk'), MIN = +f('min', 2), PAR = +f('par', Math.max(1, os.cpus().length)), TAG = f('tag', os.hostname()), ROB = +f('robust', 1), HANDS = +f('hands', 0), ROBONLY = a.includes('--robust-only'), SHARD = String(f('shard', '0/1')).split('/').map(Number); // --shard i/n: this server takes 1/n of the starts (no duplicate work across servers) // --hands N: stop after N hands (helper PCs); --robust-only: only hand-trap-aware lines
 const LIST = path.basename(DECK, '.ydk'); const OUT = `data/lib-${LIST}`; fs.mkdirSync(OUT, { recursive: true });
 const deck = parseYdk(fs.readFileSync(DECK, 'utf8')); const SCN = ['none', 'ash', 'imperm', 'droll'];
 const HINTS = `data/hints-${LIST}.json`, CARDV = `data/cardv-${LIST}.json`;
@@ -40,16 +40,17 @@ function one(n) { const r = rngOf(tagN ^ (n * 2654435761)); let perm = null, bes
 // Robust worker: re-solves the most common ways to start (from the stored lines) with the hand-trap-aware line choice
 // (robust.mjs: several strong lines, each played into Ash / Imperm / Droll at their worst timing, best overall kept).
 const startOf = (x) => { const out = []; for (const e of x.raw || []) { if (e.seat !== 0 || !e.label) continue; const m = /^(?:Activate|Normal Summon|Set|Special Summon[^(]*?) (.+?) \(hand\)/.exec(e.label); if (m && !out.includes(m[1])) out.push(m[1]); if (out.length >= 2) break; } return out; };
+const inProgress = new Set(); const hashK = (k) => [...k].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 function nextStart() { const cnt = new Map(), done = new Set(); for (const fn of fs.readdirSync(OUT)) if (fn.endsWith('.json')) { try { const x = JSON.parse(fs.readFileSync(`${OUT}/${fn}`, 'utf8')); const k = (x.robustStart || startOf(x)).slice().sort().join('+'); if (!k) continue; if (x.scn === 'robust') done.add(k); else cnt.set(k, (cnt.get(k) || 0) + 1); } catch {} }
-  const k = [...cnt.entries()].filter(([k]) => !done.has(k)).sort((a, b) => b[1] - a[1])[0]; return k ? { start: k[0].split('+'), seen: k[1] } : null; }
-function oneRobust(n) { const st = nextStart(); if (!st) return Promise.resolve(null); const r = rngOf(tagN ^ (n * 40503)); const rest = deck.main.slice();
-  const hand = []; for (const c of st.start) { const i = rest.findIndex(x => name(x) === c); if (i < 0) return Promise.resolve(null); hand.push(rest.splice(i, 1)[0]); }
+  const k = [...cnt.entries()].filter(([k]) => !done.has(k) && !inProgress.has(k) && (SHARD[1] <= 1 || hashK(k) % SHARD[1] === SHARD[0])).sort((a, b) => b[1] - a[1])[0]; if (!k) return null; inProgress.add(k[0]); return { start: k[0].split('+'), seen: k[1], key: k[0] }; }
+function oneRobust(n) { const st = nextStart(); if (!st) return Promise.resolve(null); const release = () => inProgress.delete(st.key); const r = rngOf(tagN ^ (n * 40503)); const rest = deck.main.slice();
+  const hand = []; for (const c of st.start) { const i = rest.findIndex(x => name(x) === c); if (i < 0) { release(); return Promise.resolve(null); } hand.push(rest.splice(i, 1)[0]); }
   for (let k = rest.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [rest[k], rest[j]] = [rest[j], rest[k]]; } while (hand.length < 5) hand.push(rest.shift());
   const id = `${TAG}-r${n}`; const raw = `${OUT}/${id}.json`;
   const t = { deck: DECK, hand: hand.map(name), minutes: MIN / 2, cands: 3, adapt: 0.15, cardvFile: fs.existsSync(CARDV) ? CARDV : undefined, saveTo: raw + '.tmp' };
   return new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'robust.mjs', JSON.stringify(t)], { stdio: ['ignore', 'ignore', 'ignore'] });
     p.on('close', () => { try { const x = JSON.parse(fs.readFileSync(raw + '.tmp', 'utf8')); Object.assign(x, { scn: 'robust', id, list: LIST, when: new Date().toISOString(), robustStart: st.start, hand: hand.map(name) });
-      fs.writeFileSync(raw, JSON.stringify(x)); fs.unlinkSync(raw + '.tmp'); log(`robust line for start ${st.start.join(' + ')} (seen ${st.seen}x): no trap ${x.v}, overall ${x.robust} (Ash ${x.threats.ash.v}, Imperm ${x.threats.imperm.v}, Droll ${x.threats.droll.v})`); ok(x.robust); } catch { ok(null); } }); }); }
+      fs.writeFileSync(raw, JSON.stringify(x)); fs.unlinkSync(raw + '.tmp'); log(`robust line for start ${st.start.join(' + ')} (seen ${st.seen}x): no trap ${x.v}, overall ${x.robust} (Ash ${x.threats.ash.v}, Imperm ${x.threats.imperm.v}, Droll ${x.threats.droll.v})`); release(); ok(x.robust); } catch { release(); ok(null); } }); }); }
 log(`line library: ${LIST}, ${MIN} min per hand, ${PAR} at a time, saving to ${OUT}`);
 let done = 0, t0 = Date.now();
 let rseq = 0, nh = 0; const more = () => !HANDS || nh++ < HANDS; await Promise.all(Array.from({ length: PAR }, async (_, w) => { if (ROBONLY || w < Math.min(ROB, PAR - 1)) { while (more()) { const v = await oneRobust(rseq++ + (HANDS ? Date.now() % 100000 : 0)); if (v === null && !HANDS) await new Promise(r => setTimeout(r, 60000)); } return; } while (more()) { const n = seq++; fs.writeFileSync(`${OUT}/seq-${TAG}`, String(seq)); const v = await one(n); done++; if (v === null) { log(`hand ${n} failed (no result)`); await new Promise(r => setTimeout(r, 30000)); }
