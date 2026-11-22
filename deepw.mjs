@@ -21,6 +21,8 @@ if (Array.isArray(t.prefix) && t.prefix.length) { const E = await import('./src/
   for (const rx of t.prefix) { autoAdvance(S); const d = E.decision(S, 0); if (!d) break; const re = new RegExp(rx); const i = d.options.findIndex(o => re.test(o.label)); if (i < 0) { console.error('prefix: no match for ' + rx + ' in ' + d.options.map(o => o.label).join(' | ').slice(0, 400)); break; }
     const r = E.answer(S, 0, String(i + 1)); if (!r || r.error) break; for (const x of r.resps || []) E.push(S, { seat: 0, resp: x.resp, label: x.label }); }
   autoAdvance(S); const fixed = S.game.responses.slice(); const mk0 = mk; mk = () => { const g = mk0(); g.responses = fixed.map(x => ({ ...x })); return g; }; }
+// optional fixed start given as recorded responses (t.prefixRaw): the search continues from there (evolve.mjs: keep part of a good line, re-search the rest)
+if (Array.isArray(t.prefixRaw) && t.prefixRaw.length) { const fixedR = t.prefixRaw; const mkR = mk; mk = () => { const g = mkR(); g.responses = fixedR.map(x => ({ ...x })); return g; }; }
 const divs = String(t.divs || '6,1.5').split(',').map(Number); let best = { score: -1 };
 // opening lanes: every legal first move gets an equal share of the time (the search builds long lines well once the opening is fixed,
 // but left alone it keeps chasing whatever adds board value fastest); then one open search with the rest of the time
@@ -29,7 +31,8 @@ const HP = t.hintsFile || ('data/hints-' + path.basename(t.deck).replace(/\.ydk$
 if (process.env.NRPA !== '0') { process.env.NRPA_N ||= '30'; // learned hints: moves that appeared in the best lines of earlier games of this list (data/hints-<deck>.json), a soft head start
 let hints = null; try { if (t.hints !== false) hints = loadHints(HP); } catch {}
 // hand-designed lines (lines/designed/*.json, verified in the engine) steer the search: their moves get the top hint weight
-try { if (t.hints !== false && process.env.DESIGNED !== '0' && fs.existsSync('lines/designed')) { hints = hints || {}; for (const f of fs.readdirSync('lines/designed')) { if (!f.endsWith('.json')) continue; const L = JSON.parse(fs.readFileSync('lines/designed/' + f, 'utf8')); for (const k of L.keys || []) hints[k] = Math.max(hints[k] || 0, 2); } } } catch {}
+try { if (t.hints !== false && process.env.DESIGNED !== '0' && fs.existsSync('lines/designed')) { hints = hints || {}; for (const f of fs.readdirSync('lines/designed')) { if (!f.endsWith('.json')) continue; const L = JSON.parse(fs.readFileSync('lines/designed/' + f, 'utf8')); for (const k of L.keys || []) hints[k] = Math.max(hints[k] || 0, 2); }
+  if (fs.existsSync('lines/evolved')) for (const f of fs.readdirSync('lines/evolved')) { if (!f.endsWith('.json')) continue; try { const L = JSON.parse(fs.readFileSync('lines/evolved/' + f, 'utf8')); if ((L.fit ?? -9) > 0) for (const k of L.keys || []) hints[k] = Math.max(hints[k] || 0, 1.5); } catch {} } } } catch {}
 let cardV = null, cardRaw = null; try { if (t.cardv !== false) { const cp = t.cardvFile || ('data/cardv-' + path.basename(t.deck).replace(/\.ydk$/, '') + '.json'); if (fs.existsSync(cp)) { const cv = JSON.parse(fs.readFileSync(cp, 'utf8')); cardV = cv.bonus; cardRaw = {}; for (const [n, x] of Object.entries(cv.v || {})) if (x - cv.base > 0) cardRaw[n] = x - cv.base; } } } catch {}
 // search guidance only (the reported score is always the real board): a turn that has put a strong card into the hand (one that wasn't in the
 // opening hand) counts as part of the way there, by what that card alone is worth, while the Normal Summon is still free

@@ -7,7 +7,7 @@ import fs from 'fs';
 import { parseYdk, findCard, name } from './src/cards.mjs';
 import * as E from './src/engine.mjs'; import { autoAdvance } from './src/auto.mjs';
 import { disruption, setHT } from './src/disrupt.mjs'; import { normLabel } from './src/searchplayer.mjs';
-const t = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')); setHT(1);
+const t = JSON.parse(/^\s*\{/.test(process.argv[2]) ? process.argv[2] : fs.readFileSync(process.argv[2], 'utf8')); setHT(1);
 const code = (n) => { const c = findCard(n); const k = Array.isArray(c) ? c[0] : c; if (!k) throw new Error('unknown card: ' + n); return k; };
 const deck = parseYdk(fs.readFileSync(t.deck || 'decks/L2-vand3.ydk', 'utf8'));
 // deck order: hand, then the known next cards, then the rest in a fixed shuffled order
@@ -39,4 +39,4 @@ console.log(log.join('\n'));
 console.log(`\n-- ${stop}. Board value ${disruption(S, 0).toFixed(2)}`);
 if (d) console.log('Options now' + (d.prompt ? ` (${d.prompt})` : '') + ':\n' + d.options.map((o, k) => `  #${k + 1} ${o.label}`).join('\n'));
 const bv = E.boardView(S, 0); console.log('\n' + (typeof bv === 'string' ? bv : JSON.stringify(bv)).slice(0, 3000));
-if (t.out) { fs.writeFileSync(t.out, JSON.stringify({ hand: t.hand, order, extra: deck.extra.slice(), seed: 7, raw: S.game.responses.map(e => ({ ...e })), v: +disruption(S, 0).toFixed(2), steps: log.filter(l => !/^\s+\(auto\)/.test(l)), name: t.name || '', keys }, null, 0)); console.log('saved ' + t.out); }
+if (t.out) { fs.writeFileSync(t.out, JSON.stringify({ hand: t.hand, order, extra: deck.extra.slice(), seed: 7, raw: S.game.responses.map(e => ({ ...e })), v: +disruption(S, 0).toFixed(2), steps: log.filter(l => !/^\s+\(auto\)/.test(l)), name: t.name || '', keys, script: t.steps || [], complete: stop === 'end of script', scn: 'none', designed: true, list: 'L2-vand3', when: new Date().toISOString(), id: 'designed-' + String(t.out).replace(/^.*\//, '').replace('.json', ''), board: String(E.boardView(S, 0)) }, null, 0)); console.log('saved ' + t.out); }

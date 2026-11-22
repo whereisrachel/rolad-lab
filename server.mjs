@@ -59,6 +59,13 @@ const STEPS = {
     const r = await run(['oppboards.mjs', L, String(j.n || 8), String(j.hands || 6), String(j.minutes || 0.5)], { ...(j.defense ? { OB_DEFENSE: j.defense } : {}), ...(j.tag ? { OB_TAG: j.tag } : {}), ...(j.ids ? { OB_IDS: j.ids } : {}) }, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
     const RP = `reports/oppboards-${L}${j.tag ? '-' + j.tag : ''}.md`; if (r.code || !fs.existsSync(RP)) throw new Error('oppboards failed: ' + r.out.slice(-400)); j.report = RP; j.last = 'done -> ' + j.report;
   },
+  async evolve(j) { // line evolution: seed lines followed per deck order + search finish + mutations, judged by the opponent's real turn
+    const list = j.set || [{ name: j.name, hand: j.hand }]; const N = list.length * (j.orders || 8); let k = 0; j.reports = [];
+    for (const h of list) { j.stage = `evolving lines: ${h.name}`;
+      const r = await run(['evolve.mjs', JSON.stringify({ deck: j.deckA || 'decks/L2-vand3.ydk', hand: h.hand, name: h.name, orders: j.orders || 8, rounds: j.rounds ?? 3, minutes: j.minutes || 1, hands: j.oppHands || 3, oppMinutes: j.oppMinutes || 0.5 })], {}, (l) => { if (/^order \d+/.test(l)) { k++; prog(j, k, N); j.last = h.name + ': ' + l; } });
+      const RP = `reports/evolve-${String(h.name).replace(/[^\w+-]+/g, '_').slice(0, 60)}.md`; if (r.code || !fs.existsSync(RP)) throw new Error('evolve failed: ' + r.out.slice(-400)); j.reports.push(RP); j.report = RP; }
+    j.last = 'done -> ' + j.reports.join(', ');
+  },
   async robbench(j) { // which line to play when you don't know their hand trap, on the guide hands
     j.stage = 'robust lines on the guide hands'; const L = path.basename(j.deckA || 'decks/L2-vand3.ydk', '.ydk');
     const r = await run(['robbench.mjs', j.deckA || 'decks/L2-vand3.ydk', String(j.minutes || 1)], j.only ? { ONLY: j.only } : {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
