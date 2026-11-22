@@ -91,6 +91,12 @@ if (best.raw && best.raw.length && t.prune !== false && process.env.PRUNE !== '0
     const blocks = () => { const b = []; steps.forEach((e, i) => { if (START.test(e.label) || !b.length) b.push([i, i]); else b[b.length - 1][1] = i; }); return b; };
     for (let bi = blocks().length - 1; bi >= 0; bi--) { const B = blocks(); if (bi >= B.length) continue; const [a0, a1] = B[bi]; const trial = [...steps.slice(0, a0), ...steps.slice(a1 + 1)];
       const v = await val(trial); if (v >= base - 0.01) { dropped.push(steps[a0].label); steps = trial; } }
+    // tidy: a Set whose timing changes nothing goes to the end of the line (where a player sets cards), checked by replay
+    const isSet = (l) => /^Set (Spell\/Trap|monster)/.test(l || ''); let moved = [];
+    for (let guard = 0; guard < 12; guard++) { const B = blocks(); let lastNonSet = -1; B.forEach(([a0], i) => { if (!isSet(steps[a0].label)) lastNonSet = i; });
+      const cand = B.findIndex(([a0], i) => i < lastNonSet && isSet(steps[a0].label) && !moved.includes(a0 + ':' + steps[a0].label)); if (cand < 0) break;
+      const [a0, a1] = B[cand]; const blk = steps.slice(a0, a1 + 1); const trial = [...steps.slice(0, a0), ...steps.slice(a1 + 1), ...blk]; const v = await val(trial);
+      if (v >= base - 0.01) { steps = trial; dropped.push('(moved to the end) ' + blk[0].label); } else moved.push(a0 + ':' + steps[a0].label); }
     if (dropped.length) { best.prunedFrom = (best.line || []).length; best.line = steps.map(e => e.label); best.raw = steps; best.dropped = dropped; } }
 } catch (e) { best.pruneError = String(e).slice(0, 200); } }
 const used = (best.line || []).join(' | ');

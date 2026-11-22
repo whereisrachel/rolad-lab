@@ -56,7 +56,19 @@ const rows = C.map((c, i) => { const mine = tasks.filter(x => x.i === i); const 
   for (const th of Object.keys(THREATS)) { let worst = null; for (const x of mine.filter(x => x.threat === th)) if (!worst || x.z.v < worst.v) worst = { ...x.z, k: x.k }; row.threats[th] = worst; tot += (W[th] || 0) * worst.v; }
   row.robust = +tot.toFixed(2); return row; });
 rows.sort((p, q) => q.robust - p.robust);
-if (t.saveTo && rows[0]) fs.writeFileSync(t.saveTo, JSON.stringify({ ...rows[0].cand, v: rows[0].none, robust: rows[0].robust, threats: Object.fromEntries(Object.entries(rows[0].threats).map(([k, v]) => [k, { v: +v.v.toFixed(2), k: v.k, at: v.at || '' }])) }));
+// survival: the opponent plays its turn into each of the best candidate boards (several hands from each deck, battle phase, your
+// interruptions used by the engine's real options). final = hand-trap score + average margin after their turn (what you keep minus what they end on).
+const OH = t.oppHands ?? 3, OPPD = t.opps || ['o_ss', 'o_despia'];
+if (OH > 0) { const M = Math.min(rows.length, t.survTop ?? 3); const jobs2 = [];
+  for (let i = 0; i < M; i++) { const f = path.join(tmp, `surv${i}.json`); fs.writeFileSync(f, JSON.stringify(rows[i].cand)); for (const o of OPPD) jobs2.push({ i, f, o }); }
+  const one2 = (x) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'oppturn.mjs', JSON.stringify({ line: x.f, opp: `decks/${x.o}.ydk`, minutes: t.oppMin ?? 0.5, hands: OH, oppSeed: 1, par: Math.max(1, Math.floor(NP / 2)), ...(t.defense === 'rule' ? { choke: false } : {}) })], { stdio: ['ignore', 'pipe', 'ignore'] });
+    let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => { const m = /OPPTURN (.*)/.exec(o); x.z = m ? JSON.parse(m[1]) : null; ok(); }); });
+  const q2 = jobs2.slice(); await Promise.all(Array.from({ length: 2 }, async () => { while (q2.length) await one2(q2.shift()); }));
+  for (let i = 0; i < M; i++) { const r = rows[i]; r.survival = {}; let sum = 0, n = 0; for (const x of jobs2.filter(x => x.i === i)) { if (!x.z) continue; r.survival[x.o] = { margin: x.z.margin, worst: x.z.worst, otk: x.z.otk }; sum += x.z.margin; n++; }
+    r.surv = n ? +(sum / n).toFixed(2) : -10; r.final = +(r.robust + r.surv).toFixed(2); }
+  for (let i = M; i < rows.length; i++) rows[i].final = -99;
+  rows.sort((p, q) => q.final - p.final); }
+if (t.saveTo && rows[0]) fs.writeFileSync(t.saveTo, JSON.stringify({ ...rows[0].cand, v: rows[0].none, robust: rows[0].robust, surv: rows[0].surv, final: rows[0].final, survival: rows[0].survival, threats: Object.fromEntries(Object.entries(rows[0].threats).map(([k, v]) => [k, { v: +v.v.toFixed(2), k: v.k, at: v.at || '' }])) }));
 for (const r of rows) delete r.cand;
-console.log('ROBUST ' + JSON.stringify({ hand: t.hand, chosen: rows[0], others: rows.slice(1).map(r => ({ robust: r.robust, none: r.none, from: r.from, threats: Object.fromEntries(Object.entries(r.threats).map(([k, v]) => [k, +v.v.toFixed(2)])) })) }));
+console.log('ROBUST ' + JSON.stringify({ hand: t.hand, chosen: rows[0], others: rows.slice(1).map(r => ({ robust: r.robust, none: r.none, surv: r.surv, final: r.final, from: r.from, threats: Object.fromEntries(Object.entries(r.threats).map(([k, v]) => [k, +v.v.toFixed(2)])) })) }));
 fs.rmSync(tmp, { recursive: true, force: true });

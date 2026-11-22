@@ -45,6 +45,8 @@ g2.after = { 0: defK };
 const res = await search(g2, t.minutes || 1);
 // 3) replay their best main phase, then their battle phase (every monster that can attack does; your interruptions still fire)
 const { S3 } = await readOut(g2, res);
+// the outcome is judged on the field only: a card still in hand counts only through what it did during their turn (the engine decides whether it could be used)
+setHT(0);
 const theirMain = disruption(S3, 1), oursMain = disruption(S3, 0);
 let attacks = 0;
 for (let i = 0; i < 300 && S3.pending && !S3.ended && S3.turn === 2; i++) { autoAdvance(S3); if (!S3.pending || S3.ended || S3.turn !== 2) break; if (E.seatOf(S3.game, S3.pending.player) !== 1) break;
