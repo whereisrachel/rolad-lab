@@ -30,7 +30,7 @@ const g2 = S.game; g2.goldfish = [0]; g2.script = { 0: [t.defense || 'any'] };
 // bottleneck defense (choke: data/choke-<deck>.json, from choke.mjs): only hit their key cards; must = always stop these
 const chokeFile = t.choke === false ? null : (t.choke || `data/choke-${(t.opp || 'decks/o_ss.ydk').replace(/^.*\//, '').replace(/\.ydk$/, '')}.json`);
 if (chokeFile && fs.existsSync(chokeFile) && (t.defense || 'any') === 'any') { const values = JSON.parse(fs.readFileSync(chokeFile, 'utf8')); const sorted = Object.values(values).sort((a, b) => b - a);
-  g2.choke = { 0: { values, must: t.must || ['Sky Striker Mobilize - Engage!', 'Sky Striker Ace - Kagari'], thr: Math.max(0.5, sorted[Math.min(3, sorted.length - 1)] ?? 0.5), top: Math.max(1, sorted[Math.min(1, sorted.length - 1)] ?? 1) } }; }
+  g2.choke = { 0: { values, must: t.must || ['Sky Striker Mobilize - Engage!', 'Sky Striker Ace - Kagari', 'Branded Fusion', 'Aluber the Jester of Despia', 'Fallen of Albaz'], thr: Math.max(0.5, sorted[Math.min(3, sorted.length - 1)] ?? 0.5), top: Math.max(1, sorted[Math.min(1, sorted.length - 1)] ?? 1) } }; }
 // walk to the opponent's first open game state (their Main Phase 1): you defend by policy, they decline optional chains on the way
 for (let i = 0; i < 400 && S.pending && !S.ended; i++) { autoAdvance(S); if (!S.pending || S.ended) break; const sp = E.seatOf(g2, S.pending.player); if (sp !== 1) break;
   if (S.pending.type === E.M.SELECT_IDLECMD) break; const d = E.decision(S, 1); if (!d) break; const j = d.options.findIndex(o => /^Pass/.test(o.label)); const o = d.options[j >= 0 ? j : 0]; if (!E.push(S, { seat: 1, resp: o.resp, label: o.label })) break; }
