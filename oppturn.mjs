@@ -23,6 +23,8 @@ const game = { id: 'ot', seed: String(L.seed ?? 7), first: 0, lab: true,
 // 1) your turn, then end it
 const r = await replay(game, L.raw, null); let S = r.S; autoAdvance(S);
 const our1 = disruption(S, 0); const t1 = boardFeatures(S, 0);
+// stop auto-playing their seat before ending the turn: otherwise, when your End Phase has no prompt, their whole turn was skipped as a goldfish (fixed Nov 22)
+S.game.goldfish = []; S.game.script = { 0: [t.defense || 'any'] };
 for (let i = 0; i < 50 && S.pending && !S.ended && S.turn === 1; i++) { const d = E.decision(S, 0); if (!d) { autoAdvance(S); continue; }
   const j = d.options.findIndex(o => /End Phase/.test(o.label)); E.push(S, { seat: 0, resp: d.options[j >= 0 ? j : d.options.length - 1].resp, label: d.options[j >= 0 ? j : d.options.length - 1].label }); autoAdvance(S); }
 // 2) their turn: you defend with every interruption at the first legal chance; they search for their best result

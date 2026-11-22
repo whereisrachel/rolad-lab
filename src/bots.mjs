@@ -60,7 +60,13 @@ export function policyAnswer(S, seat, pol) {
     if (pol.defense) { if (pol.after > 0) { const acts = (G.responses || []).filter(r => r.seat !== seat && !r.auto && /^Activate /.test(r.label || '')).length; if (acts < pol.after) return find(/^Pass/) || '1'; }
       const oppN = (() => { try { const ot = 1 - teamOf(G, seat); return [L.MZONE, L.SZONE].reduce((n, loc) => n + S.lb.duelQueryLocation(S.h, { flags: 0x1, controller: ot, location: loc }).filter(c => c && c.code).length, 0); } catch { return 9; } })();
       const rank = (l) => /negate the activation/i.test(l) ? 5 : /negate/i.test(l) ? 4 : /all cards the opponent controls/i.test(l) ? (oppN >= 3 ? 6 : -1) : /destroy|banish|send 1 card on the field|return .* hand|take control|change .* position/i.test(l) ? 3 : -1;
-      let bi = -1, br = 0; opts.forEach((o, i) => { if (!/^Activate /.test(o.label)) return; const r = rank(o.label); if (r > br) { br = r; bi = i; } });
+      // known interruptions by card name (many labels say only "activate this card"); a wipe waits for 3+ of their cards
+      const NR = [[/Infinite Impermanence|Ash Blossom|Artmage Finmel/, 4], [/Artmage Impasto|Artmage Diactorus/, 5], [/Ghost Ogre|Mind Shuffle|S:P Little Knight|Ars Magna of Infinity/, 3.5],
+        [/Droll & Lock Bird|Purification Power Patron|Theorealize Medius|Ars Magna of Purification|Chaos Angel/, 3], [/Lacrima|Junora/, 1.5], [/Nerva the Power Patron|Medicurius/, oppN >= 3 ? 6 : -1],
+        [/Artmage Non-Finito/, oppN >= 3 ? 5.5 : 2.5]];
+      const nrank = (l) => { const nm = (/^Activate (.+?) \(/.exec(l) || [])[1] || ''; for (const [re, v] of NR) if (re.test(nm)) return v; return -1; };
+      const onCh = !!(S.chain && S.chain.length && !lastChainIsOwn(S, seat));
+      let bi = -1, br = 0; opts.forEach((o, i) => { if (!/^Activate /.test(o.label)) return; let r = Math.max(rank(o.label), nrank(o.label)); if (!onCh && r < 5.5) r = -1; if (r > br) { br = r; bi = i; } });
       return bi >= 0 ? String(bi + 1) : (find(/^Pass/) || '1'); }
     const res = [...scr, ...(bot ? bot.chain : [])];
     return findAny(res) || find(/^Pass/) || '1';
