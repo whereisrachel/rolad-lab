@@ -7,7 +7,7 @@
 //  Every game: same shuffle for every version (an added card is shuffled in, a cut copy taken out), line finder from scratch, no guide lines.
 //  Hands rotate through opponent hand traps: none / Ash / Imperm / Droll (fired at the first legal moment).
 // node findlist.mjs --deck D [--min 2] [--h1 12] [--h2 24] [--h3 36] [--hv 60] [--adds 40] [--eds 10] [--keep2 20] [--keep3 6] [--mini] [--id X]
-import fs from 'fs'; import os from 'os'; import path from 'path'; import { spawn } from 'child_process';
+import fs from 'fs'; import os from 'os'; import path from 'path'; import { runRemote, helperSlots } from './src/remote.mjs'; import { spawn } from 'child_process';
 import { parseYdk, findCard, name, banlist, cardDB } from './src/cards.mjs'; import { synergyScores } from './src/synergy.mjs';
 const a = process.argv.slice(2); const f0 = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
 // --versions may also be an object { versions: [...], h1, h2, h3, hv, ... }: the extra keys act as command-line options
@@ -62,20 +62,25 @@ const RESUME = a.includes('--resume') && fs.existsSync(store); if (RESUME) Objec
 const HINTS = 'data/hints-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json';
 const FROZEN = `data/hints-frozen-${ID}.json`; // this run's snapshot of what has been learned so far: every version plays with the same knowledge
 const CARDV = 'data/cardv-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json';
-const play = (v, hi, sseed = 1, key = '') => new Promise(ok => { const perm = deal(v, hi); const t = { deck: deckFileFor(v), main: perm, hand: perm.slice(0, 5).map(c => name(c)), minutes: MIN, seed: 7 + hi, sseed, scn: scnOf(hi), hintsFile: a.includes('--nohints') ? HINTS : FROZEN, learnLog: HINTS, hints: !a.includes('--nohints'), cardvFile: CARDV, rawOut: SHARE ? rawPath(key, hi) : undefined, ppm: PPM || undefined, smart: a.includes('--smart') || undefined };
-  const once = (tries) => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify(t)], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = '';
-    p.stdout.on('data', b => out += b); p.on('close', () => { const m = /RESULT (.*)/.exec(out); if (!m && tries < 1) return once(tries + 1); const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; const res = { v: r.v, crash: !!r.crash, line: r.line, board: r.board, hand: t.hand, scn: t.scn, ppm1: r.ppm1 };
-      // --t2 o_ss,o_despia: also play the opponent's turn into this board (oppturn.mjs); t2 = what you still have minus what they end on
-      if (T2.length && t.rawOut && fs.existsSync(t.rawOut)) { const q = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'oppturn.mjs', JSON.stringify({ line: t.rawOut, opp: `decks/${T2[hi % T2.length]}.ydk`, oppSeed: 1000 + hi, minutes: +f('t2min', 0.5), hands: +f('t2hands', 1), par: 2 })], { stdio: ['ignore', 'pipe', 'ignore'] }); let o2 = '';
-        q.stdout.on('data', b => o2 += b); q.on('close', () => { const m2 = /OPPTURN (.*)/.exec(o2); if (m2) { const z = JSON.parse(m2[1]); res.t2 = z.margin ?? +(z.ourBoardLeft - z.theirBoard).toFixed(2); res.t2otk = z.otk || 0; res.t2opp = T2[hi % T2.length]; } ok(res); }); return; }
-      ok(res); }); };
-  once(0); });
+// one script run, here or on a helper PC (remote = true: sent through the hub; if no helper returns it in time it runs here)
+const runNode = async (script, args, remote, files, outputs) => { if (remote) { const r = await runRemote(script, args, { files, outputs }); if (r) { REMOTE_DONE++; return r.stdout; } }
+  return new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', script, JSON.stringify(args)], { stdio: ['ignore', 'pipe', 'ignore'] }); let out = ''; p.stdout.on('data', b => out += b); p.on('close', () => ok(out)); }); };
+let REMOTE_DONE = 0;
+const play = async (v, hi, sseed = 1, key = '', remote = false) => { const perm = deal(v, hi); const t = { deck: deckFileFor(v), main: perm, hand: perm.slice(0, 5).map(c => name(c)), minutes: MIN, seed: 7 + hi, sseed, scn: scnOf(hi), hintsFile: a.includes('--nohints') ? HINTS : FROZEN, learnLog: HINTS, hints: !a.includes('--nohints'), cardvFile: CARDV, rawOut: SHARE ? rawPath(key, hi) : undefined, ppm: PPM || undefined, smart: a.includes('--smart') || undefined };
+  let m = null; for (let tries = 0; tries < 2 && !m; tries++) { const out = await runNode('deepw.mjs', t, remote && tries === 0, [t.deck, t.hintsFile, t.cardvFile], t.rawOut ? [t.rawOut] : []); m = /RESULT (.*)/.exec(out); }
+  const r = m ? JSON.parse(m[1]) : { v: 0, crash: true }; const res = { v: r.v, crash: !!r.crash, line: r.line, board: r.board, hand: t.hand, scn: t.scn, ppm1: r.ppm1 };
+  // --t2 o_ss,o_despia: also play the opponent's turn into this board (oppturn.mjs); t2 = what you still have minus what they end on
+  if (T2.length && t.rawOut && fs.existsSync(t.rawOut)) { const opp = T2[hi % T2.length]; const q = { line: t.rawOut, opp: `decks/${opp}.ydk`, oppSeed: 1000 + hi, minutes: +f('t2min', 0.5), hands: +f('t2hands', 1), par: 2 };
+    const o2 = await runNode('oppturn.mjs', q, remote, [t.rawOut, q.opp, `data/choke-${opp}.json`], []); const m2 = /OPPTURN (.*)/.exec(o2);
+    if (m2) { const z = JSON.parse(m2[1]); res.t2 = z.margin ?? +(z.ourBoardLeft - z.theirBoard).toFixed(2); res.t2otk = z.otk || 0; res.t2opp = opp; } }
+  return res; };
 let liveRows = []; const writeLive = (stage, done, total) => { try { fs.writeFileSync('data/explore-live.json', JSON.stringify({ run: 'findlist ' + ID + ' · ' + stage, at: new Date().toISOString(), done, total, cardsDone: liveRows.length, cards: liveRows.length, control: null, rows: liveRows.slice(0, 40) })); } catch {} };
 async function runGames(jobs, stage) { // jobs: [{ key, v, hi, sseed }], interleaved so every version gets the same machine conditions
   const had = jobs.length; jobs = jobs.filter(j => !(R[j.key] && R[j.key][j.hi])); if (had > jobs.length) log(`${stage}: ${had - jobs.length} games already played (resumed)`);
   let k = 0, done = 0; const total = jobs.length; log(`${stage}: ${total} games`);
-  await Promise.all(Array.from({ length: PAR }, async () => { while (k < total) { const j = jobs[k++]; const r = await play(j.v, j.hi, j.sseed, j.key); (R[j.key] ||= {})[j.hi] = r; done++; console.log(`${done}/${total}`); if (done % 11 === 0) { writeLive(stage, done, total); try { fs.writeFileSync(store, JSON.stringify(R)); } catch {} } } }));
-  fs.writeFileSync(store, JSON.stringify(R)); if (SHARE) await shareHands([...new Set(jobs.map(j => j.hi))], stage);
+  const HS = a.includes('--nohelpers') ? 0 : await helperSlots(); if (HS) log(`${stage}: helper PCs add ${HS} cores (${PAR} here)`);
+  await Promise.all(Array.from({ length: PAR + HS }, async (_, w) => { while (k < total) { const j = jobs[k++]; const r = await play(j.v, j.hi, j.sseed, j.key, w >= PAR); (R[j.key] ||= {})[j.hi] = r; done++; console.log(`${done}/${total}`); if (done % 11 === 0) { writeLive(stage, done, total); try { fs.writeFileSync(store, JSON.stringify(R)); } catch {} } } }));
+  if (REMOTE_DONE) log(`${stage}: ${REMOTE_DONE} games so far played on helper PCs`); fs.writeFileSync(store, JSON.stringify(R)); if (SHARE) await shareHands([...new Set(jobs.map(j => j.hi))], stage);
   if (T2.length) { const b = R.base || {}; const rows = Object.keys(R).filter(k => k !== 'base' && k !== 'base2').map(k => { const d = Object.keys(R[k]).filter(hi => b[hi] && R[k][hi].t2 != null && b[hi].t2 != null).map(hi => R[k][hi].t2 - b[hi].t2); if (d.length < 2) return null; const m = d.reduce((p, q) => p + q, 0) / d.length; const se = Math.sqrt(d.reduce((p, q) => p + (q - m) ** 2, 0) / (d.length - 1) / d.length); return `${k} ${m >= 0 ? '+' : ''}${m.toFixed(2)} ± ${se.toFixed(2)} (n ${d.length})`; }).filter(Boolean);
     if (rows.length) log(`${stage}: after the opponent's turn (${T2.join('/')}; what you keep minus what they build), vs your list: ` + rows.join(' | ')); } }
 // line library (lines found on other machines / earlier runs, data/lib-<list>/): pulled at the start, matched per hand in shareHands

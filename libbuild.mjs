@@ -5,7 +5,7 @@
 import fs from 'fs'; import os from 'os'; import path from 'path'; import { spawn } from 'child_process';
 import { parseYdk, name } from './src/cards.mjs'; import { novelty, routeOf } from './src/novelty.mjs';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
-const DECK = f('deck', 'decks/L2-vand3.ydk'), MIN = +f('min', 2), PAR = +f('par', Math.max(1, os.cpus().length)), TAG = f('tag', os.hostname()), ROB = +f('robust', 1);
+const DECK = f('deck', 'decks/L2-vand3.ydk'), MIN = +f('min', 2), PAR = +f('par', Math.max(1, os.cpus().length)), TAG = f('tag', os.hostname()), ROB = +f('robust', 1), HANDS = +f('hands', 0), ROBONLY = a.includes('--robust-only'); // --hands N: stop after N hands (helper PCs); --robust-only: only hand-trap-aware lines
 const LIST = path.basename(DECK, '.ydk'); const OUT = `data/lib-${LIST}`; fs.mkdirSync(OUT, { recursive: true });
 const deck = parseYdk(fs.readFileSync(DECK, 'utf8')); const SCN = ['none', 'ash', 'imperm', 'droll'];
 const HINTS = `data/hints-${LIST}.json`, CARDV = `data/cardv-${LIST}.json`;
@@ -52,5 +52,5 @@ function oneRobust(n) { const st = nextStart(); if (!st) return Promise.resolve(
       fs.writeFileSync(raw, JSON.stringify(x)); fs.unlinkSync(raw + '.tmp'); log(`robust line for start ${st.start.join(' + ')} (seen ${st.seen}x): no trap ${x.v}, overall ${x.robust} (Ash ${x.threats.ash.v}, Imperm ${x.threats.imperm.v}, Droll ${x.threats.droll.v})`); ok(x.robust); } catch { ok(null); } }); }); }
 log(`line library: ${LIST}, ${MIN} min per hand, ${PAR} at a time, saving to ${OUT}`);
 let done = 0, t0 = Date.now();
-let rseq = 0; await Promise.all(Array.from({ length: PAR }, async (_, w) => { if (w < Math.min(ROB, PAR - 1)) { for (;;) { const v = await oneRobust(rseq++); if (v === null) await new Promise(r => setTimeout(r, 60000)); } } for (;;) { const n = seq++; fs.writeFileSync(`${OUT}/seq-${TAG}`, String(seq)); const v = await one(n); done++; if (v === null) { log(`hand ${n} failed (no result)`); await new Promise(r => setTimeout(r, 30000)); }
+let rseq = 0, nh = 0; const more = () => !HANDS || nh++ < HANDS; await Promise.all(Array.from({ length: PAR }, async (_, w) => { if (ROBONLY || w < Math.min(ROB, PAR - 1)) { while (more()) { const v = await oneRobust(rseq++ + (HANDS ? Date.now() % 100000 : 0)); if (v === null && !HANDS) await new Promise(r => setTimeout(r, 60000)); } return; } while (more()) { const n = seq++; fs.writeFileSync(`${OUT}/seq-${TAG}`, String(seq)); const v = await one(n); done++; if (v === null) { log(`hand ${n} failed (no result)`); await new Promise(r => setTimeout(r, 30000)); }
   if (done % 5 === 0) log(`${done} hands this session (${(done / ((Date.now() - t0) / 3600000)).toFixed(1)}/h), last ${v}; library: ${boards.size} distinct end boards, ${routes.size} distinct routes; this session new routes ${stats['new route']}, better ${stats.better}, repeats ${stats.repeat}; still finding something new on ${recent.length ? Math.round(100 * recent.reduce((p, q) => p + q, 0) / recent.length) : '-'}% of the last ${recent.length} hands`); } }));
