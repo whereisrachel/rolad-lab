@@ -13,7 +13,7 @@ if (hub) { try { const arr = await (await fetch(hub + '/evals?since=' + encodeUR
 // 2) samples: hub data + every opponent hand in the board rankings
 const S = []; if (fs.existsSync(STORE)) for (const l of fs.readFileSync(STORE, 'utf8').split('\n')) { if (!l) continue; try { const x = JSON.parse(l); if (x.t1 && Number.isFinite(x.margin)) S.push({ f: x.t1, y: x.margin, old: x.ourAfterT1 ?? null }); } catch {} }
 for (const fn of fs.existsSync('reports') ? fs.readdirSync('reports').filter(f => f.startsWith(`oppboards-${LIST}`) && f.endsWith('.json')) : []) {
-  try { for (const r of JSON.parse(fs.readFileSync('reports/' + fn, 'utf8'))) for (const o of ['o_ss', 'o_despia']) { const z = r[o]; if (z && z.t1 && z.each) for (const y of z.each) S.push({ f: z.t1, y, old: r.v ?? null }); } } catch {} }
+  try { for (const r of JSON.parse(fs.readFileSync('reports/' + fn, 'utf8'))) for (const o of Object.keys(r).filter(k => /^o_/.test(k))) { const z = r[o]; if (z && z.t1 && z.each) for (const y of z.each) S.push({ f: z.t1, y, old: r.v ?? null }); } } catch {} }
 console.log(`${S.length} samples`); if (S.length < 50) { console.log('not enough data yet'); process.exit(0); }
 // 3) features seen in at least 10 samples
 const cnt = {}; for (const s of S) for (const k of Object.keys(s.f)) cnt[k] = (cnt[k] || 0) + 1;

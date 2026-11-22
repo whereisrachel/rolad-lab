@@ -59,7 +59,7 @@ const rows = C.map((c, i) => { const mine = tasks.filter(x => x.i === i); const 
 rows.sort((p, q) => q.robust - p.robust);
 // survival: the opponent plays its turn into each of the best candidate boards (several hands from each deck, battle phase, your
 // interruptions used by the engine's real options). final = hand-trap score + average margin after their turn (what you keep minus what they end on).
-const OH = t.oppHands ?? 3, OPPD = t.opps || ['o_ss', 'o_despia'];
+const OH = t.oppHands ?? 3, OPPD = t.opps || ['o_ss_panama', 'o_elfnote']; // current TCG tops (Nov 2026): Sky Striker (Panama City WCQ Regional 1st) and Elfnote (Caracas WCQ Regional 1st)
 if (OH > 0) { const M = Math.min(rows.length, t.survTop ?? 3); const jobs2 = [];
   for (let i = 0; i < M; i++) { const f = `${tmp}/surv${i}.json`; fs.writeFileSync(f, JSON.stringify(rows[i].cand)); for (const o of OPPD) for (let sd = 1; sd <= OH; sd++) jobs2.push({ i, f, o, sd }); }
   // one opponent hand per piece, so the pieces spread over every free core here and on helper PCs

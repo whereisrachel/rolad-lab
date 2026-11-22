@@ -49,7 +49,7 @@ const STEPS = {
     if (r.code || !fs.existsSync(`reports/learned-${L}.md`)) throw new Error('learn failed: ' + r.out.slice(-400)); j.report = `reports/learned-${L}.md`; j.last = r.out.split('\n').filter(Boolean).slice(-3).join(' | ').slice(0, 300);
   },
   async choke(j) { // bottleneck cards of the opponent decks (what to stop), into one of your boards
-    const decks = (j.opps || 'o_ss,o_despia').split(','); let k = 0; for (const o of decks) { j.stage = `bottleneck cards: ${o}`;
+    const decks = (j.opps || 'o_ss_panama,o_elfnote').split(','); let k = 0; for (const o of decks) { j.stage = `bottleneck cards: ${o}`;
       const r = await run(['choke.mjs', o, j.line, String(j.hands || 8), String(j.minutes || 0.5)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, k * +m[2] + +m[1], decks.length * +m[2]); });
       if (r.code || !fs.existsSync(`reports/choke-${o}.md`)) throw new Error('choke failed: ' + r.out.slice(-400)); k++; }
     j.report = `reports/choke-${decks[0]}.md`; j.last = 'done -> ' + decks.map(o => `reports/choke-${o}.md`).join(', ');
