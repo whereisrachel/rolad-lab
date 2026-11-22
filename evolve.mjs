@@ -33,31 +33,34 @@ async function orderOf(ord) { const out = `${TMP}/ord-o${ord}.json`; if (fs.exis
 // search the rest of the turn from a fixed start (or from scratch)
 async function search(ord, order, prefixRaw, tag, remote) { const out = `${TMP}/s-${tag}.json`;
   const task = { deck: DECK, hand: t.hand, main: order, minutes: MIN, rawOut: out, ...(prefixRaw && prefixRaw.length ? { prefixRaw } : {}) };
-  const so = await runNode('deepw.mjs', task, { remote, files: [DECK], outputs: [out], heap: 3000 }); tick(); const m = /RESULT (.*)/.exec(so || '');
+  const so = await withSlot((rm) => runNode('deepw.mjs', task, { remote: rm && remote, files: [DECK], outputs: [out], heap: 3000 })); tick(); const m = /RESULT (.*)/.exec(so || '');
   if (!fs.existsSync(out)) return null; const L = JSON.parse(fs.readFileSync(out, 'utf8')); L.res = m ? JSON.parse(m[1]) : null; L.file = out; L.tag = tag; L.ord = ord; return L; }
 // judge a line: the opponent's turn into it, H hands from each opponent deck; fitness = average margin (board left minus theirs, −10 more if OTK)
 async function judge(L) { const items = []; for (const o of OPPS) for (let h = 0; h < H; h++) items.push({ o, sd: 1000 + L.ord * 37 + h });
-  const res = await poolN(items, SHARE.local, SHARE.remote, async (it, remote) => { const so = await runNode('oppturn.mjs', { line: L.file, opp: `decks/${it.o}.ydk`, oppSeed: it.sd, minutes: OMIN, hands: 1, choke: false }, { remote, files: [L.file, `decks/${it.o}.ydk`] }); tick();
-    const m = /OPPTURN (.*)/.exec(so || ''); return m ? { o: it.o, ...JSON.parse(m[1]) } : null; });
+  const res = await Promise.all(items.map(async (it) => { const so = await withSlot((remote) => runNode('oppturn.mjs', { line: L.file, opp: `decks/${it.o}.ydk`, oppSeed: it.sd, minutes: OMIN, hands: 1, choke: false }, { remote, files: [L.file, `decks/${it.o}.ydk`] })); tick();
+    const m = /OPPTURN (.*)/.exec(so || ''); return m ? { o: it.o, ...JSON.parse(m[1]) } : null; }));
   const ok = res.filter(Boolean); if (!ok.length) return null; const avg = (a) => +(a.reduce((s, x) => s + x.margin, 0) / a.length).toFixed(2);
   L.fit = avg(ok); L.byOpp = Object.fromEntries(OPPS.map(o => [o, ok.filter(x => x.o === o).length ? avg(ok.filter(x => x.o === o)) : null])); L.worst = Math.min(...ok.map(x => x.margin)); L.otk = ok.filter(x => x.otk).length; L.n = ok.length; return L; }
 // own choices of a line (index into raw) -> a cut point keeps everything before the k-th own choice
 const ownIdx = (raw) => raw.map((e, i) => [e, i]).filter(([e]) => e.seat === 0 && !e.auto && e.label).map(([, i]) => i);
 const steps = (L) => (L.raw || []).filter(e => e.seat === 0 && !e.auto && e.label && !/^(Pass|Zone |face-up|face-down)/.test(e.label)).map(e => e.label);
 
-const C = Math.min(ORD, 4); const HS = await helperSlots(); const SHARE = { local: Math.max(1, Math.floor(LOCAL / C)), remote: Math.floor(HS / C) };
+let SEM = null; const waiters = []; // one shared set of cores for every piece: helper slots first, then this PC
+const withSlot = async (job) => { for (;;) { if (SEM.r > 0) { SEM.r--; try { return await job(true); } finally { SEM.r++; const w = waiters.shift(); if (w) w(); } } if (SEM.l > 0) { SEM.l--; try { return await job(false); } finally { SEM.l++; const w = waiters.shift(); if (w) w(); } } await new Promise(r => waiters.push(r)); } };
+const C = ORD; /* every deck order at once: the long chains (search, judge, mutate) overlap and keep all cores busy */ const HS = await helperSlots(); SEM = { l: LOCAL, r: HS };
 log(`evolve ${NAME}: ${seeds.length} seed lines, ${ORD} deck orders, ${ROUNDS} mutation rounds, ${MIN} min searches, ${H} hands x ${OPPS.length} decks per line`);
 const perOrd = [];
 await poolN(Array.from({ length: ORD }, (_, i) => i + 1), C, 0, async (ord) => {
   const base = await orderOf(ord); const cands = [];
   // 1) seeds followed as far as they work, then the search finishes; a seed that works to the end is also judged as written
-  for (const sd of seeds) { const F = await follow(sd, ord); if (!F) continue; const done = !!F.complete;
+  // (all searches of this step run at once, on helper PCs where possible, then every candidate is judged at once)
+  await Promise.all([...seeds.map(async (sd) => { const F = await follow(sd, ord); if (!F) return; const done = !!F.complete;
     const tag = `${path.basename(sd.f, '.json')}-o${ord}`;
     if (done) { const fw = `${TMP}/w-${tag}.json`; fs.writeFileSync(fw, JSON.stringify(F)); cands.push({ ...F, file: fw, tag: tag + '-asis', ord, from: path.basename(sd.f, '.json'), asWritten: true }); }
-    const S = await search(ord, F.order, F.raw, tag + '-rec', true); if (S) cands.push({ ...S, from: path.basename(sd.f, '.json'), followed: (F.steps || []).length, of: stepsOf(sd.L).length }); }
+    const S = await search(ord, F.order, F.raw, tag + '-rec', true); if (S) cands.push({ ...S, from: path.basename(sd.f, '.json'), followed: (F.steps || []).length, of: stepsOf(sd.L).length }); }),
   // 2) from scratch
-  const S0 = await search(ord, base.order, null, `scratch-o${ord}`, true); if (S0) cands.push({ ...S0, from: 'search' });
-  for (const c of cands) await judge(c);
+    (async () => { const S0 = await search(ord, base.order, null, `scratch-o${ord}`, true); if (S0) cands.push({ ...S0, from: 'search' }); })()]);
+  await Promise.all(cands.map(c => judge(c)));
   // 3) mutation: keep a random first part (30-85%) of the best line so far, re-search the rest
   for (let r = 0; r < ROUNDS; r++) { const best = cands.filter(c => c.fit != null).sort((a, b) => b.fit - a.fit)[0]; if (!best || !best.raw) break;
     const own = ownIdx(best.raw); if (own.length < 4) break; const k = own[Math.floor(own.length * (0.3 + 0.55 * Math.random()))];
