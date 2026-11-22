@@ -8,7 +8,7 @@ const PAR = Math.max(1, Math.floor((os.cpus().length - 1) / 6)); const q = T.sli
 const CARDV = fs.existsSync(`data/cardv-${LIST}.json`) ? `data/cardv-${LIST}.json` : undefined;
 console.log(`robust lines: ${T.length} guide hands, ${PAR} at a time`);
 const one = (t) => new Promise(ok => { const hand = t.hand.map(fullName);
-  const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=3000', 'robust.mjs', JSON.stringify({ deck: DECK, hand, minutes: MIN, cands: 3, adapt: 0.15, cardvFile: CARDV, oppHands: +(process.env.OPP_HANDS || 3), defense: process.env.OB_DEFENSE || undefined })], { stdio: ['ignore', 'pipe', 'ignore'] });
+  const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=3000', 'robust.mjs', JSON.stringify({ deck: DECK, hand, minutes: MIN, cands: 3, adapt: 0.15, cardvFile: CARDV, oppHands: +(process.env.OPP_HANDS || 3), defense: process.env.OB_DEFENSE || 'rule' })], { stdio: ['ignore', 'pipe', 'ignore'] });
   let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => { const m = /ROBUST (.*)/.exec(o); rows.push({ id: t.id, hand, r: m ? JSON.parse(m[1]) : null }); done++; console.log(`${done}/${T.length}`); ok(); }); });
 await Promise.all(Array.from({ length: PAR }, async () => { while (q.length) await one(q.shift()); }));
 rows.sort((a, b) => T.findIndex(t => t.id === a.id) - T.findIndex(t => t.id === b.id));
