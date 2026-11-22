@@ -110,3 +110,20 @@ Nervedo and Junoldo each banish the top 3 cards of the Deck face-down. 6 cards g
 **Rule for the guide:** after the two top-3 banishes, check what's gone.
 - **Liberation, Griffoh and LDR all still in the Deck:** go for the ROLAD bridge (br1).
 - **Any of them gone:** take Past Lull with Theorealize Medius and finish like line 1 (m1a).
+
+## Head-to-head on the same starters (job 1072 = the lab's own pick, guided by these lines; their-turn margin)
+| hand | lab line | hand-built line |
+|---|---|---|
+| Engraver + Medius | +1.90 | −0.73 (e3) |
+| Black Chaos + Medius | +1.24 | −1.09 (bc1) |
+| Infinity | −0.07 | −2.40 (inf1) |
+| Medius | +0.58 (2 Ash hand) | +0.24 (br1, Imperm hand) |
+| Terminus | +2.37 | +0.45 (ter1) |
+| Treasure | +0.48 | −2.00 (tre1) |
+
+**Caveat:** the lab's numbers are flattered. It picks its best line out of several candidates on 3 opponent hands, while the hand-built lines are each one line on 6 hands. Job 1076 (line evolution) judges everything the same way and settles it.
+
+## Learned survival scoring (job 1075, 2,575 post-fix opponent turns)
+- The learned score predicts the after-their-turn result better than the hand-set score: correlation 0.503 vs 0.459. The margin is not yet big enough to switch.
+- Most valuable cards on the board: Diactorus +1.73, Non-Finito +0.79, Nerva +0.69, Medicurius +0.37, Imperm set +0.33.
+- Ash still in hand: +1.17.
