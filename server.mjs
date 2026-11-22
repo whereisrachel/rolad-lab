@@ -52,8 +52,8 @@ const STEPS = {
   },
   async oppboards(j) { // opponent's turn into the top library boards, several opponent hands each, battle phase included
     j.stage = "opponent's turn into your top boards"; const L = path.basename(j.deckA || 'decks/L2-vand3.ydk', '.ydk');
-    const r = await run(['oppboards.mjs', L, String(j.n || 8), String(j.hands || 6), String(j.minutes || 0.5)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
-    if (r.code || !fs.existsSync(`reports/oppboards-${L}.md`)) throw new Error('oppboards failed: ' + r.out.slice(-400)); j.report = `reports/oppboards-${L}.md`; j.last = 'done -> ' + j.report;
+    const r = await run(['oppboards.mjs', L, String(j.n || 8), String(j.hands || 6), String(j.minutes || 0.5)], { ...(j.defense ? { OB_DEFENSE: j.defense } : {}), ...(j.tag ? { OB_TAG: j.tag } : {}), ...(j.ids ? { OB_IDS: j.ids } : {}) }, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); });
+    const RP = `reports/oppboards-${L}${j.tag ? '-' + j.tag : ''}.md`; if (r.code || !fs.existsSync(RP)) throw new Error('oppboards failed: ' + r.out.slice(-400)); j.report = RP; j.last = 'done -> ' + j.report;
   },
   async robbench(j) { // which line to play when you don't know their hand trap, on the guide hands
     j.stage = 'robust lines on the guide hands'; const L = path.basename(j.deckA || 'decks/L2-vand3.ydk', '.ydk');
