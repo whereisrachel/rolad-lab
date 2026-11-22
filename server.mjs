@@ -44,7 +44,7 @@ const STEPS = {
     for (const B of (fs.existsSync('data/explore-confirm.txt') ? fs.readFileSync('data/explore-confirm.txt', 'utf8').split('\n').filter(Boolean) : []))
       addJob({ kind: 'pair', deckA: j.deckA, deckB: B, n: 300, scn: 'none,ash,imperm', macros: 300, title: 'Explorer find: ' + path.basename(B, '.ydk').replace(/^\d+-/, '').replace(/_/g, ' ') });
   },
-  async learn(j) { // re-fit the learned turn-1 scoring from all played-out opponent turns
+  async learnsurv(j) { // re-fit the learned turn-1 scoring from all played-out opponent turns
     j.stage = 'learning the scoring from opponent turns'; const L = path.basename(j.deckA || 'decks/L2-vand3.ydk', '.ydk'); const r = await run(['learn.mjs', L], {}, () => {});
     if (r.code || !fs.existsSync(`reports/learned-${L}.md`)) throw new Error('learn failed: ' + r.out.slice(-400)); j.report = `reports/learned-${L}.md`; j.last = r.out.split('\n').filter(Boolean).slice(-3).join(' | ').slice(0, 300);
   },
