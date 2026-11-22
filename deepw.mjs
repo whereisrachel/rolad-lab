@@ -6,7 +6,9 @@ setHT(+(process.env.HTW ?? 1)); /* hand traps still in hand count (1 = one inter
 const t = JSON.parse(process.argv[2]); const deck = parseYdk(fs.readFileSync(t.deck, 'utf8')); if (t.main) deck.main = t.main.slice(); /* exact Deck order when given */
 // the learned survival term joins the search score once the learned model predicts survival better than the hand-set scoring (data/learned-<list>.json)
 { const lf = `data/learned-${(t.deck || '').replace(/^.*[\\/]/, '').replace(/\.ydk$/, '')}.json`; if (process.env.LEARNED !== '0' && fs.existsSync(lf)) { try { const m = JSON.parse(fs.readFileSync(lf, 'utf8')); if (m.n >= 800 && m.cvCorr >= (m.oldCorr ?? 0) + 0.05) { m.mix = +(process.env.LEARNED_MIX || 1); setLearned(m); } } catch {} } }
-const EVALF = (S, s) => disruption(S, s) + learnedTerm(S, s);
+// t.mustUse: regex of an action the line should include (exploring an effect no tested line has used yet): such lines get +3 during the search only
+const MU = t.mustUse ? new RegExp(t.mustUse) : null; const usedMU = (S) => MU && (S.game.responses || []).some(r => r.seat === 0 && MU.test(r.label || ''));
+const EVALF = (S, s) => disruption(S, s) + learnedTerm(S, s) + (MU && usedMU(S) ? 3 : 0);
 const OPP = parseYdk(fs.readFileSync(path.join(ROOT, 'decks', 'oppHT.ydk'), 'utf8')); const GS = 13039848;
 const pool = deck.main.slice(); const h = t.hand.map(n => { const c = findCard(n); const code = Array.isArray(c) ? c[0] : c; let i = pool.findIndex(k => name(k) === name(code)); if (i < 0) { pool.push(code); i = pool.length - 1; } return pool.splice(i, 1)[0]; });
 // opponent: goldfish, or holding hand traps it fires at the first legal moment (t.scn: none | ash | imperm | droll | any combination joined by +)
@@ -26,7 +28,7 @@ if (Array.isArray(t.prefixRaw) && t.prefixRaw.length) { const fixedR = t.prefixR
 const divs = String(t.divs || '6,1.5').split(',').map(Number); let best = { score: -1 };
 // opening lanes: every legal first move gets an equal share of the time (the search builds long lines well once the opening is fixed,
 // but left alone it keeps chasing whatever adds board value fastest); then one open search with the rest of the time
-const OPEN = process.env.OPEN === '1';
+const OPEN = process.env.OPEN === '1' || !!t.open;
 const HP = t.hintsFile || ('data/hints-' + path.basename(t.deck).replace(/\.ydk$/, '') + '.json'); const { loadHints, logGame } = await import('./src/hints.mjs');
 if (process.env.NRPA !== '0') { process.env.NRPA_N ||= '30'; // learned hints: moves that appeared in the best lines of earlier games of this list (data/hints-<deck>.json), a soft head start
 let hints = null; try { if (t.hints !== false) hints = loadHints(HP); } catch {}
@@ -112,4 +114,4 @@ if (process.env.PROF2) { const { T2 } = await import('./src/searchplayer.mjs'); 
 // continuous learning: every finished game adds its best line to the list's learning log (unless this game is a test that must stay independent)
 if (t.rawOut) { try { fs.writeFileSync(t.rawOut, JSON.stringify({ hand: t.hand, v: best.score || 0, raw: best.raw || [], keys: best.keys || [], order: [...h, ...pool], extra: deck.extra, seed: t.seed ?? 7, after: AFTER, used: t.hand.map(n => (best.line || []).join(' | ').includes(n)) })); } catch (e) { console.error('rawOut ' + e.message); } }
 if (t.learn !== false) logGame(t.learnLog || HP, { v: best.score || 0, keys: best.keys || [] });
-console.log('RESULT ' + JSON.stringify({ dropped: best.dropped || [], v: best.score || 0, extra: best.extra || null, keys: best.keys || [], board: (String(best.board || '').split('YOU:')[1] || ''), line: (best.line || []).filter(l => /Summon|Activate|Selected/.test(l)).slice(0, 60), used: t.hand.map(n => used.includes(n)), left, po: searchT1.TOTPO || 0, ppm1: globalThis.RATE1 ?? null, smart: globalThis.SMART ?? null }));
+console.log('RESULT ' + JSON.stringify({ dropped: best.dropped || [], v: best.score || 0, extra: best.extra || null, keys: best.keys || [], board: (String(best.board || '').split('YOU:')[1] || ''), line: (best.line || []).filter(l => /Summon|Activate|Selected/.test(l)).slice(0, 60), used: t.hand.map(n => used.includes(n)), left, po: searchT1.TOTPO || 0, ppm1: globalThis.RATE1 ?? null, smart: globalThis.SMART ?? null, offered: [...(searchT1.OFFERED || [])].slice(0, 500), usedMust: MU ? (best.line || []).some(l => MU.test(l)) : null }));
