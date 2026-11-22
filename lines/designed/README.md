@@ -92,3 +92,21 @@ Draft for Belal to review. Nothing goes into the guide until he approves it.
 | inf1 Ars Magna Infinity | 6.81 | −3.12 | −1.68 | −2.40 |
 
 Margin = our board left minus their board after their full turn. Higher is better.
+
+## Reliability: the same scripted line on 20 different deck orders
+Nervedo and Junoldo each banish the top 3 cards of the Deck face-down. 6 cards gone often includes a 1-of bridge piece (Liberation, LDR, Theorealize Medius).
+
+| line | completes as written |
+|---|---|
+| inf1 Ars Magna | 20/20 |
+| m1a Medius | 17/20 |
+| tre1 Treasure → Vidolium → Terminus → Medius (line-1 finish) | 16/20 |
+| e3 Engraver | 13/20 |
+| cit1 Citrinitas → Medius (line-1 finish) | 12/20 |
+| br1 Medius → ROLAD bridge | 9/20 (Liberation gone in 6) |
+| bc1 Black Chaos | 8/20 |
+| ter1 Terminus → bridge | 4/20 |
+
+**Rule for the guide:** after the two top-3 banishes, check what's gone.
+- **Liberation, Griffoh and LDR all still in the Deck:** go for the ROLAD bridge (br1).
+- **Any of them gone:** take Past Lull with Theorealize Medius and finish like line 1 (m1a).
