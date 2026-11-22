@@ -37,7 +37,7 @@ async function doRobustLine(slotI) { const tag = tagOf(slotI); const before = ne
 async function doSurvival(slotI) { const dir = 'data/lib-L2-vand3'; if (!fs.existsSync(dir)) return new Promise(r => setTimeout(r, 30000));
   const files = fs.readdirSync(dir).filter(x => x.endsWith('.json') && !x.startsWith('seq-')); if (!files.length) return new Promise(r => setTimeout(r, 30000));
   const fn = files[Math.floor(Math.random() * files.length)]; let x; try { x = JSON.parse(fs.readFileSync(`${dir}/${fn}`, 'utf8')); } catch { return; }
-  if (!x.raw || !x.order || !x.extra) return; const opp = Math.random() < 0.5 ? 'o_ss' : 'o_despia', seed = 1 + Math.floor(Math.random() * 1e6);
+  if (!x.raw || !x.order || !x.extra) return; const OPPS = ['o_ss_panama', 'o_elfnote'].filter(o => fs.existsSync(`decks/${o}.ydk`)); const opp = OPPS.length ? OPPS[Math.floor(Math.random() * OPPS.length)] : 'o_ss', seed = 1 + Math.floor(Math.random() * 1e6);
   const r = await run('oppturn.mjs', { line: `${dir}/${fn}`, opp: `decks/${opp}.ydk`, minutes: 0.5, hands: 1, oppSeed: seed, choke: false }, 20 * 60000);
   const m = /OPPTURN (.*)/.exec(r.stdout); if (!m) return; const z = JSON.parse(m[1]); if (!z.t1) return;
   try { await hub('/put-eval', { method: 'POST', body: JSON.stringify({ id: `${NAME.replace(/[^\w-]/g, '')}-${Date.now().toString(36)}-${slotI}`, list: 'L2-vand3', line: fn.replace('.json', ''), opp, seed, ver: VER, t1: z.t1, margin: z.margin, ourBoardLeft: z.ourBoardLeft, theirBoard: z.theirBoard, otk: z.otk, ourAfterT1: z.ourAfterT1, by: NAME }) }); evDone++; } catch (e) { log('upload failed: ' + e.message); } }
