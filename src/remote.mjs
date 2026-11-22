@@ -13,8 +13,8 @@ export async function helperSlots() { if (!hub) return 0; try { const s = await 
 let seq = 0; const pending = new Map(); let poller = null;
 async function poll() { if (!pending.size) { clearInterval(poller); poller = null; return; }
   try { const { results, waiting } = await get('/results?ids=' + [...pending.keys()].join(',')); for (const r of results || []) { const p = pending.get(r.id); if (p) { pending.delete(r.id); p.ok(r); } }
-    // a piece no helper has taken for 90 s (helper gone or busy): take it back and run it here
-    const now0 = Date.now(); const stale = (waiting || []).filter(id => pending.has(id) && now0 - pending.get(id).at > 90000);
+    // a piece no helper has taken for 3 min (helper gone or busy): take it back and run it here
+    const now0 = Date.now(); const stale = (waiting || []).filter(id => pending.has(id) && now0 - pending.get(id).at > 180000);
     if (stale.length) { get('/cancel', { method: 'POST', body: JSON.stringify({ ids: stale }) }).catch(() => {}); for (const id of stale) { const p = pending.get(id); pending.delete(id); p.ok(null); } } } catch {}
   const now = Date.now(); for (const [id, p] of pending) if (now > p.deadline) { pending.delete(id); get('/cancel', { method: 'POST', body: JSON.stringify({ ids: [id] }) }).catch(() => {}); p.ok(null); } }
 // run `node <script> <args>` on a helper PC. files: local input files it needs; outputs: files it writes that we want back.

@@ -42,7 +42,8 @@ async function doSurvival(slotI) { const dir = 'data/lib-L2-vand3'; if (!fs.exis
   const r = await run('oppturn.mjs', { line: `${dir}/${fn}`, opp: `decks/${opp}.ydk`, minutes: 0.5, hands: 1, oppSeed: seed, choke: false }, 20 * 60000);
   const m = /OPPTURN (.*)/.exec(r.stdout); if (!m) return; const z = JSON.parse(m[1]); if (!z.t1) return;
   try { await hub('/put-eval', { method: 'POST', body: JSON.stringify({ id: `${NAME.replace(/[^\w-]/g, '')}-${Date.now().toString(36)}-${slotI}`, list: 'L2-vand3', line: fn.replace('.json', ''), opp, seed, ver: VER, t1: z.t1, margin: z.margin, ourBoardLeft: z.ourBoardLeft, theirBoard: z.theirBoard, otk: z.otk, ourAfterT1: z.ourAfterT1, by: NAME }) }); evDone++; } catch (e) { log('upload failed: ' + e.message); } }
-async function doLibrary(slotI) { if ((idleN++ % 4) === 3) await doRobustLine(slotI); else await doSurvival(slotI); }
+// idle work is kept short (one opponent turn, about 1-2 min) so test pieces from the PC get a free core quickly; the slow hand-trap lines are left to the Oracle servers
+async function doLibrary(slotI) { idleN++; await doSurvival(slotI); }
 async function slot(i) {
   while (!stop) {
     let t = null; try { const r = await hub(`/claim?worker=${encodeURIComponent(NAME)}&n=1&slots=${SLOTS}&busy=${busy}&ver=${VER}`); t = (r.tasks || [])[0]; } catch { await new Promise(r => setTimeout(r, 30000)); continue; }
