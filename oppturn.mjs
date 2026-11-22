@@ -4,7 +4,7 @@
 // node oppturn.mjs '<json>'  json: { line: <rawOut file of your turn>, opp: 'decks/o_ss.ydk', seed, oppSeed, minutes, defense: 'any' }
 import fs from 'fs'; import os from 'os'; import { spawn } from 'child_process';
 import { parseYdk, name } from './src/cards.mjs'; import * as E from './src/engine.mjs'; import { autoAdvance } from './src/auto.mjs';
-import { replay } from './src/replay.mjs'; import { searchT1 } from './src/searchplayer.mjs'; import { disruption, setHT } from './src/disrupt.mjs';
+import { replay } from './src/replay.mjs'; import { searchT1 } from './src/searchplayer.mjs'; import { disruption, setHT, boardFeatures } from './src/disrupt.mjs';
 setHT(+(process.env.HTW ?? 1)); process.env.CANON = '1'; process.env.LIGHT = '1';
 const t = JSON.parse(process.argv[2]); const L = JSON.parse(fs.readFileSync(t.line, 'utf8'));
 // several opponent hands: run each in its own process (in parallel) and report the average and the worst
@@ -12,7 +12,7 @@ if ((t.hands || 1) > 1) { const N = t.hands, NP = Math.max(1, Math.min(N, t.par 
   const one = (sd) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2000', 'oppturn.mjs', JSON.stringify({ ...t, hands: 1, oppSeed: sd })], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => { const m = /OPPTURN (.*)/.exec(o); if (m) res.push({ seed: sd, ...JSON.parse(m[1]) }); ok(); }); });
   await Promise.all(Array.from({ length: NP }, async () => { while (q.length) await one(q.shift()); }));
   const avg = (k) => res.length ? +(res.reduce((a, x) => a + (x[k] || 0), 0) / res.length).toFixed(2) : null;
-  console.log('OPPTURN ' + JSON.stringify({ hands: res.length, margin: avg('margin'), worst: res.length ? Math.min(...res.map(x => x.margin)) : null, otk: res.filter(x => x.otk).length, theirBoard: avg('theirBoard'), ourBoardLeft: avg('ourBoardLeft'), ourAfterT1: res[0] ? res[0].ourAfterT1 : null, each: res.map(x => ({ seed: x.seed, margin: x.margin, otk: x.otk, theirBoard: x.theirBoard, ourBoardLeft: x.ourBoardLeft, ourLP: x.ourLP })) }));
+  console.log('OPPTURN ' + JSON.stringify({ hands: res.length, margin: avg('margin'), worst: res.length ? Math.min(...res.map(x => x.margin)) : null, otk: res.filter(x => x.otk).length, theirBoard: avg('theirBoard'), ourBoardLeft: avg('ourBoardLeft'), ourAfterT1: res[0] ? res[0].ourAfterT1 : null, t1: res[0] ? res[0].t1 : null, each: res.map(x => ({ seed: x.seed, margin: x.margin, otk: x.otk, theirBoard: x.theirBoard, ourBoardLeft: x.ourBoardLeft, ourLP: x.ourLP })) }));
   process.exit(0); }
 const OPP = parseYdk(fs.readFileSync(t.opp || 'decks/o_ss.ydk', 'utf8'));
 let x = (t.oppSeed ?? 1) >>> 0 || 1; const rnd = () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296;
@@ -22,7 +22,7 @@ const game = { id: 'ot', seed: String(L.seed ?? 7), first: 0, lab: true,
   responses: [], cursor: { 0: 0, 1: 0 }, goldfish: [1], bot: {}, script: { 1: [] }, stopAfterTurn: null };
 // 1) your turn, then end it
 const r = await replay(game, L.raw, null); let S = r.S; autoAdvance(S);
-const our1 = disruption(S, 0);
+const our1 = disruption(S, 0); const t1 = boardFeatures(S, 0);
 for (let i = 0; i < 50 && S.pending && !S.ended && S.turn === 1; i++) { const d = E.decision(S, 0); if (!d) { autoAdvance(S); continue; }
   const j = d.options.findIndex(o => /End Phase/.test(o.label)); E.push(S, { seat: 0, resp: d.options[j >= 0 ? j : d.options.length - 1].resp, label: d.options[j >= 0 ? j : d.options.length - 1].label }); autoAdvance(S); }
 // 2) their turn: you defend with every interruption at the first legal chance; they search for their best result
@@ -60,5 +60,5 @@ for (let i = 0; i < 300 && S3.pending && !S3.ended && S3.turn === 2; i++) { auto
   if (/^Attack with/.test(o.label)) attacks++; if (/^Go to End Phase/.test(o.label)) break; }
 const lpLeft = S3.lp ? S3.lp[0] : null; const otk = (lpLeft !== null && lpLeft <= 0) || S3.ended && S3.winner === 1;
 const ourLeft = otk ? 0 : disruption(S3, 0), theirs = disruption(S3, 1);
-console.log('OPPTURN ' + JSON.stringify({ ourAfterT1: +our1.toFixed(2), turnReached: S3.turn, theirBoard: +theirs.toFixed(2), ourBoardLeft: +ourLeft.toFixed(2), ourLP: lpLeft, attacks, otk, margin: +(ourLeft - theirs - (otk ? 10 : 0)).toFixed(2), afterMainPhase: { theirs: +theirMain.toFixed(2), ours: +oursMain.toFixed(2) },
+console.log('OPPTURN ' + JSON.stringify({ t1, ourAfterT1: +our1.toFixed(2), turnReached: S3.turn, theirBoard: +theirs.toFixed(2), ourBoardLeft: +ourLeft.toFixed(2), ourLP: lpLeft, attacks, otk, margin: +(ourLeft - theirs - (otk ? 10 : 0)).toFixed(2), afterMainPhase: { theirs: +theirMain.toFixed(2), ours: +oursMain.toFixed(2) },
   ourT2: (res.raw || []).slice(g2.responses.length).filter(e => e.seat === 0 && /^Activate /.test(e.label || '')).map(e => e.label), defenseHeldUntil: defK, defenseTried: tried, theirLine: (res.line || []).slice(0, 60), score: res.score, board: res.board }));

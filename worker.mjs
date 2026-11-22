@@ -25,13 +25,23 @@ async function doTask(t) {
     for (const o of t.outputs || []) { const n = safe(o); if (fs.existsSync(n)) { outputs[o] = fs.readFileSync(n, 'utf8'); fs.unlinkSync(n); } }
     await hub('/done', { method: 'POST', body: JSON.stringify({ id: t.id, stdout: r.stdout.slice(-200000), outputs, by: NAME }) }); done++;
   } catch (e) { try { await hub('/done', { method: 'POST', body: JSON.stringify({ id: t.id, reject: true }) }); } catch {} log('piece failed: ' + e.message); } }
-// idle: one library hand (normal search, or every 4th one the hand-trap-aware choice), uploaded to the hub
-let libN = 0; async function doLibrary(slotI) {
-  const robust = (libN++ % 4) === 3; const before = new Set(fs.existsSync('data/lib-L2-vand3') ? fs.readdirSync('data/lib-L2-vand3') : []);
-  const tag = 'helper-' + NAME.replace(/[^\w-]/g, '').slice(0, 20) + '-s' + slotI;
-  await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'libbuild.mjs', '--deck', 'decks/L2-vand3.ydk', '--min', process.env.HELPER_MIN || '2', '--par', '1', '--hands', '1', '--tag', tag, ...(robust ? ['--robust-only'] : ['--robust', '0'])], { stdio: 'ignore' }); p.on('close', ok); });
+// idle work (no test pieces waiting):
+//  3 of 4: play the opponent's turn into a stored library board (random board, deck and hand) and upload the result: the training
+//          data the lab learns its own scoring from (what end boards actually survive);
+//  1 of 4: one hand-trap-aware library line (robust.mjs) on a common start, one core.
+let idleN = 0, evDone = 0; const tagOf = (slotI) => 'helper-' + NAME.replace(/[^\w-]/g, '').slice(0, 20) + '-s' + slotI;
+async function doRobustLine(slotI) { const tag = tagOf(slotI); const before = new Set(fs.existsSync('data/lib-L2-vand3') ? fs.readdirSync('data/lib-L2-vand3') : []);
+  await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'libbuild.mjs', '--deck', 'decks/L2-vand3.ydk', '--min', process.env.HELPER_MIN || '2', '--par', '1', '--hands', '1', '--tag', tag, '--robust-only'], { stdio: 'ignore', env: { ...process.env, ROBUST_PAR: '1' } }); p.on('close', ok); });
   for (const fn of fs.readdirSync('data/lib-L2-vand3').filter(x => x.endsWith('.json') && !before.has(x) && x.startsWith(tag))) {
     try { const x = JSON.parse(fs.readFileSync(`data/lib-L2-vand3/${fn}`, 'utf8')); await hub('/put-line', { method: 'POST', body: JSON.stringify(x) }); libDone++; } catch (e) { log('upload failed: ' + e.message); } } }
+async function doSurvival(slotI) { const dir = 'data/lib-L2-vand3'; if (!fs.existsSync(dir)) return new Promise(r => setTimeout(r, 30000));
+  const files = fs.readdirSync(dir).filter(x => x.endsWith('.json') && !x.startsWith('seq-')); if (!files.length) return new Promise(r => setTimeout(r, 30000));
+  const fn = files[Math.floor(Math.random() * files.length)]; let x; try { x = JSON.parse(fs.readFileSync(`${dir}/${fn}`, 'utf8')); } catch { return; }
+  if (!x.raw || !x.order || !x.extra) return; const opp = Math.random() < 0.5 ? 'o_ss' : 'o_despia', seed = 1 + Math.floor(Math.random() * 1e6);
+  const r = await run('oppturn.mjs', { line: `${dir}/${fn}`, opp: `decks/${opp}.ydk`, minutes: 0.5, hands: 1, oppSeed: seed, choke: false }, 20 * 60000);
+  const m = /OPPTURN (.*)/.exec(r.stdout); if (!m) return; const z = JSON.parse(m[1]); if (!z.t1) return;
+  try { await hub('/put-eval', { method: 'POST', body: JSON.stringify({ id: `${NAME.replace(/[^\w-]/g, '')}-${Date.now().toString(36)}-${slotI}`, list: 'L2-vand3', line: fn.replace('.json', ''), opp, seed, ver: VER, t1: z.t1, margin: z.margin, ourBoardLeft: z.ourBoardLeft, theirBoard: z.theirBoard, otk: z.otk, ourAfterT1: z.ourAfterT1, by: NAME }) }); evDone++; } catch (e) { log('upload failed: ' + e.message); } }
+async function doLibrary(slotI) { if ((idleN++ % 4) === 3) await doRobustLine(slotI); else await doSurvival(slotI); }
 async function slot(i) {
   while (!stop) {
     let t = null; try { const r = await hub(`/claim?worker=${encodeURIComponent(NAME)}&n=1&slots=${SLOTS}&busy=${busy}&ver=${VER}`); t = (r.tasks || [])[0]; } catch { await new Promise(r => setTimeout(r, 30000)); continue; }
@@ -40,7 +50,7 @@ async function slot(i) {
 // keep a copy of the shared library (the helper steers toward hands the library has seen least, and re-solves common starts)
 let since = ''; async function pullLibrary() { try { const arr = await hub('/all?since=' + encodeURIComponent(since)); for (const x of arr) { if (!x.list || !x.id) continue; const d = `data/lib-${x.list}`; fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(`${d}/${x.id}.json`, JSON.stringify(x)); if ((x.when || '') > since) since = x.when; } log(`library copy: ${arr.length} new lines`); } catch (e) { log('library pull failed: ' + e.message); } }
 if (LIB) { await pullLibrary(); setInterval(pullLibrary, 30 * 60000); }
-setInterval(() => log(`${done} test pieces done, ${libDone} library lines uploaded, ${busy}/${SLOTS} cores busy`), 10 * 60000);
+setInterval(() => log(`${done} test pieces done, ${evDone} opponent turns played for the learning data, ${libDone} library lines uploaded, ${busy}/${SLOTS} cores busy`), 10 * 60000);
 // new code: check GitHub every 30 min; if there is an update, finish the current work and restart (the .bat starts it again)
 setInterval(() => { try { const before = execSync('git rev-parse HEAD').toString().trim(); execSync('git pull -q', { stdio: 'ignore' }); const after = execSync('git rev-parse HEAD').toString().trim();
   if (before !== after) { log('lab update downloaded: restarting after current work'); stop = true; const w = setInterval(() => { if (!busy) process.exit(3); }, 5000); } } catch {} }, 30 * 60000);

@@ -12,7 +12,10 @@ const get = async (p, opt = {}) => { const r = await fetch(hub.url + p, { ...opt
 export async function helperSlots() { if (!hub) return 0; try { const s = await get('/status'); return (s.workers || []).filter(w => w.ver === VER).reduce((n, w) => n + (w.slots || 0), 0); } catch { return 0; } }
 let seq = 0; const pending = new Map(); let poller = null;
 async function poll() { if (!pending.size) { clearInterval(poller); poller = null; return; }
-  try { const { results } = await get('/results?ids=' + [...pending.keys()].join(',')); for (const r of results || []) { const p = pending.get(r.id); if (p) { pending.delete(r.id); p.ok(r); } } } catch {}
+  try { const { results, waiting } = await get('/results?ids=' + [...pending.keys()].join(',')); for (const r of results || []) { const p = pending.get(r.id); if (p) { pending.delete(r.id); p.ok(r); } }
+    // a piece no helper has taken for 90 s (helper gone or busy): take it back and run it here
+    const now0 = Date.now(); const stale = (waiting || []).filter(id => pending.has(id) && now0 - pending.get(id).at > 90000);
+    if (stale.length) { get('/cancel', { method: 'POST', body: JSON.stringify({ ids: stale }) }).catch(() => {}); for (const id of stale) { const p = pending.get(id); pending.delete(id); p.ok(null); } } } catch {}
   const now = Date.now(); for (const [id, p] of pending) if (now > p.deadline) { pending.delete(id); get('/cancel', { method: 'POST', body: JSON.stringify({ ids: [id] }) }).catch(() => {}); p.ok(null); } }
 // run `node <script> <args>` on a helper PC. files: local input files it needs; outputs: files it writes that we want back.
 // Resolves { stdout } (outputs written locally), or null if no helper finished it in time (then run it here instead).
@@ -25,8 +28,19 @@ export async function runRemote(script, args, { files = [], outputs = [], timeou
   const outRel = outputs.map(o => { const r = rel(o); if (r !== o) argStr = argStr.split(JSON.stringify(o).slice(1, -1)).join(r); return [o, r]; });
   args = JSON.parse(argStr);
   try { await get('/tasks', { method: 'POST', body: JSON.stringify({ tasks: [{ id, script, args, files: fileMap, outputs: outRel.map(x => x[1]), ver: VER }] }) }); } catch { return null; }
-  const r = await new Promise(ok => { pending.set(id, { ok, deadline: Date.now() + timeoutMs }); if (!poller) poller = setInterval(poll, 3000); });
+  const r = await new Promise(ok => { pending.set(id, { ok, deadline: Date.now() + timeoutMs, at: Date.now() }); if (!poller) poller = setInterval(poll, 3000); });
   if (!r || r.error) return null;
   for (const [o, rr] of outRel) { const c = (r.outputs || {})[rr]; if (c == null) continue; fs.mkdirSync(path.dirname(o), { recursive: true }); fs.writeFileSync(o, c); }
   return { stdout: r.stdout || '' };
 }
+
+// run one script: on a helper PC when remote (falls back to here if no helper finishes it), else here. Returns stdout.
+import { spawn as spawn0 } from 'child_process';
+export async function runNode(script, args, { remote = false, files = [], outputs = [], heap = 2500 } = {}) {
+  if (remote) { const r = await runRemote(script, args, { files, outputs }); if (r) return r.stdout; }
+  return new Promise(ok => { const p = spawn0(process.execPath, ['--no-warnings', `--max-old-space-size=${heap}`, script, JSON.stringify(args)], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => ok(o)); });
+}
+// run fn(item, remote) over items with `local` slots here plus every free helper core
+export async function pool(items, local, fn) { const hs = await helperSlots(); const q = items.slice(); const out = new Map();
+  await Promise.all(Array.from({ length: Math.max(1, local) + hs }, async (_, w) => { while (q.length) { const it = q.shift(); out.set(it, await fn(it, w >= local)); } }));
+  return items.map(it => out.get(it)); }

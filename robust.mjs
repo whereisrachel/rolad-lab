@@ -4,21 +4,22 @@
 //    (after your 0th, 2nd or 4th effect); when the hand trap hits, your line adapts (short search from that point),
 // 3) keep the line with the best overall result: 40% no hand trap, 60% spread over the three hand traps.
 // node robust.mjs '<json>'  json: { deck, hand: [5 names], minutes (per candidate search), cands: 3, adapt: 0.25 (min), weights }
-import fs from 'fs'; import path from 'path'; import os from 'os'; import { spawn } from 'child_process';
+import fs from 'fs'; import path from 'path'; import os from 'os'; import { spawn } from 'child_process'; import { runNode, pool } from './src/remote.mjs';
 import { parseYdk, findCard, name, ROOT } from './src/cards.mjs'; import * as E from './src/engine.mjs'; import { autoAdvance } from './src/auto.mjs';
 import { replay } from './src/replay.mjs'; import { searchT1 } from './src/searchplayer.mjs'; import { disruption, setHT } from './src/disrupt.mjs';
 setHT(+(process.env.HTW ?? 1)); process.env.CANON = '1'; process.env.LIGHT = '1';
 const t = JSON.parse(process.argv[2]); const NC = t.cands ?? 3, AD = t.adapt ?? 0.25, KS = t.ks ?? [0, 2, 4];
 const THREATS = { ash: 'Ash Blossom & Joyous Spring', imperm: 'Infinite Impermanence', droll: 'Droll & Lock Bird' };
 const W = t.weights || { none: 0.4, ash: 0.2, imperm: 0.2, droll: 0.2 };
-const EV = t.evalOne; const tmp = EV ? null : fs.mkdtempSync(path.join(os.tmpdir(), 'rob-')); const NP = Math.max(1, os.cpus().length - 1);
+const EV = t.evalOne; // temp files live inside the lab folder so helper PCs can receive them
+fs.mkdirSync('data/tmp-rob', { recursive: true }); const tmp = EV ? null : path.relative(process.cwd(), fs.mkdtempSync(path.join('data', 'tmp-rob', 'rob-'))).replace(/\\/g, '/'); const NP = Math.max(1, +(process.env.ROBUST_PAR || (os.cpus().length - 1)));
 // 1) candidates
-const runDeep = (sseed, scn = 'none') => new Promise(ok => { const out = path.join(tmp, `c${scn}${sseed}.json`);
-  const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify({ deck: t.deck, hand: t.hand, minutes: t.minutes ?? 1, seed: 7, sseed, scn, smart: scn !== 'none', learn: false, cardvFile: t.cardvFile, rawOut: out })], { stdio: ['ignore', 'pipe', 'ignore'] });
-  let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => { try { const x = JSON.parse(fs.readFileSync(out, 'utf8')); const m = /RESULT (.*)/.exec(o); x.line = m ? JSON.parse(m[1]).line : []; x.scnFrom = scn; ok(x); } catch { ok(null); } }); });
+const runDeep = async (sseed, scn = 'none', remote = false) => { const out = `${tmp}/c${scn}${sseed}.json`;
+  const o = await runNode('deepw.mjs', { deck: t.deck, hand: t.hand, minutes: t.minutes ?? 1, seed: 7, sseed, scn, smart: scn !== 'none', learn: false, cardvFile: t.cardvFile, rawOut: out }, { remote, files: [t.deck, t.cardvFile], outputs: [out] });
+  try { const x = JSON.parse(fs.readFileSync(out, 'utf8')); const m = /RESULT (.*)/.exec(o); x.line = m ? JSON.parse(m[1]).line : []; x.scnFrom = scn; return x; } catch { return null; } };
 // candidates: the best no-hand-trap lines, plus the best line found while expecting each hand trap (these tend to bait first / hold the key card)
 let C = []; if (!EV) { const jobs = [...Array.from({ length: NC }, (_, i) => [i + 1, 'none']), ...(t.threatCands === false ? [] : Object.keys(THREATS).map(th => [1, th]))];
-const cands = []; for (let i = 0; i < jobs.length; i += NP) cands.push(...await Promise.all(jobs.slice(i, i + NP).map(([s2, sc]) => runDeep(s2, sc))));
+const cands = await pool(jobs, NP, ([s2, sc], remote) => runDeep(s2, sc, remote));
 for (const c of cands) if (c) c.v = c.v; const C0 = cands.filter(Boolean);
 const seen = new Set(); C = C0.filter(c => { const k = JSON.stringify(c.raw.map(e => e.label)); if (seen.has(k)) return false; seen.add(k); return true; }); }
 // game for a threat (opponent holds that hand trap and uses it after your k-th effect)
@@ -48,10 +49,10 @@ async function vsThreat(c, threat, k) {
 // worker mode: evaluate one (candidate, hand trap, timing) and exit
 if (EV) { const c = JSON.parse(fs.readFileSync(EV.file, 'utf8')); const z = await vsThreat(c, EV.threat, EV.k); console.log('EVAL ' + JSON.stringify(z)); process.exit(0); }
 // all evaluations run in parallel worker processes
-const tasks = []; C.forEach((c, i) => { const f = path.join(tmp, `cand${i}.json`); fs.writeFileSync(f, JSON.stringify(c)); tasks.push({ i, file: f, threat: null, k: 0 }); for (const th of Object.keys(THREATS)) for (const k of KS) tasks.push({ i, file: f, threat: th, k }); });
-const evalOne = (x) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2000', 'robust.mjs', JSON.stringify({ ...t, evalOne: x })], { stdio: ['ignore', 'pipe', process.env.RDBG ? 'inherit' : 'ignore'] });
-  let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => { const m = /EVAL (.*)/.exec(o); x.z = m ? JSON.parse(m[1]) : { v: 0, hit: true, failed: true }; ok(); }); });
-const q = tasks.slice(); await Promise.all(Array.from({ length: NP }, async () => { while (q.length) await evalOne(q.shift()); }));
+const tasks = []; C.forEach((c, i) => { const f = `${tmp}/cand${i}.json`; fs.writeFileSync(f, JSON.stringify(c)); tasks.push({ i, file: f, threat: null, k: 0 }); for (const th of Object.keys(THREATS)) for (const k of KS) tasks.push({ i, file: f, threat: th, k }); });
+const evalOne = async (x, remote) => { const o = await runNode('robust.mjs', { ...t, evalOne: { i: x.i, file: x.file, threat: x.threat, k: x.k } }, { remote, files: [x.file, t.deck, t.cardvFile], heap: 2000 });
+  const m = /EVAL (.*)/.exec(o); x.z = m ? JSON.parse(m[1]) : { v: 0, hit: true, failed: true }; };
+await pool(tasks, NP, evalOne);
 const rows = C.map((c, i) => { const mine = tasks.filter(x => x.i === i); const nz = mine.find(x => !x.threat).z; const row = { none: +Math.max(nz.v, 0).toFixed(2), line: c.line, threats: {}, from: c.scnFrom, cand: { raw: c.raw, order: c.order, extra: c.extra, seed: c.seed, used: c.used, keys: c.keys, hand: c.hand } }; let tot = W.none * row.none;
   for (const th of Object.keys(THREATS)) { let worst = null; for (const x of mine.filter(x => x.threat === th)) if (!worst || x.z.v < worst.v) worst = { ...x.z, k: x.k }; row.threats[th] = worst; tot += (W[th] || 0) * worst.v; }
   row.robust = +tot.toFixed(2); return row; });
@@ -60,11 +61,12 @@ rows.sort((p, q) => q.robust - p.robust);
 // interruptions used by the engine's real options). final = hand-trap score + average margin after their turn (what you keep minus what they end on).
 const OH = t.oppHands ?? 3, OPPD = t.opps || ['o_ss', 'o_despia'];
 if (OH > 0) { const M = Math.min(rows.length, t.survTop ?? 3); const jobs2 = [];
-  for (let i = 0; i < M; i++) { const f = path.join(tmp, `surv${i}.json`); fs.writeFileSync(f, JSON.stringify(rows[i].cand)); for (const o of OPPD) jobs2.push({ i, f, o }); }
-  const one2 = (x) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'oppturn.mjs', JSON.stringify({ line: x.f, opp: `decks/${x.o}.ydk`, minutes: t.oppMin ?? 0.5, hands: OH, oppSeed: 1, par: Math.max(1, Math.floor(NP / 2)), ...(t.defense === 'rule' ? { choke: false } : {}) })], { stdio: ['ignore', 'pipe', 'ignore'] });
-    let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => { const m = /OPPTURN (.*)/.exec(o); x.z = m ? JSON.parse(m[1]) : null; ok(); }); });
-  const q2 = jobs2.slice(); await Promise.all(Array.from({ length: 2 }, async () => { while (q2.length) await one2(q2.shift()); }));
-  for (let i = 0; i < M; i++) { const r = rows[i]; r.survival = {}; let sum = 0, n = 0; for (const x of jobs2.filter(x => x.i === i)) { if (!x.z) continue; r.survival[x.o] = { margin: x.z.margin, worst: x.z.worst, otk: x.z.otk }; sum += x.z.margin; n++; }
+  for (let i = 0; i < M; i++) { const f = `${tmp}/surv${i}.json`; fs.writeFileSync(f, JSON.stringify(rows[i].cand)); for (const o of OPPD) for (let sd = 1; sd <= OH; sd++) jobs2.push({ i, f, o, sd }); }
+  // one opponent hand per piece, so the pieces spread over every free core here and on helper PCs
+  await pool(jobs2, NP, async (x, remote) => { const out = await runNode('oppturn.mjs', { line: x.f, opp: `decks/${x.o}.ydk`, minutes: t.oppMin ?? 0.5, hands: 1, oppSeed: x.sd, ...(t.defense === 'rule' ? { choke: false } : {}) }, { remote, files: [x.f, `decks/${x.o}.ydk`, `data/choke-${x.o}.json`], heap: 2000 }); const m = /OPPTURN (.*)/.exec(out); x.z = m ? JSON.parse(m[1]) : null; });
+  // per candidate and deck: average, worst and OTKs over the opponent hands
+  const agg = (i, o) => { const zs = jobs2.filter(x => x.i === i && x.o === o && x.z).map(x => x.z); if (!zs.length) return null; return { margin: +(zs.reduce((a, z) => a + z.margin, 0) / zs.length).toFixed(2), worst: Math.min(...zs.map(z => z.margin)), otk: zs.filter(z => z.otk).length }; };
+  for (let i = 0; i < M; i++) { const r = rows[i]; r.survival = {}; let sum = 0, n = 0; for (const o of OPPD) { const g = agg(i, o); if (!g) continue; r.survival[o] = g; sum += g.margin; n++; }
     r.surv = n ? +(sum / n).toFixed(2) : -10; r.final = +(r.robust + r.surv).toFixed(2); }
   for (let i = M; i < rows.length; i++) rows[i].final = -99;
   rows.sort((p, q) => q.final - p.final); }

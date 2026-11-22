@@ -87,3 +87,15 @@ export function scoreBoard(B, detail = false) {
   v = negSum + mult * other + handV + lay; parts.push(`negates ${negN} -> removal/wipes x${mult}; variety +${lay}`);
   return detail ? { v, parts, layers: [...layers] } : v;
 }
+
+// Board features for the learned scoring (learn.mjs): what is where at the end of your turn.
+//  M:<name> face-up monster, S:<name> face-up spell/trap, T:<name> set spell/trap, H:<name> card in hand, plus counts.
+export function boardFeatures(S, seat) {
+  const { lb, h } = S; const me = teamOf(S.game, seat); const f = {}; const add = (k, v = 1) => { f[k] = (f[k] || 0) + v; };
+  const q = (loc, fl = 0x1 | 0x2 | 0x200) => lb.duelQueryLocation(h, { flags: fl, controller: me, location: loc }).filter(c => c && c.code);
+  for (const c of q(L.MZONE, QFLAGS)) add('M:' + name(c.code));
+  for (const c of q(L.SZONE)) add(((c.position & 0x5) ? 'S:' : 'T:') + name(c.code));
+  const hand = q(L.HAND); for (const c of hand) add('H:' + name(c.code)); add('#hand', hand.length);
+  add('#gy', q(L.GRAVE).length); add('#field', q(L.MZONE, QFLAGS).length + q(L.SZONE).length);
+  return f;
+}

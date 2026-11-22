@@ -1,7 +1,7 @@
 // Opponent's turn into your best stored boards: for each of the top N library lines (no hand trap), the opponent takes its turn
 // with H different opening hands (Sky Striker and Despia), battle phase included. Ranks boards by what holds up, not by size.
 // node oppboards.mjs [list=L2-vand3] [n=8] [hands=6] [minutes=0.5]  -> reports/oppboards-<list>.md + .json
-import fs from 'fs'; import path from 'path'; import { spawn } from 'child_process';
+import fs from 'fs'; import path from 'path'; import { spawn } from 'child_process'; import os from 'os'; import { runNode, pool } from './src/remote.mjs';
 const LIST = process.argv[2] || 'L2-vand3', N = +(process.argv[3] || 8), H = +(process.argv[4] || 6), MIN = +(process.argv[5] || 0.5);
 // OB_DEFENSE=rule: the old defense (fire in order); OB_IDS: exactly these boards; OB_TAG: report name suffix
 const OPPS = ['o_ss', 'o_despia']; const DEF = process.env.OB_DEFENSE || 'bottleneck', TAG = process.env.OB_TAG ? '-' + process.env.OB_TAG : '', IDS = process.env.OB_IDS ? process.env.OB_IDS.split(',') : null; const dir = `data/lib-${LIST}`;
@@ -14,9 +14,16 @@ const seenB = new Set(); const top = []; for (const b of lib) { if (IDS && !IDS.
 const OUTJ = `reports/oppboards-${LIST}${TAG}.json`; const CFG = `${H} hands, ${MIN} min, defense ${DEF === 'rule' || !fs.existsSync('data/choke-o_ss.json') ? 'rule' : 'bottleneck'}`; const prev = process.env.RESUME !== '0' && fs.existsSync(OUTJ) ? JSON.parse(fs.readFileSync(OUTJ, 'utf8')) : []; const rows = []; let done = 0; const total = top.length * OPPS.length;
 console.log(`opponent's turn: ${top.length} boards x ${OPPS.length} decks x ${H} hands`);
 const save = () => { fs.mkdirSync('reports', { recursive: true }); fs.writeFileSync(OUTJ, JSON.stringify(rows)); };
-for (const b of top) { const old = prev.find(r => r.id === b.id && r.cfg === CFG && OPPS.every(o => r[o])); if (old) { rows.push({ ...old, cards: b.cards }); done += OPPS.length; console.log(`${done}/${total}`); continue; } const row = { ...b, cfg: CFG }; for (const o of OPPS) { const z = await new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', 'oppturn.mjs', JSON.stringify({ line: b.file, opp: `decks/${o}.ydk`, minutes: MIN, hands: H, oppSeed: 1, ...(DEF === 'rule' ? { choke: false } : {}) })], { stdio: ['ignore', 'pipe', 'ignore'] });
-      let s = ''; p.stdout.on('data', d => s += d); p.on('close', () => { const m = /OPPTURN (.*)/.exec(s); ok(m ? JSON.parse(m[1]) : null); }); }); row[o] = z; done++; console.log(`${done}/${total}`); }
-  row.avg = +(OPPS.reduce((a, o) => a + ((row[o] && row[o].margin) ?? -10), 0) / OPPS.length).toFixed(2); rows.push(row); save(); }
+// boards in groups of 4; every opponent hand is its own piece, spread over the cores here and on helper PCs
+const NP = Math.max(1, os.cpus().length - 1); const todo = [];
+for (const b of top) { const old = prev.find(r => r.id === b.id && r.cfg === CFG && OPPS.every(o => r[o])); if (old) { rows.push({ ...old, cards: b.cards }); done += OPPS.length; console.log(`${done}/${total}`); } else todo.push(b); }
+for (let gi = 0; gi < todo.length; gi += 4) { const grp = todo.slice(gi, gi + 4); const pieces = [];
+  for (const b of grp) for (const o of OPPS) for (let sd = 1; sd <= H; sd++) pieces.push({ b, o, sd });
+  await pool(pieces, NP, async (x, remote) => { const out = await runNode('oppturn.mjs', { line: x.b.file, opp: `decks/${x.o}.ydk`, minutes: MIN, hands: 1, oppSeed: x.sd, ...(DEF === 'rule' ? { choke: false } : {}) }, { remote, files: [x.b.file, `decks/${x.o}.ydk`, `data/choke-${x.o}.json`], heap: 2000 }); const m = /OPPTURN (.*)/.exec(out); x.z = m ? JSON.parse(m[1]) : null; });
+  for (const b of grp) { const row = { ...b, cfg: CFG }; for (const o of OPPS) { const zs = pieces.filter(x => x.b === b && x.o === o && x.z).map(x => x.z);
+      row[o] = zs.length ? { hands: zs.length, margin: +(zs.reduce((a, z) => a + z.margin, 0) / zs.length).toFixed(2), worst: Math.min(...zs.map(z => z.margin)), otk: zs.filter(z => z.otk).length, theirBoard: +(zs.reduce((a, z) => a + z.theirBoard, 0) / zs.length).toFixed(2), ourBoardLeft: +(zs.reduce((a, z) => a + z.ourBoardLeft, 0) / zs.length).toFixed(2), t1: zs[0].t1, each: zs.map(z => z.margin) } : null;
+      done++; console.log(`${done}/${total}`); }
+    row.avg = +(OPPS.reduce((a, o) => a + ((row[o] && row[o].margin) ?? -10), 0) / OPPS.length).toFixed(2); rows.push(row); save(); } }
 rows.sort((a, b) => b.avg - a.avg);
 let md = `# Opponent's turn into your top ${rows.length} boards — ${LIST}\n${new Date().toISOString()}\n\nEach board faced ${H} different opening hands from each deck, battle phase included. Margin = what you still have minus what they end on (−10 more if they OTK you). Higher is better.\n\n| board | your turn-1 value | vs Sky Striker (avg / worst / OTKs) | vs Despia (avg / worst / OTKs) | overall |\n|---|---|---|---|---|\n`;
 const cell = (z) => z ? `${z.margin} / ${z.worst} / ${z.otk}` : 'failed';

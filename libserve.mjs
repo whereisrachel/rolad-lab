@@ -27,6 +27,12 @@ http.createServer(async (req, res) => {
       return send(res, 200, out); }
     if (route === 'put-line' && req.method === 'POST') { const x = await body(req); if (!x.list || !x.id || !/^[\w.-]+$/.test(x.list + x.id)) return send(res, 400, { error: 'bad line' });
       const d = path.join(DIR, 'lib-' + x.list); fs.mkdirSync(d, { recursive: true }); x.when = new Date().toISOString(); fs.writeFileSync(path.join(d, x.id + '.json'), JSON.stringify(x)); return send(res, 200, { ok: true }); }
+    // played-out opponent turns (the learned scoring's training data): helpers upload, the PC downloads
+    if (route === 'put-eval' && req.method === 'POST') { const x = await body(req); if (!x.id || !/^[\w.-]+$/.test(x.id)) return send(res, 400, { error: 'bad eval' });
+      const d = path.join(DIR, 'evals'); fs.mkdirSync(d, { recursive: true }); x.when = new Date().toISOString(); fs.writeFileSync(path.join(d, x.id + '.json'), JSON.stringify(x)); return send(res, 200, { ok: true }); }
+    if (route === 'evals') { const since = u.searchParams.get('since') || ''; const d = path.join(DIR, 'evals'); const out = [];
+      if (fs.existsSync(d)) for (const fn of fs.readdirSync(d).filter(x => x.endsWith('.json'))) { try { const x = JSON.parse(fs.readFileSync(path.join(d, fn), 'utf8')); if (!since || (x.when || '') > since) out.push(x); } catch {} }
+      return send(res, 200, out); }
     if (route === 'tasks' && req.method === 'POST') { const b = await body(req); for (const t of b.tasks || []) if (t.id && t.script) waiting.push(t); return send(res, 200, { ok: true, waiting: waiting.length }); }
     if (route === 'claim') { const w = u.searchParams.get('worker') || '?', n = Math.max(1, Math.min(64, +(u.searchParams.get('n') || 1))), ver = u.searchParams.get('ver') || '';
       workers.set(w, { at: Date.now(), slots: +(u.searchParams.get('slots') || n), ver, busy: +(u.searchParams.get('busy') || 0) }); const out = [];
@@ -36,7 +42,7 @@ http.createServer(async (req, res) => {
       if (r.reject && t) { t.rejects = (t.rejects || 0) + 1; delete t.at; delete t.by; if (t.rejects < 3) { waiting.push(t); return send(res, 200, { ok: true }); } finished.set(t.id, { id: t.id, error: 'helpers could not run it', at: Date.now() }); return send(res, 200, { ok: true }); } // helper could not run it (e.g. different code): give it back
       r.at = Date.now(); finished.set(r.id, r); return send(res, 200, { ok: true }); }
     if (route === 'results') { const ids = (u.searchParams.get('ids') || '').split(',').filter(Boolean); const out = [];
-      for (const id of ids) { const r = finished.get(id); if (r) { out.push(r); finished.delete(id); } } return send(res, 200, { results: out }); }
+      const wset = new Set(waiting.map(t => t.id)); const notTaken = []; for (const id of ids) { const r = finished.get(id); if (r) { out.push(r); finished.delete(id); } else if (wset.has(id)) notTaken.push(id); } return send(res, 200, { results: out, waiting: notTaken }); }
     if (route === 'cancel' && req.method === 'POST') { const b = await body(req); const ids = new Set(b.ids || []); for (let i = waiting.length - 1; i >= 0; i--) if (ids.has(waiting[i].id)) waiting.splice(i, 1); return send(res, 200, { ok: true }); }
     if (route === 'status') { const now = Date.now(); return send(res, 200, { waiting: waiting.length, running: running.size, finished: finished.size,
       workers: [...workers.entries()].filter(([, w]) => now - w.at < 120000).map(([name, w]) => ({ name, slots: w.slots, busy: w.busy, ver: w.ver, seen: Math.round((now - w.at) / 1000) + 's ago' })) }); }
