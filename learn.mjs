@@ -11,8 +11,10 @@ const have = new Set(); let since = ''; if (fs.existsSync(STORE)) for (const l o
 if (hub) { try { const arr = await (await fetch(hub + '/evals?since=' + encodeURIComponent(since), { signal: AbortSignal.timeout(120000) })).json(); let n = 0;
   for (const x of arr) if (x.id && !have.has(x.id) && (x.list || LIST) === LIST && x.t1) { fs.appendFileSync(STORE, JSON.stringify(x) + '\n'); have.add(x.id); n++; } console.log(`pulled ${n} new samples from the hub`); } catch (e) { console.log('hub pull failed: ' + e.message); } }
 // 2) samples: hub data + every opponent hand in the board rankings
-const S = []; if (fs.existsSync(STORE)) for (const l of fs.readFileSync(STORE, 'utf8').split('\n')) { if (!l) continue; try { const x = JSON.parse(l); if (x.t1 && Number.isFinite(x.margin)) S.push({ f: x.t1, y: x.margin, old: x.ourAfterT1 ?? null }); } catch {} }
-for (const fn of fs.existsSync('reports') ? fs.readdirSync('reports').filter(f => f.startsWith(`oppboards-${LIST}`) && f.endsWith('.json')) : []) {
+// only results from after the Nov 22 their-turn fix (before it, their turn was sometimes skipped)
+const FIX = '2026-11-22T19:00:00Z';
+const S = []; if (fs.existsSync(STORE)) for (const l of fs.readFileSync(STORE, 'utf8').split('\n')) { if (!l) continue; try { const x = JSON.parse(l); if (x.t1 && Number.isFinite(x.margin) && (x.when || '') >= FIX) S.push({ f: x.t1, y: x.margin, old: x.ourAfterT1 ?? null }); } catch {} }
+for (const fn of fs.existsSync('reports') ? fs.readdirSync('reports').filter(f => f.startsWith(`oppboards-${LIST}`) && f.endsWith('.json') && fs.statSync('reports/' + f).mtime.toISOString() >= FIX) : []) {
   try { for (const r of JSON.parse(fs.readFileSync('reports/' + fn, 'utf8'))) for (const o of Object.keys(r).filter(k => /^o_/.test(k))) { const z = r[o]; if (z && z.t1 && z.each) for (const y of z.each) S.push({ f: z.t1, y, old: r.v ?? null }); } } catch {} }
 console.log(`${S.length} samples`); if (S.length < 50) { console.log('not enough data yet'); process.exit(0); }
 // 3) features seen in at least 10 samples
