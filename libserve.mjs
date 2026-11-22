@@ -14,7 +14,7 @@ if (!TOKEN || TOKEN.length < 16) { console.error('need --token (16+ chars)'); pr
 const LEASE = 15 * 60000; // a piece a helper took but did not return in 15 min goes back in the queue
 const waiting = [], running = new Map(), finished = new Map(), workers = new Map();
 const body = (req) => new Promise((ok, no) => { let s = ''; req.on('data', d => { s += d; if (s.length > 64e6) { req.destroy(); no(new Error('too big')); } }); req.on('end', () => { try { ok(s ? JSON.parse(s) : {}); } catch (e) { no(e); } }); });
-const send = (res, code, obj) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(obj)); };
+const send = (res, code, obj) => { res.writeHead(code, { 'content-type': 'application/json', 'access-control-allow-origin': '*' }); res.end(JSON.stringify(obj)); };
 setInterval(() => { const now = Date.now(); for (const [id, t] of running) if (now - t.at > LEASE) { running.delete(id); delete t.at; delete t.by; waiting.unshift(t); }
   for (const [id, r] of finished) if (now - r.at > 6 * 3600000) finished.delete(id); }, 30000);
 http.createServer(async (req, res) => {
