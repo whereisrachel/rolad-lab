@@ -26,6 +26,7 @@ const code = (n) => { const c = findCard(n); const k = Array.isArray(c) ? c[0] :
 const count = {}; for (const k of base.main) count[name(k)] = (count[name(k)] || 0) + 1;
 const LIM = banlist(); const limitOf = (k) => (LIM && LIM.has(k) ? LIM.get(k) : 3);
 // hand traps kept in hand score 0 in a board comparison, so cutting one would always look free: they are not cut or added here
+const HTX = /Ash Blossom|Infinite Impermanence|Droll|Ghost Ogre|Nibiru|Maxx|Mulcharmy|Effect Veiler|Called by the Grave|Ghost Belle|Ghost Mourner|Ghost Sister|D\.D\. Crow|Fuwalos|Bystial|Dominus|Talents|Retaliating/;
 const isHandTrap = (n) => { const k = code(n); const t = (cardDB().text.get(k) || {}).desc || ''; return (/\(Quick Effect\): You can (discard|send) this card/i.test(t) && /(negate|destroy|opponent's hand|activates)/i.test(t)) || /^Infinite Impermanence$/.test(n); };
 
 // ---------- versions ----------
@@ -150,7 +151,7 @@ if (pool) { const side = (k, n) => pool.ranked.filter(x => x.zone === 'main' && 
   adds.splice(0, adds.length, ...explore(addsAll, NADD - 8), ...fresh([...side('body', 3), ...side('draw', 2), ...side('standalone', 3)])); }
 const skipped = [...cuts, ...plus, ...eds, ...pkgs].filter(v => tested[label(v)]).length; if (skipped) log(`memory: ${skipped} changes already tested on this list in earlier runs are skipped (use --retest to test them again)`);
 let versions = MINI ? [cuts.find(v => /Nervedo/.test(v[0].card)) || cuts[0], plus.find(v => /Medius the Pure/.test(v[0].card)) || plus[0], ...adds, ...eds] : [...fresh(cuts), ...fresh(plus), ...adds, ...fresh(eds), ...fresh(pkgs)];
-versions = versions.filter(Boolean); const K = (v) => label(v);
+versions = versions.filter(Boolean).filter(v => !v.some(c => c.op === 'add' && (isHandTrap(c.card) || HTX.test(c.card)))); /* Belal: no generic hand traps as candidates, from any source (pool screen included) */ const K = (v) => label(v);
 { const custom = f('versions', null) ? JSON.parse(f('versions')) : null; // --versions '[[{"op":"cut","card":"X"},...]]': test exactly these (e.g. a whole package taken out)
   if (f('only', null)) { const want = f('only').split(';').map(x => x.trim().toLowerCase()); versions = versions.filter(v => want.some(w => label(v).toLowerCase().includes(w))); } else if (custom) versions = [];
   if (custom) versions.push(...custom.map(v => { let k = 0; const room = Math.max(0, 15 - base.extra.length); return v.map(c => c.op === 'ed' && c.out === 'auto' ? { ...c, out: k < room ? (k++, null) : edOrder[(k++) - room] } : c); })); } // out:'auto' = replace your least-used Extra Deck card // --only "Pilgrim;Masquerena": only versions whose name contains one of these
