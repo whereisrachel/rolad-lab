@@ -10,7 +10,7 @@ const HUB = CFG.hub || (fs.existsSync('data/hub.json') ? JSON.parse(fs.readFileS
 if (!HUB) { console.error('No hub address: put {"hub": "http://IP:8080/<token>"} in worker.json'); process.exit(1); }
 const SLOTS = +f('slots', CFG.slots || Math.max(1, os.cpus().length - 2)), NAME = f('name', CFG.name || os.hostname()), LIB = !a.includes('--nolib') && CFG.library !== false;
 const MAXMIN = +f('maxmin', 0), IDLEEXIT = +f('idleexit', 0), NOPULL = a.includes('--nopull'); /* cloud runners (GitHub): stop claiming after MAXMIN minutes, leave after IDLEEXIT idle minutes, never git pull */
-const ALLOW = new Set(['deepw.mjs', 'oppturn.mjs', 'robust.mjs']); const VER = codeVer(); const START = Date.now();
+const ALLOW = new Set(['deepw.mjs', 'oppturn.mjs', 'robust.mjs', 'poolscan.mjs', 'secondturn.mjs']); /* poolscan chunks and going-second games too (Nov 23) */ const VER = codeVer(); const START = Date.now();
 const log = (s) => console.log(new Date().toLocaleTimeString() + ' ' + s);
 log(`ROLAD helper "${NAME}": ${SLOTS} cores, code ${VER}, hub ${HUB.replace(/\/[^/]+$/, '/…')}${LIB ? ', library lines when idle' : ''}`);
 const hub = async (p, opt = {}) => { const r = await fetch(HUB + p, { ...opt, signal: AbortSignal.timeout(120000) }); if (!r.ok) throw new Error('hub HTTP ' + r.status); return r.json(); };
