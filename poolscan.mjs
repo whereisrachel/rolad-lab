@@ -171,6 +171,36 @@ log(`stage 2 done: ${B1s.filter(x => x.gain > 0.25).length} cards beat your line
 log(`stage 3/3: longer value test for the top ${top.length} (${TB2}s, first and last usable point in two lines each)`);
 const B2items = top.map(x => ({ ...x, hits: byV(live.find(l => l.name === x.name).hits).slice(0, 2).flatMap(h => h.last !== undefined && h.last !== h.i ? [h, lastOf(h)] : [h]) }));
 const B2 = PKGONLY ? [] : await runStage('B', B2items, { tb: TB2, ctrl: await ctrlFor(B2items, TB2) });
+// ---- stage 4 (Belal, Nov 23): robustness. One fixed deck order and the single best point overrate cards (a free body, a lucky dig, a cost that
+// happened not to hit anything). Each top card is re-tested on fresh lines recorded from K different deck orders of every hand where it was usable,
+// and scored by its AVERAGE gain over those games; it must help in at least 2 different starting hands to rank as robust.
+const K = +f('orders', 8); let ROB = null;
+if (!a.includes('--norobust') && !PKGONLY && B2.length) {
+  const cand = B2.filter(x => x.gain !== null && x.gain > 0.3 && kindOf(x) !== 'standalone').sort((p, q) => q.gain - p.gain).slice(0, +f('robtop', 40)); // Set-only cards are scored from text, not lines: the review handles them
+  const handIds = [...new Set(cand.flatMap(x => (live.find(l => l.name === x.name) || { hits: [] }).hits.map(h => lines[h.li].id)))];
+  const rng = (sd) => () => { sd = (sd * 1103515245 + 12345) % 2147483648; return sd / 2147483648; };
+  const vjobs = []; for (const id of handIds) { const ln = lines.find(l => l.id === id); if (!ln) continue; const hand = ln.order.slice(0, 5); const rest = ln.order.slice(5);
+    for (let k = 1; k < K; k++) { const r = rng(1000 + k * 7919 + id.length * 31); const o = rest.slice(); for (let q = o.length - 1; q > 0; q--) { const j = Math.floor(r() * (q + 1)); [o[q], o[j]] = [o[j], o[q]]; }
+      vjobs.push({ id, k, hand: hand.map(c => name(c)), main: [...hand, ...o], out: `results/line-${LIST}-${id}-o${k}.json` }); } }
+  log(`stage 4/4: robustness — ${cand.length} cards that gained > 0.3; recording ${vjobs.length} more lines (${handIds.length} hands x ${K - 1} other deck orders, ${Math.max(1, LMIN - 1)} min each)`);
+  let kk = 0, dn = 0; await Promise.all(Array.from({ length: PAR }, async () => { while (kk < vjobs.length) { const v = vjobs[kk++]; await spawnP(['deepw.mjs', JSON.stringify({ deck: deckPath, hand: v.hand, main: v.main, minutes: Math.max(1, LMIN - 1), rawOut: v.out })]); if (++dn % 10 === 0 || dn === vjobs.length) console.log(`${dn}/${vjobs.length}`); } }));
+  const vlines = vjobs.map(v => { try { return { id: v.id + '-o' + v.k, base: v.id, ...JSON.parse(fs.readFileSync(v.out, 'utf8')) }; } catch { return null; } }).filter(x => x && x.raw && x.raw.length);
+  const all = [...lines.map(l => ({ ...l, base: l.id })), ...vlines]; log(`  ${vlines.length} extra lines recorded; finding where each card is usable in them`);
+  // usable points in every line (original + new), then the value test at the last usable point of each line, same search time for card and control
+  const RA = await runStage('A', cand.map(x => ({ name: x.name, code: x.code, zone: x.zone })), { lines: all });
+  const RBitems = RA.filter(x => x.hits.length).map(x => ({ ...x, hits: x.hits.map(lastOf) }));
+  const RB = [];
+  for (const x of RBitems) for (const h of x.hits) RB.push({ ...x, hits: [h] }); // one test per (card, line): average, not best-of
+  const TB3 = +f('tb3', 20); const R = await runStage('B', RB, { tb: TB3, lines: all, ctrl: await (async () => { const pts = new Map(); for (const x of RB) for (const h of x.hits) { const k2 = (x.zone === 'ed' ? 'e' : 'm') + h.li + ':' + h.i; if (!pts.has(k2)) pts.set(k2, { li: h.li, i: h.i, ed: x.zone === 'ed', name: k2 }); } const C = await runStage('C', [...pts.values()], { tb: TB3, lines: all }); const m = {}; for (const c of C) m[c.key] = c.v; return m; })() });
+  ROB = new Map(); for (const r of R) { if (r.gain === null) continue; const e = ROB.get(r.name) || { g: [], byHand: {} }; e.g.push(r.gain); const hb = all[r.best.li].base; (e.byHand[hb] ||= []).push(r.gain); ROB.set(r.name, e); }
+  // cards with no usable point in a new deck order count 0 there (they needed that exact order)
+  for (const x of cand) { const e = ROB.get(x.name) || { g: [], byHand: {} }; const n = e.g.length;
+    const bases = new Set((live.find(l => l.name === x.name) || { hits: [] }).hits.map(h => lines[h.li].id)); const tries = Math.max(n, all.filter(l => bases.has(l.base)).length); // unusable in a deck order = 0 there
+    const mean = tries ? e.g.reduce((p, q) => p + q, 0) / tries : 0;
+    const per = {}; for (const b of bases) per[b] = K; const hands = Object.entries(e.byHand).filter(([h, arr]) => arr.reduce((p, q) => p + q, 0) / (per[h] || arr.length) >= 0.3).map(([h]) => h);
+    ROB.set(x.name, { mean: +mean.toFixed(2), n, hands, robust: hands.length >= 2 && mean >= 0.3 }); }
+  log(`stage 4 done: ${[...ROB.values()].filter(v => v.robust).length} of ${cand.length} cards still help on average across deck orders in 2+ hands`);
+}
 // ---- packages: what each usable card needs / is needed by (from the engine's card scripts), grown 2 steps, tested together ----
 const NOPKG = a.includes('--nopkg'); let pkRanked = [];
 if (!NOPKG) {
@@ -200,8 +230,8 @@ if (!NOPKG) {
   pkRanked = P2.filter(x => x.gain !== null).map(x => ({ ...x, members: { main: x.pkg.main.map(c => name(c)), ed: x.pkg.ed.map(c => name(c)) }, kind: x.best && x.best.line.some(l => [...x.pkg.main, ...x.pkg.ed].some(c => l.includes(name(c)))) ? 'engine' : 'standalone' })).sort((p, q) => q.gain - p.gain);
 }
 // engine use = the card is activated/summoned/selected in the improved line; standalone = it only adds itself as a Set card (its own text-based credit)
-const ranked = B2.filter(x => x.gain !== null).map(x => ({ ...x, kind: kindOf(x) })).sort((p, q) => q.gain - p.gain);
-fs.writeFileSync(OUT, JSON.stringify({ at: new Date().toISOString(), list: deckPath, leastEd, lines: lines.map(l => ({ id: l.id, v: l.v })), screened: pool.length, live: live.length, ranked: ranked.map(x => ({ name: x.name, zone: x.zone, kind: x.kind, gain: x.gain, best: x.best })), packages: pkRanked.map(x => ({ name: x.name, members: x.members, kind: x.kind, gain: x.gain, best: x.best })) }));
+const ranked = B2.filter(x => x.gain !== null).map(x => { const r = ROB && ROB.get(x.name); return { ...x, kind: kindOf(x), gain1: x.gain, gain: r ? r.mean : (ROB ? Math.min(x.gain, 0) : x.gain), robust: r ? r.robust : !ROB, hands: r ? r.hands : [], tests: r ? r.n : 0 }; }).sort((p, q) => (q.robust - p.robust) || (q.gain - p.gain));
+fs.writeFileSync(OUT, JSON.stringify({ at: new Date().toISOString(), list: deckPath, leastEd, lines: lines.map(l => ({ id: l.id, v: l.v })), screened: pool.length, live: live.length, ranked: ranked.map(x => ({ name: x.name, zone: x.zone, kind: x.kind, gain: x.gain, gain1: x.gain1, robust: x.robust, hands: x.hands, tests: x.tests, best: x.best })), packages: pkRanked.map(x => ({ name: x.name, members: x.members, kind: x.kind, gain: x.gain, best: x.best })) }));
 let md = `# Whole-pool screen ${ID}: ${LIST}\n${new Date().toISOString()}\n\n- Cards screened: **${pool.length}** (every TCG-legal card not banned, not a generic hand trap, not already in the list)\n- Get a real action somewhere in your lines: **${live.length}**\n- Your lines (end board score): ${lines.map(l => `${l.id} ${l.v.toFixed(2)}`).join(', ')}\n- Extra Deck candidates replace your least-used Extra Deck card: ${leastEd}\n\n## Engine cards: used in the improved line (activated, summoned or picked), by gain\n| # | card | zone | gain | line: without → with the card | first usable as |\n|---|---|---|---|---|---|\n`;
 ranked.filter(x => x.kind === 'engine').slice(0, 50).forEach((x, i) => { md += `| ${i + 1} | ${x.name} | ${x.zone === 'ed' ? 'Extra' : 'Main'} | ${x.gain >= 0 ? '+' : ''}${x.gain.toFixed(2)} | ${x.best ? lines[x.best.li].id + ' (' + x.best.base.toFixed(2) + ' → ' + x.best.v.toFixed(2) + ')' : ''} | ${x.best ? x.best.at.slice(0, 90) : ''} |\n`; });
 md += `\n## Free bodies: only Special Summon themselves and become material (any free monster does this; shown so you can see them)\n| # | card | gain |\n|---|---|---|\n`; ranked.filter(x => x.kind === 'body').slice(0, 10).forEach((x, i) => { md += `| ${i + 1} | ${x.name} | ${x.gain >= 0 ? '+' : ''}${x.gain.toFixed(2)} |\n`; });

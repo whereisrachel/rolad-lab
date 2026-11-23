@@ -32,7 +32,8 @@ for (const x of pool.ranked) {
   if (/Ash Blossom|Infinite Impermanence|Droll|Ghost Ogre|Nibiru|Maxx|Mulcharmy|Effect Veiler|Called by the Grave|Ghost Belle|Ghost Mourner|Ghost Sister|D\.D\. Crow|Fuwalos|Bystial|Dominus|Talents|Retaliating/.test(x.name)) why.push('hand trap (Belal: no generic hand traps)');
   if (x.kind === 'standalone') why.push('scored from text only (a lone Set card), not from a real line');
   if ((x.kind === 'body' || x.kind === 'draw') && !FAMILY.test(x.name) && !FAMILY.test(t)) why.push(x.kind === 'body' ? 'generic free body: the scan overrates any extra monster in hand' : 'draw card: its value is luck on one fixed deck order');
-  if (x.gain < 0.3) why.push('gain under 0.3 in the scan');
+  if (x.robust === false) why.push(`does not hold up across deck orders (average ${x.gain} over ${x.tests} games; helps in ${(x.hands || []).length} hand(s), needs 2)`);
+  else if (x.gain < 0.3) why.push('gain under 0.3 in the scan');
   (why.length ? dropped : kept).push({ ...x, text: t, line: c != null && cardLine ? cardLine(c) : x.name, why });
 }
 let md = `# Pool review: ${LIST}\n${new Date().toISOString()} · from poolscan of ${pool.at.slice(0, 10)}\n\n`;
