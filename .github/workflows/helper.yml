@@ -1,0 +1,61 @@
+name: helper
+# Cloud helpers for the ROLAD lab: up to 4 GitHub machines join the same hub as the helper PCs and take test pieces
+# (one game each) while a lab job is running. Capped on purpose (Belal, Nov 23): at most 4 at once, 45 min each,
+# every 3 hours, and only when the hub has work -> at most ~1,440 machine-minutes a day.
+# The hub address is the HUB_URL secret (never in the repo).
+on:
+  schedule:
+    - cron: '7 */3 * * *'
+  workflow_dispatch:
+    inputs:
+      machines: { description: "machines (max 4)", default: "4", type: string }
+      minutes: { description: "minutes each (max 45)", default: "45", type: string }
+permissions:
+  contents: read
+concurrency:
+  group: rolad-helper
+  cancel-in-progress: false
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      go: ${{ steps.c.outputs.go }}
+      matrix: ${{ steps.c.outputs.matrix }}
+      minutes: ${{ steps.c.outputs.minutes }}
+    steps:
+      - id: c
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+          M_IN: ${{ inputs.machines }}
+          T_IN: ${{ inputs.minutes }}
+        run: |
+          S=$(curl -s -m 20 "$HUB_URL/status" || echo '{}')
+          W=$(echo "$S" | python3 -c "import sys,json;d=json.load(sys.stdin);print(int(d.get('waiting',0))+int(d.get('running',0)))" 2>/dev/null || echo 0)
+          M=$(python3 -c "import os;print(max(1,min(4,int(os.environ.get('M_IN') or 4))))")
+          T=$(python3 -c "import os;print(max(5,min(45,int(os.environ.get('T_IN') or 45))))")
+          echo "hub pieces waiting+running: $W"
+          if [ "$W" -gt 0 ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "go=1" >> "$GITHUB_OUTPUT"; else echo "go=0" >> "$GITHUB_OUTPUT"; fi
+          python3 -c "import json;print('matrix='+json.dumps({'m':list(range($M))}))" >> "$GITHUB_OUTPUT"
+          echo "minutes=$T" >> "$GITHUB_OUTPUT"
+  help:
+    needs: gate
+    if: needs.gate.outputs.go == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJson(needs.gate.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: vm }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: npm ci --no-audit --no-fund
+      - name: join the hub
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+        run: |
+          python3 -c "import json,os;json.dump({'hub':os.environ['HUB_URL'],'library':False},open('worker.json','w'))"
+          node --no-warnings worker.mjs --slots $(nproc) --name "github-${{ matrix.m }}" --nolib --nopull --maxmin ${{ needs.gate.outputs.minutes }} --idleexit 10
