@@ -9,6 +9,7 @@ const CFG = fs.existsSync('worker.json') ? JSON.parse(fs.readFileSync('worker.js
 const HUB = CFG.hub || (fs.existsSync('data/hub.json') ? JSON.parse(fs.readFileSync('data/hub.json', 'utf8')).url : null);
 if (!HUB) { console.error('No hub address: put {"hub": "http://IP:8080/<token>"} in worker.json'); process.exit(1); }
 const SLOTS = +f('slots', CFG.slots || Math.max(1, os.cpus().length - 2)), NAME = f('name', CFG.name || os.hostname()), LIB = !a.includes('--nolib') && CFG.library !== false;
+const MAXMIN = +f('maxmin', 0), IDLEEXIT = +f('idleexit', 0), NOPULL = a.includes('--nopull'); /* cloud runners (GitHub): stop claiming after MAXMIN minutes, leave after IDLEEXIT idle minutes, never git pull */
 const ALLOW = new Set(['deepw.mjs', 'oppturn.mjs', 'robust.mjs']); const VER = codeVer(); const START = Date.now();
 const log = (s) => console.log(new Date().toLocaleTimeString() + ' ' + s);
 log(`ROLAD helper "${NAME}": ${SLOTS} cores, code ${VER}, hub ${HUB.replace(/\/[^/]+$/, '/…')}${LIB ? ', library lines when idle' : ''}`);
@@ -50,6 +51,7 @@ async function doLibrary(slotI) { idleN++; await doSurvival(slotI); }
 let lastTask = 0, idleBusy = 0;
 async function slot(i) {
   while (!stop) {
+    if (MAXMIN && Date.now() - START > MAXMIN * 60000) break; if (IDLEEXIT && Date.now() - Math.max(lastTask, START) > IDLEEXIT * 60000 && !busy) break;
     let t = null; try { const r = await hub(`/claim?worker=${encodeURIComponent(NAME)}&n=1&slots=${SLOTS}&busy=${busy}&ver=${VER}`); t = (r.tasks || [])[0]; } catch { await new Promise(r => setTimeout(r, 30000)); continue; }
     // while the PC is sending test pieces (one came in the last 10 min), at most a quarter of the cores do idle work, so pieces are taken at once
     if (t) lastTask = Date.now(); const pcActive = Date.now() - lastTask < 10 * 60000;
@@ -61,6 +63,7 @@ let since = ''; async function pullLibrary() { try { const arr = await hub('/all
 if (LIB) { await pullLibrary(); setInterval(pullLibrary, 30 * 60000); }
 setInterval(() => log(`${done} test pieces done, ${evDone} opponent turns played for the learning data, ${libDone} library lines uploaded, ${busy}/${SLOTS} cores busy`), 10 * 60000);
 // new code: check GitHub every 30 min; if there is an update, finish the current work and restart (the .bat starts it again)
-setInterval(() => { try { const before = execSync('git rev-parse HEAD').toString().trim(); execSync('git pull -q', { stdio: 'ignore' }); const after = execSync('git rev-parse HEAD').toString().trim();
+if (!NOPULL) setInterval(() => { try { const before = execSync('git rev-parse HEAD').toString().trim(); execSync('git pull -q', { stdio: 'ignore' }); const after = execSync('git rev-parse HEAD').toString().trim();
   if (before !== after) { log('lab update downloaded: restarting now (unfinished pieces go back to the queue)'); stop = true; for (const p of KIDS) { try { p.kill(); } catch {} } if (process.platform === 'win32') for (const p of KIDS) { try { execSync(`taskkill /pid ${p.pid} /T /F`, { stdio: 'ignore' }); } catch {} } setTimeout(() => process.exit(3), 3000); } } catch {} }, 30 * 60000);
 await Promise.all(Array.from({ length: SLOTS }, (_, i) => slot(i)));
+log(`helper leaving: ${done} test pieces done in ${((Date.now() - START) / 60000).toFixed(0)} min`); process.exit(0);
