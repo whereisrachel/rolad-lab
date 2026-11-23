@@ -1,6 +1,6 @@
 // ROLAD Lab, local edition: runs entirely on this computer. Start with "Start ROLAD Lab.bat" (or: node server.mjs).
 // Serves the app at http://localhost:4747 and runs one job at a time using all processor cores but one.
-import http from 'http'; import fs from 'fs'; import path from 'path'; import os from 'os'; import { spawn } from 'child_process'; import { fileURLToPath } from 'url';
+import http from 'http'; import fs from 'fs'; import path from 'path'; import os from 'os'; import { spawn, execSync } from 'child_process'; import { fileURLToPath } from 'url';
 const ROOT = path.dirname(fileURLToPath(import.meta.url)); process.chdir(ROOT);
 const PORT = +(process.env.PORT || 4747); const THREADS = Math.max(1, os.cpus().length - 1); const NODE = process.execPath;
 // started by the nightly task while the app is already open: hand the explorer run to the open app and exit
@@ -12,6 +12,13 @@ const save = () => fs.writeFileSync(JF, JSON.stringify(jobs.slice(-300), null, 1
 let current = null;
 
 // ---- job steps --------------------------------------------------------------------------
+
+// lab processes on this PC (node.exe running a lab script); a cancelled job's whole process tree is killed, and strays can be cleared
+const LABRX = /(deepw|oppturn|robust|evolve|findlist|play|oppboards|robbench|libbuild|learn|choke|explore)\.mjs/;
+function labProcs() { try { if (process.platform !== 'win32') return []; const out = execSync('powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -eq \'node.exe\' } | Select-Object ProcessId,ParentProcessId,CommandLine,KernelModeTime,UserModeTime | ConvertTo-Json -Compress"', { encoding: 'utf8', timeout: 30000 });
+  const a = JSON.parse(out || '[]'); return (Array.isArray(a) ? a : [a]).map(x => ({ pid: x.ProcessId, ppid: x.ParentProcessId, cmd: String(x.CommandLine || ''), cpuS: Math.round(((x.KernelModeTime || 0) + (x.UserModeTime || 0)) / 1e7) })); } catch { return []; } }
+function killTree(pid) { try { if (process.platform === 'win32') execSync(`taskkill /PID ${pid} /T /F`, { stdio: 'ignore', timeout: 30000 }); else process.kill(pid, 'SIGKILL'); } catch {} }
+function strays() { const P = labProcs(); const keep = new Set([process.pid]); const kids = (pid) => P.filter(x => x.ppid === pid).forEach(x => { if (!keep.has(x.pid)) { keep.add(x.pid); kids(x.pid); } }); kids(process.pid); return P.filter(x => !keep.has(x.pid) && LABRX.test(x.cmd)); }
 function run(args, env = {}, onLine = () => {}) {
   return new Promise((ok) => { const p = spawn(NODE, ['--no-warnings', ...args], { cwd: ROOT, env: { ...process.env, LEARN: '1', ROLAD_FAST: process.env.ROLAD_FULL ? '' : '1', ...env } }); current.proc = p; let out = '';
     const take = (b) => { const s = b.toString(); out += s; for (const l of s.split(/\r?\n/)) if (l.trim()) { onLine(l.trim()); current.last = l.trim().slice(0, 160); } };
@@ -144,7 +151,9 @@ http.createServer(async (req, res) => {
     if (p === '/api/deck' && req.method === 'POST') { const b = await body(req); const f = `decks/user/${(b.name || 'list').replace(/[^A-Za-z0-9_-]+/g, '_')}-${Date.now()}.txt`; fs.writeFileSync(f, b.text || ''); return send(res, 200, { path: f }); }
     if (p === '/api/run' && req.method === 'POST') { const b = await body(req); if (!STEPS[b.kind]) return send(res, 400, { error: 'unknown job' }); if (b.kind === 'explore' && !b.deckA) { const last = [...jobs].reverse().find(j => j.kind === 'explore' && j.deckA); b.deckA = (last && last.deckA) || 'decks/L2-vand3.ydk'; } return send(res, 200, addJob(b)); }
     if (p === '/api/restart' && req.method === 'POST') { if (current) return send(res, 409, { error: 'a job is running' }); send(res, 200, { ok: true }); setTimeout(() => process.exit(42), 300); return; }
-    if (p === '/api/cancel' && req.method === 'POST') { const b = await body(req); const j = jobs.find(x => x.id === b.id); if (j) { if (j === current && current.proc) { j.status = 'cancelled'; current.proc.kill(); } else if (j.status === 'queued') j.status = 'cancelled'; save(); } return send(res, 200, { ok: true }); }
+    if (p === '/api/procs') { const P = labProcs(); const st = strays(); return send(res, 200, { lab: P.filter(x => LABRX.test(x.cmd)).length, strays: st.map(x => ({ pid: x.pid, cpuS: x.cpuS, cmd: x.cmd.slice(0, 160) })) }); }
+    if (p === '/api/killstrays' && req.method === 'POST') { const st = strays(); for (const x of st) killTree(x.pid); return send(res, 200, { killed: st.length }); }
+    if (p === '/api/cancel' && req.method === 'POST') { const b = await body(req); const j = jobs.find(x => x.id === b.id); if (j) { if (j === current && current.proc) { j.status = 'cancelled'; killTree(current.proc.pid); try { current.proc.kill(); } catch {} } else if (j.status === 'queued') j.status = 'cancelled'; save(); } return send(res, 200, { ok: true }); }
     send(res, 404, { error: 'not found' });
   } catch (e) { send(res, 500, { error: String(e.message) }); }
 }).listen(PORT, '127.0.0.1', () => { console.log(`ROLAD Lab running: http://localhost:${PORT}  (${THREADS} worker threads)`); pump(); });
