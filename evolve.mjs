@@ -14,7 +14,7 @@ import { runNode, helperSlots, hub } from './src/remote.mjs';
 const poolN = async (items, local, remote, fn) => { const q = items.slice(); const out = new Map(); await Promise.all(Array.from({ length: Math.max(1, local) + Math.max(0, remote) }, async (_, w) => { while (q.length) { const it = q.shift(); out.set(it, await fn(it, w >= local)); } })); return items.map(it => out.get(it)); };
 const t = JSON.parse(process.argv[2]); const DECK = t.deck || 'decks/L2-vand3.ydk'; const LIST = path.basename(DECK, '.ydk');
 const NAME = (t.name || t.hand.join('+')).replace(/[^\w+-]+/g, '_').slice(0, 60); const ORD = +(t.orders || 8), ROUNDS = +(t.rounds ?? 3), MIN = +(t.minutes || 1), H = +(t.hands || 3), OMIN = +(t.oppMinutes || 0.5);
-const OPPS = (t.opps || ['o_ss_panama', 'o_elfnote']).filter(o => fs.existsSync(`decks/${o}.ydk`)); const LOCAL = Math.max(1, +(t.par || os.cpus().length - 1));
+const OPPS = (t.opps || ['o_ss_panama', 'o_elfnote', 'o_despia', 'o_angelechy']).filter(o => fs.existsSync(`decks/${o}.ydk`)); const LOCAL = Math.max(1, +(t.par || os.cpus().length - 1));
 const TMP = `data/tmp-evo/${NAME}`; fs.mkdirSync(TMP, { recursive: true }); fs.mkdirSync('lines/evolved', { recursive: true }); fs.mkdirSync(`data/lib-${LIST}`, { recursive: true });
 const key = (a) => [...a].sort().join('|'); const HK = key(t.hand);
 // seed lines: hand-designed lines for this exact opening hand (or the files given)
@@ -113,7 +113,7 @@ md += Object.keys(fails).length ? `Where the hand-designed lines broke (next ste
 md += props.length ? `List changes proposed for the list test (data/proposals-${LIST}.json):\n${props.map(p => `- ${p.v.map(c => (c.op === 'add' ? '+1 ' : '−1 ') + c.card).join(', ')} — ${p.why}`).join('\n')}\n\n` : '';
 const tri = Object.entries(COV).filter(([, v]) => v.tried && v.best != null).sort((a, b) => b[1].best - a[1].best).slice(0, 8);
 md += tri.length ? `Effects the search had not used, tried on purpose (best result so far):\n${tri.map(([k, v]) => `- ${k.split(':')[0]}: ${v.best}`).join('\n')}\n\n` : '';
-for (const p of perOrd) { const w = p.cands[0]; if (!w) continue; md += `## Order ${p.ord}: best ${w.fit} (Sky Striker ${w.byOpp.o_ss_panama ?? '-'}, Elfnote ${w.byOpp.o_elfnote ?? '-'}, worst ${w.worst}) — from ${w.from}${w.followed != null ? ` (seed followed ${w.followed}/${w.of} steps)` : ''}\n`;
+for (const p of perOrd) { const w = p.cands[0]; if (!w) continue; md += `## Order ${p.ord}: best ${w.fit} (${Object.entries(w.byOpp || {}).map(([o, v]) => o.replace(/^o_/, '') + ' ' + v).join(', ')}, worst ${w.worst}) — from ${w.from}${w.followed != null ? ` (seed followed ${w.followed}/${w.of} steps)` : ''}\n`;
   md += `Others: ${p.cands.slice(1).map(c => `${c.from} ${c.fit}`).join(' · ')}\n\n${w.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nEnd board: ${w.board.replace(/\n/g, ' ')}\n\n`; }
 fs.mkdirSync('reports', { recursive: true }); fs.writeFileSync(`reports/evolve-${NAME}.md`, md); fs.writeFileSync(`reports/evolve-${NAME}.json`, JSON.stringify(perOrd));
 clearInterval(hsTimer); try { (await import('child_process')).execFileSync(process.execPath, ['--no-warnings', 'bridges.mjs'], { stdio: 'ignore', timeout: 60000 }); } catch {} log(`done -> reports/evolve-${NAME}.md`);
