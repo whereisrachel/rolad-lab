@@ -36,9 +36,11 @@ export async function runRemote(script, args, { files = [], outputs = [], timeou
 
 // run one script: on a helper PC when remote (falls back to here if no helper finishes it), else here. Returns stdout.
 import { spawn as spawn0 } from 'child_process';
-export async function runNode(script, args, { remote = false, files = [], outputs = [], heap = 2500 } = {}) {
+export async function runNode(script, args, { remote = false, files = [], outputs = [], heap = 2500, timeoutMin = 25 } = {}) {
   if (remote) { const r = await runRemote(script, args, { files, outputs }); if (r) return r.stdout; }
-  return new Promise(ok => { const p = spawn0(process.execPath, ['--no-warnings', `--max-old-space-size=${heap}`, script, JSON.stringify(args)], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = ''; p.stdout.on('data', b => o += b); p.on('close', () => ok(o)); });
+  // a piece that hangs (never exits) is killed after `timeoutMin` so one stuck game cannot stall a whole job (Nov 22: evolve job 1076 hung for 45+ min)
+  return new Promise(ok => { const p = spawn0(process.execPath, ['--no-warnings', `--max-old-space-size=${heap}`, script, JSON.stringify(args)], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = ''; p.stdout.on('data', b => o += b);
+    const tm = setTimeout(() => { try { p.kill(); } catch {} }, Math.max(1, timeoutMin) * 60000); p.on('close', () => { clearTimeout(tm); ok(o); }); });
 }
 // run fn(item, remote) over items with `local` slots here plus every free helper core
 export async function pool(items, local, fn) { const hs = await helperSlots(); const q = items.slice(); const out = new Map();
