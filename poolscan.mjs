@@ -8,7 +8,7 @@
 // node poolscan.mjs [--deck D] [--tb 12] [--tb2 40] [--top2 150] [--lmin 3] [--limit N]
 import fs from 'fs'; import os from 'os'; import path from 'path'; import { spawn } from 'child_process';
 import { parseYdk, name, banlist, cardDB } from './src/cards.mjs';
-const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
+let a = process.argv.slice(2); if (a.length === 1 && a[0].startsWith('{')) { const o = JSON.parse(a[0]); a = ['--worker', '--in', o.in, '--out', o.out]; } /* a chunk sent to a helper PC arrives as one JSON argument */ const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
 const deckPath = f('deck', 'decks/L2-vand3.ydk'); const LIST = path.basename(deckPath).replace(/\.ydk$/, '');
 const PAR = Math.min(+f('par', Math.max(1, os.cpus().length - 1)), Math.max(1, Math.floor(os.freemem() / 1.3e9)));
 const TB = +f('tb', 8), TB2 = +f('tb2', 30), TOP2 = +f('top2', 150), LMIN = +f('lmin', 3), ID = f('id', String(Date.now() % 100000));
@@ -138,11 +138,20 @@ for (const [code, t] of text) { const d = data.get(code); if (!d || d.alias || (
 const LIMIT = +f('limit', 0); if (LIMIT) pool.splice(LIMIT);
 log(`whole pool: ${pool.filter(p => p.zone === 'main').length} Main Deck + ${pool.filter(p => p.zone === 'ed').length} Extra Deck cards; ${lines.length} recorded lines; Extra Deck candidates replace ${leastEd}`);
 const hintsW = await (async () => { try { const { loadHints } = await import('./src/hints.mjs'); return loadHints(`data/hints-${LIST}.json`) || {}; } catch { return {}; } })();
-async function runStage(stage, items, extra = {}) { const chunks = Array.from({ length: PAR }, () => []); items.forEach((x, i) => chunks[i % PAR].push(x)); let done = 0; const total = items.length;
-  const outs = await Promise.all(chunks.map(async (ch, w) => { if (!ch.length) return []; const inF = `results/ps-${ID}-${stage}-${w}.in.json`, outF = inF.replace('.in.', '.out.');
-    fs.writeFileSync(inF, JSON.stringify({ stage, items: ch, lines, leastEd, edOrder: EDORDER, hints: hintsW, ...extra }));
-    await spawnP(['poolscan.mjs', '--worker', '--in', inF, '--out', outF], (l) => { if (/^\d+\/\d+$/.test(l)) { done++; if (done % 25 === 0 || done === total) console.log(`${done}/${total}`); } });
-    try { return JSON.parse(fs.readFileSync(outF, 'utf8')); } catch { return []; } })); return outs.flat(); }
+// chunks run here AND on helper PCs (Nov 23: the scan used only this PC's cores). Small chunks (a few minutes each) go to a shared queue;
+// local workers and one remote worker per free helper core take them; a chunk no helper finishes comes back and runs here.
+const { runRemote, helperSlots } = await import('./src/remote.mjs');
+async function runStage(stage, items, extra = {}) { const tb = extra.tb || TB; const size = stage === 'A' ? 250 : stage === 'P' ? 150 : Math.max(2, Math.floor(240 / (tb * (stage === 'C' ? 2 : 3))));
+  const chunks = []; for (let i = 0; i < items.length; i += size) chunks.push(items.slice(i, i + size)); let done = 0; const total = items.length; let q = 0, ci = 0; const outs = [];
+  fs.mkdirSync('data/ps-tmp', { recursive: true }); const NOH = a.includes('--nohelpers'); let HS = NOH ? 0 : await helperSlots(), hsAt = Date.now(); if (HS) log(`  ${stage}: ${chunks.length} chunks, helper PCs add ${HS} cores (${PAR} here)`);
+  const mk = (ch) => { const k = ci++; const inF = `data/ps-tmp/ps-${ID}-${stage}-${k}.in.json`, outF = inF.replace('.in.', '.out.'); fs.writeFileSync(inF, JSON.stringify({ stage, items: ch, lines, leastEd, edOrder: EDORDER, hints: hintsW, ...extra })); return { inF, outF, n: ch.length }; };
+  const local = async (c) => { await spawnP(['poolscan.mjs', '--worker', '--in', c.inF, '--out', c.outF], (l) => { if (/^\d+\/\d+$/.test(l)) { done++; if (done % 25 === 0 || done === total) console.log(`${done}/${total}`); } }); };
+  const remote = async (c) => { const r = await runRemote('poolscan.mjs', { in: c.inF, out: c.outF }, { files: [c.inF], outputs: [c.outF], timeoutMs: 28 * 60000 }); if (!r || !fs.existsSync(c.outF)) return false; done += c.n; console.log(`${done}/${total}`); return true; };
+  const finish = (c) => { try { outs.push(...JSON.parse(fs.readFileSync(c.outF, 'utf8'))); } catch {} try { fs.unlinkSync(c.inF); fs.unlinkSync(c.outF); } catch {} };
+  const helperOk = async (w) => { if (NOH) return false; if (Date.now() - hsAt > 120000) { hsAt = Date.now(); HS = await helperSlots(); } return w < HS; };
+  await Promise.all([...Array.from({ length: PAR }, async () => { while (q < chunks.length) { const c = mk(chunks[q++]); await local(c); finish(c); } }),
+    ...Array.from({ length: 48 }, async (_, w) => { while (q < chunks.length) { if (!(await helperOk(w))) { await new Promise(r => setTimeout(r, 30000)); continue; } const c = mk(chunks[q++]); if (!(await remote(c))) await local(c); finish(c); } })]);
+  return outs; }
 // A
 log(`stage 1/3: does each card get a real action anywhere in your lines? (${pool.length} cards)`);
 const A = await runStage('A', pool); const live = A.filter(x => x.hits.length);
@@ -181,8 +190,9 @@ if (!a.includes('--norobust') && !PKGONLY && B2.length) {
   const rng = (sd) => () => { sd = (sd * 1103515245 + 12345) % 2147483648; return sd / 2147483648; };
   const vjobs = []; for (const id of handIds) { const ln = lines.find(l => l.id === id); if (!ln) continue; const hand = ln.order.slice(0, 5); const rest = ln.order.slice(5);
     for (let k = 1; k < K; k++) { const r = rng(1000 + k * 7919 + id.length * 31); const o = rest.slice(); for (let q = o.length - 1; q > 0; q--) { const j = Math.floor(r() * (q + 1)); [o[q], o[j]] = [o[j], o[q]]; }
-      vjobs.push({ id, k, hand: hand.map(c => name(c)), main: [...hand, ...o], out: `results/line-${LIST}-${id}-o${k}.json` }); } }
+      vjobs.push({ id, k, hand: hand.map(c => name(c)), main: [...hand, ...o], out: `data/ps-tmp/line-${LIST}-${id}-o${k}.json` }); } } fs.mkdirSync('data/ps-tmp', { recursive: true });
   log(`stage 4/4: robustness — ${cand.length} cards that gained > 0.3; recording ${vjobs.length} more lines (${handIds.length} hands x ${K - 1} other deck orders, ${Math.max(1, LMIN - 1)} min each)`);
+  // recorded here only: these lines need board-only scores (HTW=0, set by spawnP), which a helper PC's deepw does not get
   let kk = 0, dn = 0; await Promise.all(Array.from({ length: PAR }, async () => { while (kk < vjobs.length) { const v = vjobs[kk++]; await spawnP(['deepw.mjs', JSON.stringify({ deck: deckPath, hand: v.hand, main: v.main, minutes: Math.max(1, LMIN - 1), rawOut: v.out })]); if (++dn % 10 === 0 || dn === vjobs.length) console.log(`${dn}/${vjobs.length}`); } }));
   const vlines = vjobs.map(v => { try { return { id: v.id + '-o' + v.k, base: v.id, ...JSON.parse(fs.readFileSync(v.out, 'utf8')) }; } catch { return null; } }).filter(x => x && x.raw && x.raw.length);
   const all = [...lines.map(l => ({ ...l, base: l.id })), ...vlines]; log(`  ${vlines.length} extra lines recorded; finding where each card is usable in them`);

@@ -11,7 +11,13 @@ log(`going second: ${DECKS.length} deck(s) x ${OPPS.length} opponents (${OPPS.jo
 const res = []; let k = 0, done = 0; fs.mkdirSync('results', { recursive: true });
 const one = (j) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'secondturn.mjs', JSON.stringify({ deck: j.deck, opp: `decks/${j.opp}.ydk`, seed: j.seed, oppSeed: j.oppSeed, minutes: MIN, oppMinutes: OMIN })], { stdio: ['ignore', 'pipe', 'ignore'] });
   let o = ''; p.stdout.on('data', b => o += b); const tm = setTimeout(() => { try { p.kill(); } catch {} }, (MIN + OMIN) * 60000 * 4 + 120000); p.on('close', () => { clearTimeout(tm); const m = /SECOND (.*)/.exec(o); ok(m ? { ...j, ...JSON.parse(m[1]) } : { ...j, failed: true }); }); });
-await Promise.all(Array.from({ length: PAR }, async () => { while (k < jobs.length) { const j = jobs[k++]; res.push(await one(j)); console.log(`${++done}/${jobs.length}`); if (done % 10 === 0) fs.writeFileSync(`results/second-${ID}.json`, JSON.stringify(res)); } }));
+// games also run on helper PCs (one remote worker per free helper core, re-checked every 2 min); a game no helper finishes runs here
+const { runRemote, helperSlots } = await import('./src/remote.mjs'); let HS = a.includes('--nohelpers') ? 0 : await helperSlots(), hsAt = Date.now(); if (HS) log(`helper PCs add ${HS} cores`);
+const two = async (j) => { const r = await runRemote('secondturn.mjs', { deck: j.deck, opp: `decks/${j.opp}.ydk`, seed: j.seed, oppSeed: j.oppSeed, minutes: MIN, oppMinutes: OMIN }, { files: [j.deck, `decks/${j.opp}.ydk`], timeoutMs: ((MIN + OMIN) * 4 + 3) * 60000 }); const m = r && /SECOND (.*)/.exec(r.stdout); return m ? { ...j, ...JSON.parse(m[1]) } : one(j); };
+const helperOk = async (w) => { if (a.includes('--nohelpers')) return false; if (Date.now() - hsAt > 120000) { hsAt = Date.now(); HS = await helperSlots(); } return w < HS; };
+const save = (r) => { res.push(r); console.log(`${++done}/${jobs.length}`); if (done % 10 === 0) fs.writeFileSync(`results/second-${ID}.json`, JSON.stringify(res)); };
+await Promise.all([...Array.from({ length: PAR }, async () => { while (k < jobs.length) save(await one(jobs[k++])); }),
+  ...Array.from({ length: 48 }, async (_, w) => { while (k < jobs.length) { if (!(await helperOk(w))) { await new Promise(r => setTimeout(r, 30000)); continue; } save(await two(jobs[k++])); } })]);
 fs.writeFileSync(`results/second-${ID}.json`, JSON.stringify(res));
 const ok = res.filter(r => !r.failed); const mean = (xs) => xs.length ? xs.reduce((p, q) => p + q, 0) / xs.length : 0;
 const sum = (rs) => ({ n: rs.length, score: mean(rs.map(r => r.score)), broke: mean(rs.map(r => r.theirBefore > 0 ? (r.theirBefore - r.theirAfter) / r.theirBefore : 1)), clear: rs.filter(r => r.theirAfter < 0.5).length, lethal: rs.filter(r => r.lethal).length, ours: mean(rs.map(r => r.ours)), dmg: mean(rs.map(r => r.damage)), before: mean(rs.map(r => r.theirBefore)) });
