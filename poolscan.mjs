@@ -100,7 +100,7 @@ if (a.includes('--worker')) {
 
 // ---------------- orchestrator ----------------
 const base = parseYdk(fs.readFileSync(deckPath, 'utf8')); const inMain = new Set(base.main.map(c => name(c))), inEd = new Set(base.extra.map(c => name(c)));
-const spawnP = (args, onLine) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', ...args], { stdio: ['ignore', 'pipe', 'pipe'] }); let o = '';
+const spawnP = (args, onLine) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', ...args], { stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, HTW: '0' } }); /* board-only scores (deepw now counts hand traps kept in hand by default; the screen compares boards with setHT(0)) */ let o = '';
   p.stdout.on('data', b => { o += b; if (onLine) for (const l of String(b).split('\n')) if (l.trim()) onLine(l.trim()); }); p.on('close', () => ok(o)); });
 // 0) lines
 if (!fs.existsSync(LINES) || a.includes('--relines')) {
