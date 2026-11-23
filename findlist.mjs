@@ -134,6 +134,11 @@ const cuts = Object.keys(count).filter(n => !isHandTrap(n) && (ONLYCUTS === null
 const plus = a.includes('--noplus') ? [] : Object.keys(count).filter(n => !isHandTrap(n) && count[n] < limitOf(code(n))).map(n => [{ op: 'add', card: n }]);
 // candidates from the whole-pool screen (poolscan.mjs: every legal card, tested inside your own lines) when it has been run; else cards connected by text
 const PS = 'data/poolscan-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json'; const pool = !a.includes('--synergy') && fs.existsSync(PS) ? JSON.parse(fs.readFileSync(PS, 'utf8')) : null;
+// review gate (Belal, Nov 23): pool-scan cards are only tested after the automatic drawback screen (poolreview.mjs) and Claude's review;
+// the approved names live in data/pool-approved-<list>.json. Without it, no pool cards are tested.
+if (pool) { const AP = 'data/pool-approved-' + path.basename(deckPath).replace(/\.ydk$/, '') + '.json'; const ok = fs.existsSync(AP) ? new Set(JSON.parse(fs.readFileSync(AP, 'utf8')).approved || []) : null;
+  if (!ok) log('pool candidates not reviewed yet (no ' + AP + '): pool cards skipped');
+  pool.ranked = pool.ranked.filter(x => ok && ok.has(x.name)); pool.packages = (pool.packages || []).filter(x => ok && [...(x.members.main || []), ...(x.members.ed || [])].every(n => ok.has(n))); }
 if (pool) log(`candidates from the whole-pool screen of ${pool.at.slice(0, 10)}: ${pool.screened} cards screened, ${pool.live} usable in your lines, ${pool.ranked.length} value-tested`);
 const adds = pool ? [...pool.ranked.filter(x => x.zone === 'main' && x.kind !== 'standalone' && !inList.has(x.name) && limitOf(code(x.name)) > 0).slice(0, NADD - 5), ...pool.ranked.filter(x => x.zone === 'main' && x.kind === 'standalone' && limitOf(code(x.name)) > 0).slice(0, 5)].map(x => [{ op: 'add', card: x.name, why: [`pool screen ${x.gain >= 0 ? '+' : ''}${x.gain} in ${pool.lines[x.best.li].id}`] }])
   : syn.filter(x => x.zone === 'main' && !inList.has(x.name) && limitOf(x.code) > 0 && !isHandTrap(x.name)).slice(0, NADD).map(x => [{ op: 'add', card: x.name, why: x.why }]);
