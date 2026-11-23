@@ -18,7 +18,7 @@ concurrency:
 jobs:
   gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 5
     outputs:
       go: ${{ steps.c.outputs.go }}
       matrix: ${{ steps.c.outputs.matrix }}
@@ -30,8 +30,10 @@ jobs:
           M_IN: ${{ inputs.machines }}
           T_IN: ${{ inputs.minutes }}
         run: |
-          S=$(curl -s -m 20 "$HUB_URL/status" || echo '{}')
-          W=$(echo "$S" | python3 -c "import sys,json;d=json.load(sys.stdin);print(int(d.get('waiting',0))+int(d.get('running',0)))" 2>/dev/null || echo 0)
+          W=0; for t in 1 2 3 4 5 6 7 8; do  # the lab sends pieces in waves: look for work for ~2.5 min, not one instant
+            S=$(curl -s -m 15 "$HUB_URL/status" || echo '{}')
+            W=$(echo "$S" | python3 -c "import sys,json;d=json.load(sys.stdin);print(int(d.get('waiting',0))+int(d.get('running',0)))" 2>/dev/null || echo 0)
+            [ "$W" -gt 0 ] && break; sleep 20; done
           M=$(python3 -c "import os;print(max(1,min(4,int(os.environ.get('M_IN') or 4))))")
           T=$(python3 -c "import os;print(max(5,min(45,int(os.environ.get('T_IN') or 45))))")
           echo "hub pieces waiting+running: $W"
