@@ -15,7 +15,7 @@ const poolN = async (items, local, remote, fn) => { const q = items.slice(); con
 const t = JSON.parse(process.argv[2]); const DECK = t.deck || 'decks/L2-vand3.ydk'; const LIST = path.basename(DECK, '.ydk');
 const NAME = (t.name || t.hand.join('+')).replace(/[^\w+-]+/g, '_').slice(0, 60); const ORD = +(t.orders || 8), ROUNDS = +(t.rounds ?? 3), MIN = +(t.minutes || 1), H = +(t.hands || 3), OMIN = +(t.oppMinutes || 0.5);
 const OPPS = (t.opps || ['o_ss_panama', 'o_elfnote']).filter(o => fs.existsSync(`decks/${o}.ydk`)); const LOCAL = Math.max(1, +(t.par || os.cpus().length - 1));
-const TMP = `data/tmp-evo/${NAME}`; fs.mkdirSync(TMP, { recursive: true }); fs.mkdirSync('lines/evolved', { recursive: true });
+const TMP = `data/tmp-evo/${NAME}`; fs.mkdirSync(TMP, { recursive: true }); fs.mkdirSync('lines/evolved', { recursive: true }); fs.mkdirSync(`data/lib-${LIST}`, { recursive: true });
 const key = (a) => [...a].sort().join('|'); const HK = key(t.hand);
 // seed lines: hand-designed lines for this exact opening hand (or the files given)
 const seeds = (t.seeds || fs.readdirSync('lines/designed').filter(f => f.endsWith('.json')).map(f => 'lines/designed/' + f))
