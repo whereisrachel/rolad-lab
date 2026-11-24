@@ -38,12 +38,12 @@ function passOne(S2, seat, prefer) { const d = E.decision(S2, seat); if (!d || !
   const o = d.options[j]; return !!(o.resp && E.push(S2, { seat, resp: o.resp, label: o.label })); }
 const log = []; let S = await sim(game);
 for (let guard = 0; guard < 60 && !over(S) && S.turn <= MAXT; guard++) {
-  const A = turnSeat(S), B = 1 - A, T = S.turn; S.game.goldfish = [B]; S.game.script = { [B]: ['any'] };
+  const A = turnSeat(S), B = 1 - A, T = S.turn; S.game.goldfish = [B]; S.game.script = { [B]: ['any'] }; S.game.gfTurn = T;
   // 1) walk to A's Main Phase (draw / standby prompts: A passes, B defends by policy)
   for (let i = 0; i < 300 && S.pending && !over(S); i++) { autoAdvance(S); if (!S.pending || over(S)) break; if (S.pending.type === E.M.SELECT_IDLECMD && pseat(S) === A) break; if (pseat(S) !== A) break; if (!passOne(S, A)) break; }
   if (over(S)) break;
   if (!(S.pending && S.pending.type === E.M.SELECT_IDLECMD && pseat(S) === A && S.turn === T)) { log.push(`T${T}: no main phase reached`); break; }
-  const pre = S.game.responses.map(e => ({ ...e })); const g0 = clone(S.game); g0.responses = pre; g0.goldfish = [B]; g0.script = { [B]: ['any'] };
+  const pre = S.game.responses.map(e => ({ ...e })); const g0 = clone(S.game); g0.responses = pre; g0.goldfish = [B]; g0.script = { [B]: ['any'] }; g0.gfTurn = T;
   const bBefore = disruption(S, B), lpB0 = lpOf(S, B);
   const evalFn = (S2) => { const th = disruption(S2, B), mi = disruption(S2, A); const lpB = lpOf(S2, B); return 0.8 * mi - 1.2 * th + (th < 1 ? Math.min(atkOf(S2, A), Math.max(0, lpB)) / 1500 : 0) + (lpB <= 0 ? 20 : 0); };
   const search = (gg, mins) => searchT1(clone(gg), { seat: A, turn: T, ms: mins * 60000, nrpa: 3, seed: (t.sseed || 1) + T, evalFn });
@@ -56,7 +56,7 @@ for (let guard = 0; guard < 60 && !over(S) && S.turn <= MAXT; guard++) {
       if (!ok) break; k++; }
     gq = clone(g0); gq.responses = S0.game.responses.map(e => ({ ...e })); }
   let r; try { r = await search(gq, MIN[A]); } catch { r = { raw: gq.responses }; }
-  const g1 = clone(g0); g1.responses = (r.raw || gq.responses).map(e => ({ ...e })); S = await sim(g1); S.game.goldfish = [B]; S.game.script = { [B]: ['any'] };
+  const g1 = clone(g0); g1.responses = (r.raw || gq.responses).map(e => ({ ...e })); S = await sim(g1); S.game.goldfish = [B]; S.game.script = { [B]: ['any'] }; S.game.gfTurn = T;
   const bMain = disruption(S, B), aMain = disruption(S, A);
   // 3) battle (not on the first turn of the game): every monster that can attack does; then end the turn
   let attacks = 0;
@@ -65,10 +65,10 @@ for (let guard = 0; guard < 60 && !over(S) && S.turn <= MAXT; guard++) {
     if (ty === E.M.SELECT_IDLECMD) { j = T > 1 && !attacks ? d.options.findIndex(o => o.label === 'Go to Battle Phase') : -1; if (j < 0) j = d.options.findIndex(o => /^Go to End Phase/.test(o.label)); }
     else if (ty === E.M.SELECT_BATTLECMD) { j = d.options.findIndex(o => /^Attack with/.test(o.label)); if (j >= 0) attacks++; if (j < 0) j = d.options.findIndex(o => /End Phase/.test(o.label)); if (j < 0) j = d.options.findIndex(o => /Main Phase 2/.test(o.label)); }
     else { if (!passOne(S, A)) break; continue; }
-    if (j < 0) break; const o = d.options[j]; if (/End Phase/.test(o.label)) S.game.goldfish = []; /* else the auto-player would also play the next player's whole turn */
+    if (j < 0) break; const o = d.options[j];
     if (!o.resp || !E.push(S, { seat: A, resp: o.resp, label: o.label })) break; }
   // finish the End Phase (discard to hand size, end-phase effects): A answers with the first legal choice
-  S.game.goldfish = []; for (let i = 0; i < 200 && S.pending && !over(S) && S.turn === T; i++) { autoAdvance(S); if (!S.pending || over(S) || S.turn !== T) break; const ps = pseat(S); if (!passOne(S, ps, ps === A ? /End Phase/ : null)) break; }
+  for (let i = 0; i < 200 && S.pending && !over(S) && S.turn === T; i++) { autoAdvance(S); if (!S.pending || over(S) || S.turn !== T) break; const ps = pseat(S); if (!passOne(S, ps, ps === A ? /End Phase/ : null)) break; }
   const who = A === 0 ? 'you' : 'opp';
   log.push(`T${T} ${who}: board ${aMain.toFixed(1)} vs ${bMain.toFixed(1)} (theirs was ${bBefore.toFixed(1)}), attacks ${attacks}, LP you ${lpOf(S, 0)} / opp ${lpOf(S, 1)}`);
   if (S.turn === T && !over(S)) { log.push(`T${T}: turn did not end`); break; }

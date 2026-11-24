@@ -17,7 +17,7 @@ export function autoAdvance(S) {
     const seat = seatOf(S.game, S.pending.player);
     const a = autoResponse(S);
     if (a) { if (!push(S, { seat, resp: a, auto: true })) break; continue; }
-    const pol = polOf(S.game, seat);
+    const pol = (S.game.gfTurn != null && S.turn !== S.game.gfTurn) ? null : polOf(S.game, seat); /* gfTurn: the auto-player only acts during that turn (full games) */
     if (pol) { const t = policyAnswer(S, seat, pol); if (!t || !applyText(S, seat, t)) break; continue; }
     break;
   }
