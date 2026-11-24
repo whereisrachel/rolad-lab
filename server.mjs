@@ -14,7 +14,7 @@ let current = null;
 // ---- job steps --------------------------------------------------------------------------
 
 // lab processes on this PC (node.exe running a lab script); a cancelled job's whole process tree is killed, and strays can be cleared
-const LABRX = /(deepw|oppturn|robust|evolve|findlist|play|oppboards|robbench|libbuild|learn|choke|explore|secondturn|secondtest|poolscan|poolreview)\.mjs/;
+const LABRX = /(deepw|oppturn|robust|evolve|findlist|play|oppboards|robbench|libbuild|learn|choke|explore|secondturn|secondtest|fullgame|gamestest|poolscan|poolreview)\.mjs/;
 function labProcs() { try { if (process.platform !== 'win32') return []; const out = execSync('powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -eq \'node.exe\' } | Select-Object ProcessId,ParentProcessId,CommandLine,KernelModeTime,UserModeTime | ConvertTo-Json -Compress"', { encoding: 'utf8', timeout: 30000 });
   const a = JSON.parse(out || '[]'); return (Array.isArray(a) ? a : [a]).map(x => ({ pid: x.ProcessId, ppid: x.ParentProcessId, cmd: String(x.CommandLine || ''), cpuS: Math.round(((x.KernelModeTime || 0) + (x.UserModeTime || 0)) / 1e7) })); } catch { return []; } }
 function killTree(pid) { try { if (process.platform === 'win32') execSync(`taskkill /PID ${pid} /T /F`, { stdio: 'ignore', timeout: 30000 }); else process.kill(pid, 'SIGKILL'); } catch {} }
@@ -27,6 +27,10 @@ function run(args, env = {}, onLine = () => {}) {
 async function resolveDeck(p) { const r = await run(['resolve-deck.mjs', p]); if (r.code) throw new Error(r.out.trim()); return r.out.trim().split(/\r?\n/).pop(); }
 const prog = (j, done, total) => { j.progress = total ? Math.round(100 * done / total) : j.progress; };
 const STEPS = {
+  async games(j) { // full games to the end, you first and/or second (fullgame.mjs / gamestest.mjs; Belal, Nov 24)
+    j.stage = 'full games'; const decks = []; for (const d of String(j.decks || j.deckA || 'decks/findlist-1100.ydk').split(';').filter(Boolean)) decks.push(await resolveDeck(d));
+    const r = await run(['gamestest.mjs', '--decks', decks.join(';'), '--opps', j.opps || 'o_ss_panama,o_elfnote,o_despia,o_angelechy', '--n', String(j.n || 24), '--sides', j.sides || 'first,second', '--min', String(j.minutes || 0.75), '--omin', String(j.oppMinutes || 0.75), '--turns', String(j.turns || 10), '--id', String(j.id)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else j.last = l; });
+    const out = `reports/games-${j.id}.md`; if (r.code || !fs.existsSync(out)) throw new Error('full-games test failed: ' + r.out.slice(-400)); j.report = out; },
   async second(j) { // going second: the opponent goes first with a real deck, you take your turn into their board (secondturn.mjs / secondtest.mjs)
     j.stage = 'going second'; const decks = []; for (const d of String(j.decks || j.deckA || 'decks/L2-vand3.ydk').split(';').filter(Boolean)) decks.push(await resolveDeck(d));
     const r = await run(['secondtest.mjs', '--decks', decks.join(';'), '--opps', j.opps || 'o_ss_panama,o_elfnote,o_despia,o_angelechy', '--n', String(j.n || 24), '--min', String(j.minutes || 1), '--omin', String(j.oppMinutes || 1), '--id', String(j.id)], {}, (l) => { const m = /^(\d+)\/(\d+)/.exec(l); if (m) prog(j, +m[1], +m[2]); else j.last = l; });
