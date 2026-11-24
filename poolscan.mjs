@@ -150,7 +150,7 @@ async function runStage(stage, items, extra = {}) { const tb = extra.tb || TB; c
   const finish = (c) => { try { outs.push(...JSON.parse(fs.readFileSync(c.outF, 'utf8'))); } catch {} try { fs.unlinkSync(c.inF); fs.unlinkSync(c.outF); } catch {} };
   const helperOk = async (w) => { if (NOH) return false; if (Date.now() - hsAt > 120000) { hsAt = Date.now(); HS = await helperSlots(); } return w < HS; };
   await Promise.all([...Array.from({ length: PAR }, async () => { while (q < chunks.length) { const c = mk(chunks[q++]); await local(c); finish(c); } }),
-    ...Array.from({ length: 48 }, async (_, w) => { while (q < chunks.length) { if (!(await helperOk(w))) { await new Promise(r => setTimeout(r, 30000)); continue; } const c = mk(chunks[q++]); if (!(await remote(c))) await local(c); finish(c); } })]);
+    ...Array.from({ length: 48 }, async (_, w) => { while (q < chunks.length) { if (!(await helperOk(w))) { await new Promise(r => setTimeout(r, 30000)); continue; } if (q >= chunks.length) break; /* another worker may have taken the last chunk while this one waited */ const c = mk(chunks[q++]); if (!(await remote(c))) await local(c); finish(c); } })]);
   return outs; }
 // A
 log(`stage 1/3: does each card get a real action anywhere in your lines? (${pool.length} cards)`);
