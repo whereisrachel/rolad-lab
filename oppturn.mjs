@@ -49,7 +49,7 @@ async function blindSearch(gg, mins) { if (!plan) return search(gg, mins);
   const hit = () => S0.game.responses.slice(pre0).some(e => e.seat === 0 && /^Activate .*\(hand\)/.test(e.label || ''));
   for (let i = 0; i < 5000 && S0.pending && !S0.ended && k < plan.length && !hit(); i++) { autoAdvance(S0); if (!S0.pending || S0.ended || hit()) break;
     if (E.seatOf(S0.game, S0.pending.player) !== 1) break; const e = plan[k]; let ok = false;
-    try { if (e.label) { const d = E.decision(S0, 1); const o = d && d.options.find(x => x.label === e.label); if (o && o.resp) ok = E.push(S0, { seat: 1, resp: o.resp, label: o.label }); } else ok = E.push(S0, { seat: 1, resp: e.resp }); } catch { ok = false; }
+    try { if (e.label) { const d = E.decision(S0, 1); const o = d && d.options.find(x => x.label === e.label); if (o && o.resp) ok = E.push(S0, { seat: 1, resp: o.resp, label: o.label }); else ok = E.push(S0, { seat: 1, resp: e.resp, label: e.label }); /* zone / card picks: labels differ, the recorded answer still fits */ } else ok = E.push(S0, { seat: 1, resp: e.resp }); } catch { ok = false; }
     if (!ok) break; k++; }
   const gq = JSON.parse(JSON.stringify(gg)); gq.responses = S0.game.responses.map(e => ({ ...e }));
   try { return await search(gq, mins); } catch { return { raw: gq.responses }; } }
