@@ -41,6 +41,10 @@ export function policyAnswer(S, seat, pol) {
   if (T === M.SELECT_CHAIN) {
     if (d.msg.forced) return '1';
     if (lastChainIsOwn(S, seat)) return find(/^Pass/);
+    // timing hand traps (fix Nov 24): Nibiru, the Mulcharmys and Droll go off at an open game state, not in response to a chain link, so the
+    // 'chain links only' rule below never used them (second 1115: Nibiru 0/51, Fuwalos 0/59 drawn hands). The engine only offers them when
+    // their condition is met (5th summon, a search, you control no cards), so use them as soon as they are offered.
+    if (pol.defense) { const ti = opts.findIndex(o => /^Activate (Nibiru, the Primal Being|Mulcharmy Fuwalos|Mulcharmy Purulia|Mulcharmy Meowls|Droll & Lock Bird) \(/.test(o.label)); if (ti >= 0) return String(ti + 1); }
     // pol.after = k: hold the hand traps until the other player has activated k effects (a stronger player waits for the key card)
     let scr = pol.script || []; if (pol.after > 0 && scr.length) { const acts = (G.responses || []).filter(r => r.seat !== seat && !r.auto && /^Activate /.test(r.label || '')).length; if (acts < pol.after) scr = []; }
     if (process.env.DEFLOG && seat === 0) console.error('DEF ' + S.turn + ' ' + opts.map(o => o.label).join(' | '));
