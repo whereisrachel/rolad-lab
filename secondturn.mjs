@@ -26,17 +26,30 @@ const oppSearch = (gg, mins) => searchT1(JSON.parse(JSON.stringify(gg)), { seat:
 const boardOf = async (gg, rr) => { const g3 = JSON.parse(JSON.stringify(gg)); if (rr.raw) g3.responses = rr.raw.map(e => ({ ...e })); E.resetLib(); const S3 = autoAdvance(await E.simulate(g3)); return disruption(S3, 1); };
 const OM = t.oppMinutes ?? 1;
 // a) what they build if you do nothing (no hand traps): the measure of what your hand traps stopped
-const gNo = JSON.parse(JSON.stringify(game)); gNo.script = { 0: ['none'] }; let theirNoTraps = null; if (t.notraps !== false) { try { const rn = await oppSearch(gNo, OM * 0.5); theirNoTraps = await boardOf(gNo, rn); } catch {} }
+const gNo = JSON.parse(JSON.stringify(game)); gNo.script = { 0: ['none'] }; let theirNoTraps = null, plan = null; if (t.notraps !== false) { try { const rn = await oppSearch(gNo, OM * 0.5); theirNoTraps = await boardOf(gNo, rn); plan = (rn.raw || []).filter(e => e.seat === 1 && !e.auto); } catch {} }
+// They don't see your hand (fix Nov 24): they start their best line as if you had no hand traps (the plan above), and only change course
+// once one of your hand traps goes off; from there they re-plan (a search from that point, the rest of your hand still unknown to the
+// search only in the sense that it re-plans after each hit). Before, the search saw your whole hand and simply played around every hand
+// trap, so hand traps looked almost useless (second 1115/1117: Ash used in 18% of the hands that held it).
+async function blindAdapt(gg, mins) { if (!plan || t.blind === false) return oppSearch(gg, mins);
+  const g = JSON.parse(JSON.stringify(gg)); g.responses = []; E.resetLib(); const S0 = autoAdvance(await E.simulate(g)); let k = 0;
+  const hit = () => S0.game.responses.some(e => e.seat === 0 && /^Activate /.test(e.label || ''));
+  for (let i = 0; i < 5000 && S0.pending && !S0.ended && S0.turn <= 1 && k < plan.length && !hit(); i++) { autoAdvance(S0); if (!S0.pending || S0.ended || hit()) break;
+    if (E.seatOf(S0.game, S0.pending.player) !== 1) break; const e = plan[k]; let ok = false;
+    try { if (e.label) { const d = E.decision(S0, 1); const o = d && d.options.find(x => x.label === e.label); if (o && o.resp) ok = E.push(S0, { seat: 1, resp: o.resp, label: o.label }); } else ok = E.push(S0, { seat: 1, resp: e.resp }); } catch { ok = false; }
+    if (!ok) break; k++; }
+  const gp = JSON.parse(JSON.stringify(gg)); gp.responses = S0.game.responses.map(e => ({ ...e }));
+  try { return await oppSearch(gp, mins); } catch { return { raw: gp.responses }; } }
 // b) bottleneck defense when a choke file exists for their deck (hit their key cards), else smart timing: hold your hand traps until they
 //    have activated k effects, try k = 0..3 with short searches and keep the k that leaves their board smallest
 const chokeFile = `data/choke-${(t.opp || 'decks/o_ss_panama.ydk').replace(/^.*\//, '').replace(/\.ydk$/, '')}.json`;
 if (fs.existsSync(chokeFile) && (t.defense || 'any') === 'any') { const values = JSON.parse(fs.readFileSync(chokeFile, 'utf8')); const sorted = Object.values(values).sort((p, q) => q - p);
   game.choke = { 0: { values, must: ['Sky Striker Mobilize - Engage!', 'Sky Striker Ace - Kagari', 'Branded Fusion', 'Aluber the Jester of Despia', 'Fallen of Albaz'], thr: Math.max(0.5, sorted[Math.min(3, sorted.length - 1)] ?? 0.5), top: Math.max(1, sorted[Math.min(1, sorted.length - 1)] ?? 1) } }; }
 let defK = 0; const tried = [];
-if (!game.choke && t.smartDefense !== false) { for (let k = 0; k <= (t.defK ?? 3); k++) { const gk = JSON.parse(JSON.stringify(game)); gk.after = { 0: k }; try { const rk = await oppSearch(gk, OM * 0.25); tried.push([k, +(await boardOf(gk, rk)).toFixed(2)]); } catch {} }
+if (!game.choke && t.smartDefense !== false) { for (let k = 0; k <= (t.defK ?? 3); k++) { const gk = JSON.parse(JSON.stringify(game)); gk.after = { 0: k }; try { const rk = await blindAdapt(gk, OM * 0.25); tried.push([k, +(await boardOf(gk, rk)).toFixed(2)]); } catch {} }
   tried.sort((p, q) => p[1] - q[1] || p[0] - q[0]); if (tried.length) defK = tried[0][0]; }
 game.after = { 0: defK };
-const r1 = await oppSearch(game, OM);
+const r1 = await blindAdapt(game, OM);
 const g2 = JSON.parse(JSON.stringify(game)); if (r1.raw) g2.responses = r1.raw.map(e => ({ ...e }));
 E.resetLib(); S = autoAdvance(await E.simulate(JSON.parse(JSON.stringify(g2))));
 const trapsUsed = (r1.raw || []).filter(e => e.seat === 0 && /^Activate /.test(e.label || '')).map(e => e.label.replace(/^Activate /, '').replace(/ \(.*$/, ''));
