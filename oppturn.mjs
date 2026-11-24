@@ -40,11 +40,24 @@ const score = (S2) => disruption(S2, 1) - 0.5 * disruption(S2, 0) + (S2.lp && S2
 const search = (gg, mins) => searchT1(JSON.parse(JSON.stringify(gg)), { seat: 1, turn: 2, ms: mins * 60000, nrpa: 3, seed: t.sseed || 1, evalFn: (S2) => score(S2) });
 const readOut = async (gg, rr) => { const g3 = JSON.parse(JSON.stringify(gg)); if (rr.raw) g3.responses = rr.raw.map(e => ({ ...e })); E.resetLib(); const S3 = autoAdvance(await E.simulate(g3)); return { S3, their: disruption(S3, 1), ours: disruption(S3, 0) }; };
 // smart defense: hold your interruptions until they have activated k effects; try k = 0..K with short searches, keep the k that leaves you best off
+// They don't see your hand (fix Nov 24): they plan their turn knowing your face-up board but not your hand (noHand), play that plan
+// until one of your hand cards goes off, then re-plan from there. Before, their search saw your hand traps and simply avoided them.
+const pre0 = g2.responses.length; let plan = null;
+if (t.blind !== false) { try { const gp = JSON.parse(JSON.stringify(g2)); gp.noHand = { 0: true }; const rp = await search(gp, (t.minutes || 1) * 0.4); plan = (rp.raw || []).slice(pre0).filter(e => e.seat === 1 && !e.auto); } catch { plan = null; } }
+async function blindSearch(gg, mins) { if (!plan) return search(gg, mins);
+  const g = JSON.parse(JSON.stringify(gg)); E.resetLib(); const S0 = autoAdvance(await E.simulate(g)); let k = 0;
+  const hit = () => S0.game.responses.slice(pre0).some(e => e.seat === 0 && /^Activate .*\(hand\)/.test(e.label || ''));
+  for (let i = 0; i < 5000 && S0.pending && !S0.ended && k < plan.length && !hit(); i++) { autoAdvance(S0); if (!S0.pending || S0.ended || hit()) break;
+    if (E.seatOf(S0.game, S0.pending.player) !== 1) break; const e = plan[k]; let ok = false;
+    try { if (e.label) { const d = E.decision(S0, 1); const o = d && d.options.find(x => x.label === e.label); if (o && o.resp) ok = E.push(S0, { seat: 1, resp: o.resp, label: o.label }); } else ok = E.push(S0, { seat: 1, resp: e.resp }); } catch { ok = false; }
+    if (!ok) break; k++; }
+  const gq = JSON.parse(JSON.stringify(gg)); gq.responses = S0.game.responses.map(e => ({ ...e }));
+  try { return await search(gq, mins); } catch { return { raw: gq.responses }; } }
 let defK = 0, tried = [];
-if (t.smartDefense !== false && !g2.choke) { for (let k = 0; k <= (t.defK ?? 4); k++) { g2.after = { 0: k }; const rk = await search(g2, (t.minutes || 1) * 0.25); const o = await readOut(g2, rk); tried.push([k, +(o.ours - o.their).toFixed(2)]); }
+if (t.smartDefense !== false && !g2.choke) { for (let k = 0; k <= (t.defK ?? 4); k++) { g2.after = { 0: k }; const rk = await blindSearch(g2, (t.minutes || 1) * 0.25); const o = await readOut(g2, rk); tried.push([k, +(o.ours - o.their).toFixed(2)]); }
   tried.sort((p, q) => q[1] - p[1] || p[0] - q[0]); defK = tried[0][0]; }
 g2.after = { 0: defK };
-const res = await search(g2, t.minutes || 1);
+const res = await blindSearch(g2, t.minutes || 1);
 // 3) replay their best main phase, then their battle phase (every monster that can attack does; your interruptions still fire)
 const { S3 } = await readOut(g2, res);
 // the outcome is judged on the field only: a card still in hand counts only through what it did during their turn (the engine decides whether it could be used)

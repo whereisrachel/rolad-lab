@@ -31,6 +31,7 @@ export function trapRegexes(list) { return (list || []).map(n => TRAPS[n.toLower
 function lastChainIsOwn(S, seat) { const c = S.chain[S.chain.length - 1]; return !!c && c.ctrl === teamOf(S.game, seat); }
 
 // returns an answer string, or null if no decision / nothing sensible
+// pol.noHand (Nov 24): your hand is hidden from the opponent's planning search: plan as if your hand cards do nothing (board cards are public)
 export function policyAnswer(S, seat, pol) {
   const d = decision(S, seat); if (!d) return null;
   const T = d.type; const opts = d.options;
@@ -44,7 +45,7 @@ export function policyAnswer(S, seat, pol) {
     // timing hand traps (fix Nov 24): Nibiru, the Mulcharmys and Droll go off at an open game state, not in response to a chain link, so the
     // 'chain links only' rule below never used them (second 1115: Nibiru 0/51, Fuwalos 0/59 drawn hands). The engine only offers them when
     // their condition is met (5th summon, a search, you control no cards), so use them as soon as they are offered.
-    if (pol.defense) { const ti = opts.findIndex(o => /^Activate (Nibiru, the Primal Being|Mulcharmy Fuwalos|Mulcharmy Purulia|Mulcharmy Meowls|Droll & Lock Bird) \(/.test(o.label)); if (ti >= 0) return String(ti + 1); }
+    if (pol.defense && !pol.noHand) { const ti = opts.findIndex(o => /^Activate (Nibiru, the Primal Being|Mulcharmy Fuwalos|Mulcharmy Purulia|Mulcharmy Meowls|Droll & Lock Bird) \(/.test(o.label)); if (ti >= 0) return String(ti + 1); }
     // pol.after = k: hold the hand traps until the other player has activated k effects (a stronger player waits for the key card)
     let scr = pol.script || []; if (pol.after > 0 && scr.length) { const acts = (G.responses || []).filter(r => r.seat !== seat && !r.auto && /^Activate /.test(r.label || '')).length; if (acts < pol.after) scr = []; }
     if (process.env.DEFLOG && seat === 0) console.error('DEF ' + S.turn + ' ' + opts.map(o => o.label).join(' | '));
@@ -55,9 +56,9 @@ export function policyAnswer(S, seat, pol) {
       const onChain = S.chain && S.chain.length && !lastChainIsOwn(S, seat); const X = onChain ? ((/^Activate (.+?) \(/.exec(last) || [])[1] || '') : ''; const must = (ck.must || []).some(m => X.includes(m)); const val = must ? 99 : ((ck.values || {})[X] ?? 0);
       const oppN = (() => { try { const ot = 1 - teamOf(G, seat); return [L.MZONE, L.SZONE].reduce((n, loc) => n + S.lb.duelQueryLocation(S.h, { flags: 0x1, controller: ot, location: loc }).filter(c => c && c.code).length, 0); } catch { return 9; } })();
       const isWipe = (l) => /all cards the opponent controls/i.test(l); const kind = (l) => /negate the activation/i.test(l) ? 5 : /negate/i.test(l) ? 4 : isWipe(l) ? (oppN >= 2 ? 3.5 : -1) : /destroy|banish|send 1 card on the field|return .* hand|take control|change .* position/i.test(l) ? 3 : -1;
-      const pick = (ok) => { let bi = -1, br = 0; opts.forEach((o, i) => { if (!/^Activate /.test(o.label) || !ok(o.label)) return; const r = kind(o.label); if (r > br) { br = r; bi = i; } }); return bi; };
+      const pick = (ok) => { let bi = -1, br = 0; opts.forEach((o, i) => { if (!/^Activate /.test(o.label) || !ok(o.label) || (pol.noHand && /\(hand\)/.test(o.label))) return; const r = kind(o.label); if (r > br) { br = r; bi = i; } }); return bi; };
       // top targets get your strongest answer; lesser targets get the cheapest answer that still stops them (a hand trap before a board negate)
-      const cheapest = () => { let bi = -1, bc = 1e9; opts.forEach((o, i) => { if (!/^Activate /.test(o.label)) return; const r = kind(o.label); if (r < 4) return; const c = r + (/\(hand\)/.test(o.label) ? 0 : 2) + (isWipe(o.label) ? 5 : 0); if (c < bc) { bc = c; bi = i; } }); return bi; };
+      const cheapest = () => { let bi = -1, bc = 1e9; opts.forEach((o, i) => { if (!/^Activate /.test(o.label) || (pol.noHand && /\(hand\)/.test(o.label))) return; const r = kind(o.label); if (r < 4) return; const c = r + (/\(hand\)/.test(o.label) ? 0 : 2) + (isWipe(o.label) ? 5 : 0); if (c < bc) { bc = c; bi = i; } }); return bi; };
       let bi = -1; if (X && val >= (ck.top ?? 1e9)) bi = pick(() => true); else if (X && val >= (ck.thr ?? 0.5)) { bi = cheapest(); if (bi < 0) bi = pick(l => !isWipe(l)); } else if (oppN >= 4) bi = pick(isWipe);
       if (process.env.DEFLOG) console.error(`CHOKE vs ${X || '-'} (value ${val}) -> ${bi >= 0 ? opts[bi].label.slice(0, 60) : 'hold'}`);
       return bi >= 0 ? String(bi + 1) : (find(/^Pass/) || '1'); }
@@ -70,7 +71,7 @@ export function policyAnswer(S, seat, pol) {
         [/Artmage Non-Finito/, oppN >= 3 ? 5.5 : 2.5]];
       const nrank = (l) => { const nm = (/^Activate (.+?) \(/.exec(l) || [])[1] || ''; for (const [re, v] of NR) if (re.test(nm)) return v; return -1; };
       const onCh = !!(S.chain && S.chain.length && !lastChainIsOwn(S, seat));
-      let bi = -1, br = 0; opts.forEach((o, i) => { if (!/^Activate /.test(o.label)) return; let r = Math.max(rank(o.label), nrank(o.label)); if (!onCh && r < 5.5) r = -1; if (r > br) { br = r; bi = i; } });
+      let bi = -1, br = 0; opts.forEach((o, i) => { if (!/^Activate /.test(o.label) || (pol.noHand && /\(hand\)/.test(o.label))) return; let r = Math.max(rank(o.label), nrank(o.label)); if (!onCh && r < 5.5) r = -1; if (r > br) { br = r; bi = i; } });
       return bi >= 0 ? String(bi + 1) : (find(/^Pass/) || '1'); }
     const res = [...scr, ...(bot ? bot.chain : [])];
     return findAny(res) || find(/^Pass/) || '1';
