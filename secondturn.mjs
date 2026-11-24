@@ -20,11 +20,26 @@ const game = { id: 'g2', seed: String(t.seed ?? 7), first: 1, lab: true,
   seats: { 0: { name: 'A', deck: { main: mine, extra: ME.extra.slice(), side: [] }, hand: mine.slice(0, 5) }, 1: { name: 'o', deck: { ...OPP, main: theirs }, hand: theirs.slice(0, 5) } },
   responses: [], cursor: { 0: 0, 1: 0 }, goldfish: [0], bot: {}, script: { 0: [t.defense || 'any'] }, stopAfterTurn: null };
 E.resetLib(); let S = autoAdvance(await E.simulate(JSON.parse(JSON.stringify(game))));
-// 1) their turn 1: they search for their best board through your hand traps
+// 1) their turn 1: they search for their best board through your hand traps (Belal: going second is also stopping them with hand traps)
 const oppScore = (S2) => disruption(S2, 1) - 0.5 * disruption(S2, 0);
-const r1 = await searchT1(JSON.parse(JSON.stringify(game)), { seat: 1, turn: 1, ms: (t.oppMinutes ?? 1) * 60000, nrpa: 3, seed: t.sseed || 1, evalFn: oppScore });
+const oppSearch = (gg, mins) => searchT1(JSON.parse(JSON.stringify(gg)), { seat: 1, turn: 1, ms: mins * 60000, nrpa: 3, seed: t.sseed || 1, evalFn: oppScore });
+const boardOf = async (gg, rr) => { const g3 = JSON.parse(JSON.stringify(gg)); if (rr.raw) g3.responses = rr.raw.map(e => ({ ...e })); E.resetLib(); const S3 = autoAdvance(await E.simulate(g3)); return disruption(S3, 1); };
+const OM = t.oppMinutes ?? 1;
+// a) what they build if you do nothing (no hand traps): the measure of what your hand traps stopped
+const gNo = JSON.parse(JSON.stringify(game)); gNo.script = { 0: ['none'] }; let theirNoTraps = null; if (t.notraps !== false) { try { const rn = await oppSearch(gNo, OM * 0.5); theirNoTraps = await boardOf(gNo, rn); } catch {} }
+// b) bottleneck defense when a choke file exists for their deck (hit their key cards), else smart timing: hold your hand traps until they
+//    have activated k effects, try k = 0..3 with short searches and keep the k that leaves their board smallest
+const chokeFile = `data/choke-${(t.opp || 'decks/o_ss_panama.ydk').replace(/^.*\//, '').replace(/\.ydk$/, '')}.json`;
+if (fs.existsSync(chokeFile) && (t.defense || 'any') === 'any') { const values = JSON.parse(fs.readFileSync(chokeFile, 'utf8')); const sorted = Object.values(values).sort((p, q) => q - p);
+  game.choke = { 0: { values, must: ['Sky Striker Mobilize - Engage!', 'Sky Striker Ace - Kagari', 'Branded Fusion', 'Aluber the Jester of Despia', 'Fallen of Albaz'], thr: Math.max(0.5, sorted[Math.min(3, sorted.length - 1)] ?? 0.5), top: Math.max(1, sorted[Math.min(1, sorted.length - 1)] ?? 1) } }; }
+let defK = 0; const tried = [];
+if (!game.choke && t.smartDefense !== false) { for (let k = 0; k <= (t.defK ?? 3); k++) { const gk = JSON.parse(JSON.stringify(game)); gk.after = { 0: k }; try { const rk = await oppSearch(gk, OM * 0.25); tried.push([k, +(await boardOf(gk, rk)).toFixed(2)]); } catch {} }
+  tried.sort((p, q) => p[1] - q[1] || p[0] - q[0]); if (tried.length) defK = tried[0][0]; }
+game.after = { 0: defK };
+const r1 = await oppSearch(game, OM);
 const g2 = JSON.parse(JSON.stringify(game)); if (r1.raw) g2.responses = r1.raw.map(e => ({ ...e }));
 E.resetLib(); S = autoAdvance(await E.simulate(JSON.parse(JSON.stringify(g2))));
+const trapsUsed = (r1.raw || []).filter(e => e.seat === 0 && /^Activate /.test(e.label || '')).map(e => e.label.replace(/^Activate /, '').replace(/ \(.*$/, ''));
 // end their turn: pass every prompt of theirs until it is your turn 2
 for (let i = 0; i < 300 && S.pending && !S.ended && S.turn === 1; i++) { autoAdvance(S); if (!S.pending || S.ended || S.turn !== 1) break; const sp = E.seatOf(S.game, S.pending.player);
   const d = E.decision(S, sp); if (!d || !d.options.length) break; let j = d.options.findIndex(o => /End Phase/.test(o.label)); if (j < 0) j = d.options.findIndex(o => /^(Pass|No|Cancel)\b/.test(o.label)); if (j < 0) j = d.options.length - 1;
@@ -50,9 +65,10 @@ for (let i = 0; i < 300 && S4.pending && !S4.ended && S4.turn === 2; i++) { auto
 const lp1 = S4.lp ? S4.lp[THEM] : lp0; const lethal = (lp1 !== null && lp1 <= 0) || (S4.ended && S4.winner === 0);
 const damage = Math.max(0, (lp0 ?? 8000) - Math.max(0, lp1 ?? 0));
 const theirAfter = lethal ? 0 : disruption(S4, 1), ours = disruption(S4, 0);
-// one number: their board broken + yours built + damage; lethal = +10
-const score = +((theirBefore - theirAfter) + 0.5 * ours + damage / 2000 + (lethal ? 10 : 0)).toFixed(2);
-const out = { hand: mine.slice(0, 6).map(c => name(c)), theirBefore: +theirBefore.toFixed(2), theirAfterMain: +theirMain.toFixed(2), theirAfter: +theirAfter.toFixed(2), oursMain: +oursMain.toFixed(2), ours: +ours.toFixed(2), damage, lethal, score,
+// one number, judged on the outcome (a board your hand traps stopped counts the same as one you broke): what they still have after your turn
+// counts against you, your board and damage for you, lethal +10. Baseline: their full board with no hand traps (theirNoTraps).
+const score = +((theirNoTraps ?? theirBefore) - theirAfter + 0.5 * ours + damage / 2000 + (lethal ? 10 : 0)).toFixed(2);
+const out = { hand: mine.slice(0, 6).map(c => name(c)), theirNoTraps: theirNoTraps === null ? null : +theirNoTraps.toFixed(2), trapsUsed, defenseHeldUntil: defK, defenseTried: tried, theirBefore: +theirBefore.toFixed(2), theirAfterMain: +theirMain.toFixed(2), theirAfter: +theirAfter.toFixed(2), oursMain: +oursMain.toFixed(2), ours: +ours.toFixed(2), damage, lethal, score,
   ourLine: (r2.line || []).filter(l => /Summon|Activate|Selected|Set/.test(l)).slice(0, 60), theirLine: (r1.line || []).filter(l => /Summon|Activate|Set/.test(l)).slice(0, 40) };
 if (t.out) fs.writeFileSync(t.out, JSON.stringify({ ...out, raw: r2.raw || [], pre }));
 console.log('SECOND ' + JSON.stringify(out));
