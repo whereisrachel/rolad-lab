@@ -6,7 +6,7 @@ import fs from 'fs'; import os from 'os'; import path from 'path'; import { spaw
 import { codeVer } from './src/remote.mjs';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
 const CFG = fs.existsSync('worker.json') ? JSON.parse(fs.readFileSync('worker.json', 'utf8')) : {};
-const HUB = CFG.hub || (fs.existsSync('data/hub.json') ? JSON.parse(fs.readFileSync('data/hub.json', 'utf8')).url : null);
+const HUB = f('hub', '') || CFG.hub || (fs.existsSync('data/hub.json') ? JSON.parse(fs.readFileSync('data/hub.json', 'utf8')).url : null);
 if (!HUB) { console.error('No hub address: put {"hub": "http://IP:8080/<token>"} in worker.json'); process.exit(1); }
 const SLOTS = +f('slots', CFG.slots || Math.max(1, os.cpus().length - 2)), NAME = f('name', CFG.name || os.hostname()), LIB = !a.includes('--nolib') && CFG.library !== false;
 const MAXMIN = +f('maxmin', 0), IDLEEXIT = +f('idleexit', 0), NOPULL = a.includes('--nopull'); /* cloud runners (GitHub): stop claiming after MAXMIN minutes, leave after IDLEEXIT idle minutes, never git pull */
@@ -20,7 +20,7 @@ const KIDS = new Set(); let track = (p) => { KIDS.add(p); p.on('close', () => KI
 const track0 = track; track = (p) => { try { os.setPriority(p.pid, os.constants.priority.PRIORITY_LOW); } catch {} return track0(p); };
 const run = (script, args, ms) => new Promise(ok => { const p = track(spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', script, typeof args === 'string' ? args : JSON.stringify(args)], { stdio: ['ignore', 'pipe', 'ignore'] }));
   let o = ''; p.stdout.on('data', b => o += b); const t = setTimeout(() => p.kill(), ms); p.on('close', (code) => { clearTimeout(t); ok({ code, stdout: o }); }); });
-let busy = 0, done = 0, libDone = 0, stop = false;
+let pieces = 0, busy = 0, done = 0, libDone = 0, stop = false;
 async function doTask(t) {
   if (!ALLOW.has(t.script)) return hub('/done', { method: 'POST', body: JSON.stringify({ id: t.id, reject: true }) });
   try { for (const [p, c] of Object.entries(t.files || {})) { const n = safe(p); fs.mkdirSync(path.dirname(n), { recursive: true }); fs.writeFileSync(n, c); }
@@ -49,6 +49,8 @@ async function doSurvival(slotI) { const dir = 'data/lib-L2-vand3'; if (!fs.exis
 // idle work is kept short (one opponent turn, about 1-2 min) so test pieces from the PC get a free core quickly; the slow hand-trap lines are left to the Oracle servers
 async function doLibrary(slotI) { idleN++; await doSurvival(slotI); }
 let lastTask = 0, idleBusy = 0;
+// --busyfile: tells a builder running beside this helper (Oracle servers) when test pieces are running, so it frees the cores
+const BUSYF = f('busyfile', ''); if (BUSYF) setInterval(() => { try { fs.writeFileSync(BUSYF, JSON.stringify({ at: Date.now(), busy: pieces, last: lastTask })); } catch {} }, 2000);
 async function slot(i) {
   while (!stop) {
     if (MAXMIN && Date.now() - START > MAXMIN * 60000) break; if (IDLEEXIT && Date.now() - Math.max(lastTask, START) > IDLEEXIT * 60000 && !busy) break;
@@ -56,7 +58,7 @@ async function slot(i) {
     // while the PC is sending test pieces (one came in the last 10 min), at most a quarter of the cores do idle work, so pieces are taken at once
     if (t) lastTask = Date.now(); const pcActive = Date.now() - lastTask < 10 * 60000;
     if (!t && pcActive && idleBusy >= Math.max(1, Math.floor(SLOTS / 4))) { await new Promise(r => setTimeout(r, 3000)); continue; }
-    busy++; try { if (t) await doTask(t); else if (LIB) { idleBusy++; try { await doLibrary(i); } finally { idleBusy--; } } else await new Promise(r => setTimeout(r, 15000)); } finally { busy--; }
+    busy++; try { if (t) { pieces++; try { await doTask(t); } finally { pieces--; } } else if (LIB) { idleBusy++; try { await doLibrary(i); } finally { idleBusy--; } } else await new Promise(r => setTimeout(r, 15000)); } finally { busy--; }
   } }
 // keep a copy of the shared library (the helper steers toward hands the library has seen least, and re-solves common starts)
 let since = ''; async function pullLibrary() { try { const arr = await hub('/all?since=' + encodeURIComponent(since)); for (const x of arr) { if (!x.list || !x.id) continue; const d = `data/lib-${x.list}`; fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(`${d}/${x.id}.json`, JSON.stringify(x)); if ((x.when || '') > since) since = x.when; } log(`library copy: ${arr.length} new lines`); } catch (e) { log('library pull failed: ' + e.message); } }

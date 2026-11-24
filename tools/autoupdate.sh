@@ -9,6 +9,8 @@ new=$(git rev-parse HEAD)
 # the engine package must load; reinstall it if not (self-repair)
 [ -f node_modules/ocgcore-wasm/package.json ] || { rm -rf node_modules; npm ci --silent; sudo systemctl restart libbuild libserve; echo "$(date -Is) reinstalled packages" >> /home/ubuntu/autoupdate.log; }
 [ "$old" = "$new" ] && exit 0
-git diff --name-only "$old" "$new" | grep -q package-lock.json && npm ci --silent
-sudo systemctl restart libbuild libserve
+changed=$(git diff --name-only "$old" "$new")
+echo "$changed" | grep -q package-lock.json && npm ci --silent
+# the hub (libserve) holds the queue of test pieces in memory: restart it only when its own code changed, so updates don't drop running tests
+if echo "$changed" | grep -qE '^(libserve\.mjs|package-lock\.json)$'; then sudo systemctl restart libbuild libserve; else sudo systemctl restart libbuild; fi
 echo "$(date -Is) updated ${old:0:8} -> ${new:0:8}" >> /home/ubuntu/autoupdate.log
