@@ -2,6 +2,7 @@
 title ROLAD Helper (close this window to stop)
 cd /d "%USERPROFILE%\ROLAD-Helper"
 :loop
+git checkout -- data 2>nul
 git pull -q 2>nul
 call npm.cmd ci --silent >nul 2>nul
 node --no-warnings worker.mjs
