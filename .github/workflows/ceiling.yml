@@ -61,7 +61,7 @@ jobs:
           CFG: ${{ needs.plan.outputs.cfg }}
         run: |
           python3 -c "import json,os;json.dump({'url':os.environ['HUB_URL']},open('data/hub.json','w'))"
-          T=$(python3 -c "import json,os;h=json.loads(os.environ['H']);c=json.loads(os.environ['CFG']);print(json.dumps({'deck':c['deck'],'hand':h['hand'],'name':h['name'],'orders':c['orders'],'rounds':h.get('rounds',c['rounds']),'minutes':h.get('minutes',c['minutes']),'hands':3,'oppMinutes':0.5,**{k:c[k] for k in ('fitness','explore','judgeWinner') if k in c}}))")
+          T=$(python3 -c "import json,os;h=json.loads(os.environ['H']);c=json.loads(os.environ['CFG']);print(json.dumps({'deck':c['deck'],'hand':h['hand'],'name':h['name'],'orders':c['orders'],'rounds':h.get('rounds',c['rounds']),'minutes':h.get('minutes',c['minutes']),'hands':3,'oppMinutes':0.5,**{k:h.get(k,c.get(k)) for k in ('fitness','explore','judgeWinner','hints','seedBase','tries','only','seeds','share') if k in h or k in c}}))")
           node --no-warnings evolve.mjs "$T" 2>&1 | grep -v -i "http" | tee evolve.out
           rm -f data/hub.json
       - name: push results to branch ceiling-${{ matrix.h.name }}
