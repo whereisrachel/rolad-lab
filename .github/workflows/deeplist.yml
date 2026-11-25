@@ -1,0 +1,52 @@
+name: deeplist
+# Deep list re-check (Belal, Nov 25): findlist.mjs "versions" mode on a GitHub coordinator, pieces go to the hub helpers.
+# Same as the PC's findlist jobs except the search minutes. Started by a push to ceiling/deeplist.json:
+#   {"id":"2001","deck":"decks/findlist-1100.ydk","opts":{"min":5,"h1":12,...},"versions":[[{"op":"cut","card":"X"}],...]}
+# Results go to branch deeplist-<id> (reports + data/findlist-<id>.json, no secrets). The hub address is the HUB_URL secret.
+on:
+  push:
+    branches: [main]
+    paths: ['ceiling/deeplist.json']
+permissions:
+  contents: write   # results branch only
+jobs:
+  findlist:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: req }
+      - uses: actions/checkout@v4
+        with: { ref: vm, path: lab }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: findlist
+        working-directory: lab
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+        run: |
+          npm ci --no-audit --no-fund
+          python3 -c "import json,os;json.dump({'url':os.environ['HUB_URL']},open('data/hub.json','w'))"
+          python3 - > /tmp/args.txt <<'PY'
+          import json
+          r=json.load(open('../req/ceiling/deeplist.json'))
+          o=dict(r.get('opts',{})); o['versions']=r['versions']
+          print(r['id']); print(r['deck']); print(json.dumps(o))
+          PY
+          ID=$(sed -n 1p /tmp/args.txt); DECK=$(sed -n 2p /tmp/args.txt); V=$(sed -n 3p /tmp/args.txt)
+          echo "$ID" > /tmp/id.txt
+          node --no-warnings findlist.mjs --deck "$DECK" --id "$ID" --noprops --versions "$V" 2>&1 | grep -v -i "http" | tee /tmp/findlist.out
+          rm -f data/hub.json
+      - name: push results to branch deeplist-<id>
+        if: always()
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ID=$(cat /tmp/id.txt); rm -f lab/data/hub.json
+          mkdir -p /tmp/res/reports /tmp/res/data && cd /tmp/res
+          cp "$GITHUB_WORKSPACE"/lab/reports/findlist-$ID.* reports/ || true
+          cp "$GITHUB_WORKSPACE"/lab/data/findlist-$ID.json data/ || true
+          cp /tmp/findlist.out . || true
+          git init -q . && git config user.name rolad-ceiling && git config user.email noreply@github.com
+          git add -A && git commit -qm "deeplist results $ID"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/deeplist-$ID
