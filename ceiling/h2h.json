@@ -1,5 +1,5 @@
 {
- "id": "h2h-1",
+ "id": "h2h-2",
  "A": "v8 lines (survival search)",
  "B": "board search",
  "pairs": [
@@ -163,6 +163,29 @@
     "lines/h2h/board-citrinitas-o7.json",
     "lines/h2h/board-citrinitas-o8.json"
    ]
+  },
+  {
+   "hand": "treasure",
+   "a": [
+    "lines/h2h/deep-treasure-o1.json",
+    "lines/h2h/deep-treasure-o2.json",
+    "lines/h2h/deep-treasure-o3.json",
+    "lines/h2h/deep-treasure-o4.json",
+    "lines/h2h/deep-treasure-o5.json",
+    "lines/h2h/deep-treasure-o6.json",
+    "lines/h2h/deep-treasure-o7.json",
+    "lines/h2h/deep-treasure-o8.json"
+   ],
+   "b": [
+    "lines/h2h/board-treasure-o1.json",
+    "lines/h2h/board-treasure-o2.json",
+    "lines/h2h/board-treasure-o3.json",
+    "lines/h2h/board-treasure-o4.json",
+    "lines/h2h/board-treasure-o5.json",
+    "lines/h2h/board-treasure-o6.json",
+    "lines/h2h/board-treasure-o7.json",
+    "lines/h2h/board-treasure-o8.json"
+   ]
   }
  ],
  "seeds": [
@@ -170,5 +193,5 @@
   5002,
   5003
  ],
- "minutes": 0.5
+ "minutes": 1.5
 }

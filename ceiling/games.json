@@ -1,0 +1,8 @@
+{
+ "id": "2001",
+ "title": "Stronger opponents: same hands and seeds as test 1124 (47-card list), opponent gets 3x thinking time per turn (2.25 vs 0.75 min)",
+ "decks": "decks/findlist-1100.ydk",
+ "opps": "o_ss_panama,o_elfnote,o_despia,o_angelechy",
+ "sides": "first,second",
+ "n": 24, "min": 0.75, "omin": 2.25, "turns": 10
+}

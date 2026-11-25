@@ -1,0 +1,53 @@
+name: games
+# Full games to the end (gamestest.mjs) on a GitHub coordinator; games also go to the hub helpers.
+# Started by a push to ceiling/games.json: { id, decks, opps, sides, n, min, omin, turns }. Results go to branch games-<id>.
+# The hub address is the HUB_URL secret (never in the repo).
+on:
+  push:
+    branches: [main]
+    paths: ['ceiling/games.json']
+permissions:
+  contents: write   # results branch only
+jobs:
+  games:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: req }
+      - uses: actions/checkout@v4
+        with: { ref: vm, path: lab }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: games
+        working-directory: lab
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+        run: |
+          npm ci --no-audit --no-fund
+          python3 -c "import json,os;json.dump({'url':os.environ['HUB_URL']},open('data/hub.json','w'))"
+          python3 - > /tmp/args.txt <<'PY'
+          import json
+          r = json.load(open('../req/ceiling/games.json'))
+          open('/tmp/id.txt', 'w').write(str(r['id']))
+          a = ['--decks', r.get('decks', 'decks/findlist-1100.ydk'), '--opps', r.get('opps', 'o_ss_panama,o_elfnote,o_despia,o_angelechy'),
+               '--sides', r.get('sides', 'first,second'), '--n', str(r.get('n', 24)), '--min', str(r.get('min', 0.75)),
+               '--omin', str(r.get('omin', 0.75)), '--turns', str(r.get('turns', 10)), '--id', str(r['id'])]
+          print('\n'.join(a))
+          PY
+          mapfile -t ARGS < /tmp/args.txt
+          node --no-warnings gamestest.mjs "${ARGS[@]}" 2>&1 | grep -v -i "http" | tee /tmp/games.out
+          rm -f data/hub.json
+      - name: push results
+        if: always()
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ID=$(cat /tmp/id.txt); rm -f lab/data/hub.json
+          mkdir -p /tmp/res/reports /tmp/res/results && cd /tmp/res
+          cp "$GITHUB_WORKSPACE"/lab/reports/games-$ID.md reports/ || true
+          cp "$GITHUB_WORKSPACE"/lab/results/games-$ID.json results/ || true
+          cp /tmp/games.out . || true
+          git init -q . && git config user.name rolad-ceiling && git config user.email noreply@github.com
+          git add -A && git commit -qm "games results $ID"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/games-$ID
