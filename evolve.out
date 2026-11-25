@@ -1,0 +1,60 @@
+evolve board-blackchaos: 0 seed lines, 8 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 62
+helper slots now 4
+progress 5 pieces
+helper slots now 58
+progress 10 pieces
+progress 15 pieces
+progress 20 pieces
+progress 25 pieces
+helper slots now 46
+progress 30 pieces
+helper slots now 58
+helper slots now 26
+helper slots now 46
+progress 35 pieces
+progress 40 pieces
+helper slots now 62
+helper slots now 38
+helper slots now 62
+progress 45 pieces
+helper slots now 50
+helper slots now 46
+helper slots now 62
+progress 50 pieces
+helper slots now 54
+progress 55 pieces
+helper slots now 56
+helper slots now 58
+progress 60 pieces
+progress 65 pieces
+progress 70 pieces
+progress 75 pieces
+progress 80 pieces
+order 4: best 4.95 (search)
+progress 85 pieces
+progress 90 pieces
+progress 95 pieces
+order 1: best 4.95 (search)
+progress 100 pieces
+helper slots now 60
+progress 105 pieces
+progress 110 pieces
+progress 115 pieces
+order 2: best 4.95 (search)
+progress 120 pieces
+order 3: best 4.95 (search)
+progress 125 pieces
+progress 130 pieces
+order 7: best 4.95 (search)
+progress 135 pieces
+helper slots now 62
+progress 140 pieces
+progress 145 pieces
+order 5: best 4.95 (search)
+progress 150 pieces
+progress 155 pieces
+order 6: best 4.95 (search)
+progress 160 pieces
+order 8: best 4.95 (search)
+done -> reports/evolve-board-blackchaos.md
