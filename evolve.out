@@ -1,0 +1,28 @@
+evolve test-medius: 4 seed lines, 1 deck orders, 0 mutation rounds, 0.3 min searches, 3 hands x 4 decks per line
+progress 5 pieces
+progress 10 pieces
+progress 15 pieces
+progress 20 pieces
+progress 25 pieces
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+progress 45 pieces
+progress 50 pieces
+progress 55 pieces
+progress 60 pieces
+progress 65 pieces
+progress 70 pieces
+progress 75 pieces
+progress 80 pieces
+progress 85 pieces
+progress 90 pieces
+progress 95 pieces
+progress 100 pieces
+progress 105 pieces
+progress 110 pieces
+progress 115 pieces
+progress 120 pieces
+progress 125 pieces
+order 1: best 7.21 (m1b)
+done -> reports/evolve-test-medius.md
