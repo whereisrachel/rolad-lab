@@ -14,7 +14,7 @@ const ALLOW = new Set(['deepw.mjs', 'oppturn.mjs', 'robust.mjs', 'poolscan.mjs',
 const log = (s) => console.log(new Date().toLocaleTimeString() + ' ' + s);
 log(`ROLAD helper "${NAME}": ${SLOTS} cores, code ${VER}, hub ${HUB.replace(/\/[^/]+$/, '/…')}${LIB ? ', library lines when idle' : ''}`);
 const hub = async (p, opt = {}) => { const r = await fetch(HUB + p, { ...opt, signal: AbortSignal.timeout(120000) }); if (!r.ok) throw new Error('hub HTTP ' + r.status); return r.json(); };
-const safe = (p) => { const n = path.normalize(p).replace(/\\/g, '/'); if (n.startsWith('..') || path.isAbsolute(n) || !/^(decks|data)\//.test(n)) throw new Error('bad path ' + p); return n; };
+const safe = (p) => { const n = path.normalize(p).replace(/\\/g, '/'); if (n.startsWith('..') || path.isAbsolute(n) || !/^(decks|data|lines)\//.test(n)) throw new Error('bad path ' + p); return n; };
 const KIDS = new Set(); let track = (p) => { KIDS.add(p); p.on('close', () => KIDS.delete(p)); return p; };
 // games run at low priority, so the helper PC stays usable while it helps (Windows: 'Below normal'/'Low'); it only takes CPU nobody else wants
 const track0 = track; track = (p) => { try { os.setPriority(p.pid, os.constants.priority.PRIORITY_LOW); } catch {} return track0(p); };
