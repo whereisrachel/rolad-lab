@@ -1,0 +1,241 @@
+evolve sat15-infinity: 1 seed lines, 8 deck orders, 4 mutation rounds, 15 min searches, 3 hands x 4 decks per line
+helper slots now 48
+helper slots now 0
+helper slots now 48
+helper slots now 0
+helper slots now 4
+helper slots now 52
+progress 5 pieces
+helper slots now 0
+progress 10 pieces
+helper slots now 6
+progress 15 pieces
+progress 20 pieces
+progress 25 pieces
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+helper slots now 52
+helper slots now 0
+helper slots now 52
+progress 45 pieces
+progress 50 pieces
+helper slots now 4
+helper slots now 14
+progress 55 pieces
+progress 60 pieces
+progress 65 pieces
+progress 70 pieces
+progress 75 pieces
+progress 80 pieces
+progress 85 pieces
+progress 90 pieces
+progress 95 pieces
+progress 100 pieces
+progress 105 pieces
+helper slots now 62
+progress 110 pieces
+progress 115 pieces
+progress 120 pieces
+helper slots now 50
+progress 125 pieces
+progress 130 pieces
+progress 135 pieces
+helper slots now 58
+progress 140 pieces
+progress 145 pieces
+progress 150 pieces
+progress 155 pieces
+progress 160 pieces
+progress 165 pieces
+progress 170 pieces
+progress 175 pieces
+progress 180 pieces
+progress 185 pieces
+progress 190 pieces
+progress 195 pieces
+helper slots now 62
+progress 200 pieces
+progress 205 pieces
+progress 210 pieces
+progress 215 pieces
+progress 220 pieces
+progress 225 pieces
+progress 230 pieces
+progress 235 pieces
+progress 240 pieces
+progress 245 pieces
+progress 250 pieces
+progress 255 pieces
+progress 260 pieces
+progress 265 pieces
+progress 270 pieces
+progress 275 pieces
+progress 280 pieces
+progress 285 pieces
+progress 290 pieces
+progress 295 pieces
+progress 300 pieces
+progress 305 pieces
+progress 310 pieces
+progress 315 pieces
+progress 320 pieces
+progress 325 pieces
+progress 330 pieces
+helper slots now 54
+progress 335 pieces
+progress 340 pieces
+helper slots now 50
+helper slots now 40
+helper slots now 44
+helper slots now 42
+helper slots now 54
+progress 345 pieces
+helper slots now 58
+progress 350 pieces
+progress 355 pieces
+helper slots now 62
+progress 360 pieces
+progress 365 pieces
+progress 370 pieces
+progress 375 pieces
+progress 380 pieces
+progress 385 pieces
+progress 390 pieces
+progress 395 pieces
+progress 400 pieces
+progress 405 pieces
+progress 410 pieces
+progress 415 pieces
+progress 420 pieces
+helper slots now 14
+progress 425 pieces
+progress 430 pieces
+progress 435 pieces
+progress 440 pieces
+progress 445 pieces
+progress 450 pieces
+progress 455 pieces
+progress 460 pieces
+progress 465 pieces
+progress 470 pieces
+progress 475 pieces
+progress 480 pieces
+progress 485 pieces
+progress 490 pieces
+progress 495 pieces
+progress 500 pieces
+progress 505 pieces
+progress 510 pieces
+progress 515 pieces
+progress 520 pieces
+progress 525 pieces
+progress 530 pieces
+progress 535 pieces
+progress 540 pieces
+helper slots now 62
+progress 545 pieces
+progress 550 pieces
+progress 555 pieces
+progress 560 pieces
+progress 565 pieces
+progress 570 pieces
+progress 575 pieces
+progress 580 pieces
+progress 585 pieces
+progress 590 pieces
+progress 595 pieces
+order 6: best 7.85 (opening lanes)
+progress 600 pieces
+progress 605 pieces
+progress 610 pieces
+progress 615 pieces
+progress 620 pieces
+progress 625 pieces
+progress 630 pieces
+progress 635 pieces
+progress 640 pieces
+progress 645 pieces
+progress 650 pieces
+progress 655 pieces
+progress 660 pieces
+progress 665 pieces
+progress 670 pieces
+progress 675 pieces
+progress 680 pieces
+progress 685 pieces
+progress 690 pieces
+progress 695 pieces
+progress 700 pieces
+progress 705 pieces
+progress 710 pieces
+progress 715 pieces
+progress 720 pieces
+progress 725 pieces
+progress 730 pieces
+progress 735 pieces
+helper slots now 58
+helper slots now 62
+helper slots now 58
+helper slots now 62
+progress 740 pieces
+progress 745 pieces
+progress 750 pieces
+progress 755 pieces
+progress 760 pieces
+progress 765 pieces
+progress 770 pieces
+progress 775 pieces
+progress 780 pieces
+progress 785 pieces
+progress 790 pieces
+progress 795 pieces
+progress 800 pieces
+progress 805 pieces
+progress 810 pieces
+progress 815 pieces
+progress 820 pieces
+progress 825 pieces
+helper slots now 60
+progress 830 pieces
+progress 835 pieces
+progress 840 pieces
+progress 845 pieces
+progress 850 pieces
+progress 855 pieces
+progress 860 pieces
+progress 865 pieces
+progress 870 pieces
+helper slots now 12
+progress 875 pieces
+progress 880 pieces
+progress 885 pieces
+progress 890 pieces
+order 4: best 7.43 (opening lanes)
+progress 895 pieces
+progress 900 pieces
+progress 905 pieces
+progress 910 pieces
+progress 915 pieces
+order 3: best 5.86 (inf1)
+helper slots now 60
+progress 920 pieces
+progress 925 pieces
+progress 930 pieces
+order 1: best 7.77 (tries Activate Fiendsmith's Tract → new ending)
+helper slots now 62
+progress 935 pieces
+progress 940 pieces
+progress 945 pieces
+progress 950 pieces
+progress 955 pieces
+order 7: best 5.64 (opening lanes)
+order 2: best 4.97 (inf1 → new early order)
+progress 960 pieces
+progress 965 pieces
+progress 970 pieces
+order 8: best 4.54 (opening lanes → new ending → new early order → new ending)
+progress 975 pieces
+progress 980 pieces
+order 5: best 7.01 (opening lanes)
+done -> reports/evolve-sat15-infinity.md
