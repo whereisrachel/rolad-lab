@@ -1,55 +1,7 @@
 {
  "hands": [
   {
-   "name": "base-bcmed",
-   "hand": [
-    "Black Chaos",
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 1,
-   "rounds": 3
-  },
-  {
-   "name": "base-citrinitas",
-   "hand": [
-    "Ars Magna - \"Citrinitas\"",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 1,
-   "rounds": 3
-  },
-  {
-   "name": "base-engmed",
-   "hand": [
-    "Fiendsmith Engraver",
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 1,
-   "rounds": 3
-  },
-  {
-   "name": "base-infinity",
-   "hand": [
-    "Ars Magna of Infinity and Finity",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 1,
-   "rounds": 3
-  },
-  {
-   "name": "base-smallworld",
+   "name": "sat15-smallworld",
    "hand": [
     "Small World",
     "Ash Blossom & Joyous Spring",
@@ -57,23 +9,47 @@
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 1,
-   "rounds": 3
+   "minutes": 15,
+   "rounds": 4
   },
   {
-   "name": "base-treasure",
+   "name": "sat15-infinity",
    "hand": [
-    "Pendulum Treasure",
+    "Ars Magna of Infinity and Finity",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 1,
-   "rounds": 3
+   "minutes": 15,
+   "rounds": 4
+  },
+  {
+   "name": "sat15-terminus",
+   "hand": [
+    "Prohibited Power Patron Portal - Terminus",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 15,
+   "rounds": 4
+  },
+  {
+   "name": "sat15-medius",
+   "hand": [
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 15,
+   "rounds": 4
   }
  ],
  "deck": "decks/findlist-1100.ydk",
  "orders": 8,
- "note": "ceiling run 2b: same 6 openers at the old 1-min settings (same-code baseline)"
+ "note": "saturation test: same 4 hands at 15-min searches (deep run used 5) \u2014 do scores keep climbing?"
 }
