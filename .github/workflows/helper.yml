@@ -4,6 +4,9 @@ name: helper
 # each, started every hour, and only while the hub has work (they leave after 10 idle minutes) -> near-continuous during lab jobs.
 # The hub address is the HUB_URL secret (never in the repo).
 on:
+  push:
+    branches: [main]
+    paths: ['ceiling/helpers.txt']   # a push queues one more helper round right after the current one (no gap between hourly rounds)
   schedule:
     - cron: '7 * * * *'
   workflow_dispatch:
