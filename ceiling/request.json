@@ -1,39 +1,9 @@
 {
  "hands": [
   {
-   "name": "board-citrinitas",
-   "hand": [
-    "Ars Magna - \"Citrinitas\"",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
    "name": "board-treasure",
    "hand": [
     "Pendulum Treasure",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "board-engraver",
-   "hand": [
-    "Fiendsmith Engraver",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "board-blackchaos",
-   "hand": [
-    "Black Chaos",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Droll & Lock Bird",
@@ -47,5 +17,5 @@
  "rounds": 4,
  "fitness": "board",
  "explore": 2,
- "note": "board-strength line search run B: rank by end-board interruptions; v5.2 max combos as seeds; winners also played into the 4 opponent decks"
+ "note": "board search rerun: treasure (the first job lost its runner at 19:15Z)"
 }
