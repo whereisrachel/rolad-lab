@@ -15,7 +15,7 @@ on:
       orders: { default: "8", type: string }
       hands: { description: 'JSON list of {"name","hand":[...]}', type: string, default: "" }
 permissions:
-  contents: read
+  contents: write   # results are pushed to branch ceiling-<name> (reports only, no secrets)
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -64,6 +64,13 @@ jobs:
           T=$(python3 -c "import json,os;h=json.loads(os.environ['H']);c=json.loads(os.environ['CFG']);print(json.dumps({'deck':c['deck'],'hand':h['hand'],'name':h['name'],'orders':c['orders'],'rounds':c['rounds'],'minutes':c['minutes'],'hands':3,'oppMinutes':0.5}))")
           node --no-warnings evolve.mjs "$T" 2>&1 | grep -v -i "http" | tee evolve.out
           rm -f data/hub.json
+      - name: push results to branch ceiling-${{ matrix.h.name }}
+        if: always()
+        run: |
+          N="${{ matrix.h.name }}"; mkdir -p /tmp/out && cp -r reports/evolve-$N.* evolve.out /tmp/out/ 2>/dev/null; cp -r lines/evolved /tmp/out/ 2>/dev/null || true
+          git config user.name "rolad-ceiling"; git config user.email "noreply@github.com"
+          git checkout --orphan "ceiling-$N" && git rm -rq --cached . && git clean -fdq -e node_modules
+          cp -r /tmp/out/* . && git add -A -- . ':!node_modules' && git commit -qm "ceiling results $N" && git push -f origin "ceiling-$N"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
