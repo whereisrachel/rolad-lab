@@ -1,1 +1,105 @@
-{"hands":[{"name":"test-medius","hand":["Medius the Pure","Ash Blossom & Joyous Spring","Infinite Impermanence","Droll & Lock Bird","Ghost Ogre & Snow Rabbit"]}],"deck":"decks/findlist-1100.ydk","minutes":0.3,"rounds":0,"orders":1,"note":"pipeline test 3"}
+{
+ "hands": [
+  {
+   "name": "deep-medius",
+   "hand": [
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 5,
+   "rounds": 4
+  },
+  {
+   "name": "deep-terminus",
+   "hand": [
+    "Prohibited Power Patron Portal - Terminus",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 5,
+   "rounds": 4
+  },
+  {
+   "name": "deep-engraver",
+   "hand": [
+    "Fiendsmith Engraver",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 5,
+   "rounds": 4
+  },
+  {
+   "name": "deep-blackchaos",
+   "hand": [
+    "Black Chaos",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 5,
+   "rounds": 4
+  },
+  {
+   "name": "base-medius",
+   "hand": [
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 1,
+   "rounds": 3
+  },
+  {
+   "name": "base-terminus",
+   "hand": [
+    "Prohibited Power Patron Portal - Terminus",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 1,
+   "rounds": 3
+  },
+  {
+   "name": "base-engraver",
+   "hand": [
+    "Fiendsmith Engraver",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 1,
+   "rounds": 3
+  },
+  {
+   "name": "base-blackchaos",
+   "hand": [
+    "Black Chaos",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 1,
+   "rounds": 3
+  }
+ ],
+ "deck": "decks/findlist-1100.ydk",
+ "orders": 8,
+ "minutes": 5,
+ "rounds": 4,
+ "note": "ceiling search: deep-* = 5-min searches + 4 rounds; base-* = the old 1-min/3-round settings on the same current code, run side by side"
+}
