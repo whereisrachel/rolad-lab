@@ -36,10 +36,17 @@ async function search(ord, order, prefixRaw, tag, remote, extra = {}) { const ou
   const so = await withSlot((rm) => runNode('deepw.mjs', task, { remote: rm && remote, files: [DECK], outputs: [out], heap: 3000 })); tick(); const m = /RESULT (.*)/.exec(so || '');
   if (!fs.existsSync(out)) return null; const L = JSON.parse(fs.readFileSync(out, 'utf8')); L.res = m ? JSON.parse(m[1]) : null; L.file = out; L.tag = tag; L.ord = ord; return L; }
 // judge a line: the opponent's turn into it, H hands from each opponent deck; fitness = average margin (board left minus theirs, −10 more if OTK)
-async function judge(L) { const items = []; for (const o of OPPS) for (let h = 0; h < H; h++) items.push({ o, sd: 1000 + L.ord * 37 + h });
+// t.fitness 'board' (Belal, Nov 25): rank lines by the end board's interruptions (src/disrupt.mjs, the guide's count) instead of the margin
+// after a weak lab opponent's turn, which stops rewarding bigger boards once the board is "enough". The winner of each order still gets
+// the opponent check (margin), reported beside the board score.
+const BOARD = t.fitness === 'board';
+const boardV = (L) => { let v = L.res ? (L.res.v ?? 0) : (L.v ?? 0); if (L.mu && (L.raw || []).some(e => e.seat === 0 && new RegExp(L.mu).test(e.label || ''))) v -= 3; return +v.toFixed(2); };
+async function judge(L) { if (BOARD) { L.fit = boardV(L); L.byOpp = {}; L.worst = L.fit; L.otk = 0; L.n = 0; return L; } return judgeOpp(L); }
+async function judgeOpp(L, into = null) { const items = []; for (const o of OPPS) for (let h = 0; h < H; h++) items.push({ o, sd: 1000 + L.ord * 37 + h });
   const res = await Promise.all(items.map(async (it) => { const so = await withSlot((remote) => runNode('oppturn.mjs', { line: L.file, opp: `decks/${it.o}.ydk`, oppSeed: it.sd, minutes: OMIN, hands: 1, choke: false }, { remote, files: [L.file, `decks/${it.o}.ydk`] })); tick();
     const m = /OPPTURN (.*)/.exec(so || ''); return m ? { o: it.o, ...JSON.parse(m[1]) } : null; }));
   const ok = res.filter(Boolean); if (!ok.length) return null; const avg = (a) => +(a.reduce((s, x) => s + x.margin, 0) / a.length).toFixed(2);
+  if (into) { into.margin = avg(ok); into.marginByOpp = Object.fromEntries(OPPS.map(o => [o, ok.filter(x => x.o === o).length ? avg(ok.filter(x => x.o === o)) : null])); into.marginWorst = Math.min(...ok.map(x => x.margin)); return into; }
   L.fit = avg(ok); L.byOpp = Object.fromEntries(OPPS.map(o => [o, ok.filter(x => x.o === o).length ? avg(ok.filter(x => x.o === o)) : null])); L.worst = Math.min(...ok.map(x => x.margin)); L.otk = ok.filter(x => x.otk).length; L.n = ok.length; return L; }
 // own choices of a line (index into raw) -> a cut point keeps everything before the k-th own choice
 const ownIdx = (raw) => raw.map((e, i) => [e, i]).filter(([e]) => e.seat === 0 && !e.auto && e.label).map(([, i]) => i);
@@ -75,7 +82,7 @@ await poolN(Array.from({ length: ORD }, (_, i) => i + 1), C, 0, async (ord) => {
   const untried = [...offered.keys()].filter(k => !used.has(k) && !TRIVIAL.test(k)).sort((a, b) => (COV[a]?.tried || 0) - (COV[b]?.tried || 0) || (COV[b]?.offered || 0) - (COV[a]?.offered || 0));
   for (const k of offered.keys()) { COV[k] = COV[k] || { offered: 0, tried: 0, best: null }; COV[k].offered++; }
   for (const k of untried.slice(0, +(t.explore ?? 2))) { COV[k].tried++; ex.push((async () => { const mu = '^' + k.split(':')[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const X = await search(ord, base.order, null, `try${Math.abs(hashS(k)) % 1e6}-o${ord}`, true, { mustUse: mu }); if (!X) return; X.from = 'tries ' + k.split(':')[0].slice(0, 70); await judge(X); cands.push(X);
+    const X = await search(ord, base.order, null, `try${Math.abs(hashS(k)) % 1e6}-o${ord}`, true, { mustUse: mu }); if (!X) return; X.from = 'tries ' + k.split(':')[0].slice(0, 70); X.mu = mu; await judge(X); cands.push(X);
     if (X.fit != null && (COV[k].best == null || X.fit > COV[k].best)) COV[k].best = X.fit; })()); }
   await Promise.all(ex);
   // 4) mutation: keep the first part of the best line so far and re-search the rest; rounds alternate a late cut (30-85%: new ending)
@@ -84,10 +91,11 @@ await poolN(Array.from({ length: ORD }, (_, i) => i + 1), C, 0, async (ord) => {
     const own = ownIdx(best.raw); if (own.length < 4) break; const lo = r % 2 ? 0.05 : 0.3, span = r % 2 ? 0.25 : 0.55; const k = own[Math.floor(own.length * (lo + span * Math.random()))];
     const M = await search(ord, best.order, best.raw.slice(0, k), `mut${r}-o${ord}`, true); if (!M) continue; M.from = (best.from || '') + (r % 2 ? ' → new early order' : ' → new ending'); await judge(M); cands.push(M); }
   const ranked = cands.filter(c => c.fit != null).sort((a, b) => b.fit - a.fit); const win = ranked[0];
+  if (BOARD && win && t.judgeWinner !== false) await judgeOpp(win, win);
   if (win) { const id = `evo-${NAME}-o${ord}`; const keep = { ...win, id, list: LIST, scn: 'none', when: new Date().toISOString(), evolved: true, keys: (win.res && win.res.keys) || win.keys || [] }; delete keep.res;
     fs.writeFileSync(`lines/evolved/${id}.json`, JSON.stringify(keep)); fs.writeFileSync(`data/lib-${LIST}/${id}.json`, JSON.stringify(keep));
     if (hub) try { await fetch(hub.url + '/put-line', { method: 'POST', body: JSON.stringify(keep), signal: AbortSignal.timeout(30000) }); } catch {} }
-  perOrd.push({ ord, cands: ranked.map(c => ({ tag: c.tag, from: c.from, fit: c.fit, byOpp: c.byOpp, worst: c.worst, otk: c.otk, followed: c.followed, of: c.of, asWritten: !!c.asWritten, failStep: c.followed != null && c.followed < c.of ? (seeds.find(x => path.basename(x.f, '.json') === String(c.from).split(' ')[0])?.L.script || [])[c.followed] || null : null, gone: facedown(c), board: String((c.res && c.res.board) || c.board || '').split('YOU:').pop().slice(0, 700), steps: steps(c) })) });
+  perOrd.push({ ord, cands: ranked.map(c => ({ tag: c.tag, from: c.from, fit: c.fit, margin: c.margin ?? null, marginByOpp: c.marginByOpp || null, marginWorst: c.marginWorst ?? null, byOpp: c.byOpp, worst: c.worst, otk: c.otk, followed: c.followed, of: c.of, asWritten: !!c.asWritten, failStep: c.followed != null && c.followed < c.of ? (seeds.find(x => path.basename(x.f, '.json') === String(c.from).split(' ')[0])?.L.script || [])[c.followed] || null : null, gone: facedown(c), board: String((c.res && c.res.board) || c.board || '').split('YOU:').pop().slice(0, 700), steps: steps(c) })) });
   log(`order ${ord}: best ${win ? win.fit : '-'} (${win ? win.from : '-'})`); });
 
 perOrd.sort((a, b) => a.ord - b.ord);
@@ -105,7 +113,8 @@ const CUTS = t.cutOrder || ['Plundered Power Patron Plane - Vidolia', 'Artmage V
 const cutsFor = (c) => CUTS.filter(k => k !== c); const HTX = /Ash Blossom|Infinite Impermanence|Droll|Ghost Ogre|Nibiru|Maxx|Mulcharmy|Effect Veiler|Called by the Grave/; /* Belal: no generic hand traps as candidates */ const props = weak.filter(x => x.drop >= 0.5 && cnt(x.card) > 0 && cnt(x.card) < 3 && !HTX.test(x.card)).slice(0, 4).map((x, i) => ({ why: `${x.card}: best line ${x.drop} worse when a cost banished it (${x.hit} of ${ORD} orders) — ${t.hand[0]}`, v: [{ op: 'add', card: x.card }, { op: 'cut', card: cutsFor(x.card)[i % cutsFor(x.card).length] }] }));
 { const seen = new Set(); for (const p of props.slice()) if (!seen.has(p.v[0].card)) { seen.add(p.v[0].card); props.push({ why: p.why + ' (add only: deck grows, up to 60)', v: [p.v[0]] }); } } /* Belal: the deck can be 60 cards, so test pure adds too */
 const PF = `data/proposals-${LIST}.json`; const P0 = fs.existsSync(PF) ? JSON.parse(fs.readFileSync(PF, 'utf8')) : []; for (const p of props) if (!P0.some(q => JSON.stringify(q.v) === JSON.stringify(p.v))) P0.push({ ...p, from: NAME, when: new Date().toISOString() }); fs.writeFileSync(PF, JSON.stringify(P0, null, 1));
-let md = `# Evolved lines — ${t.hand.join(', ')} (${LIST})\n${new Date().toISOString()}\n\n${ORD} deck orders (different face-down banishes / draws), ${H} opponent hands x ${OPPS.join(' + ')} per line, ${MIN} min searches, ${ROUNDS} mutation rounds.\nFitness = average margin after their turn (what you keep minus what they build; −10 more if they OTK). Higher is better.\n\n`;
+let md = `# Evolved lines — ${t.hand.join(', ')} (${LIST})\n${new Date().toISOString()}\n\n${ORD} deck orders (different face-down banishes / draws), ${H} opponent hands x ${OPPS.join(' + ')} per line, ${MIN} min searches, ${ROUNDS} mutation rounds.\n${BOARD ? 'Fitness = end-board interruptions (the lab scorer, src/disrupt.mjs: wipe 2, negate 1-1.5, banish/protection less; hand traps kept count 1 each). The winner of each order is also played into the opponent decks: margin after their turn shown beside it.' : 'Fitness = average margin after their turn (what you keep minus what they build; −10 more if they OTK). Higher is better.'}\n\n`;
+if (BOARD) md += `**Margin after their turn (winners): average ${mean(all.map(x => x.margin).filter(x => x != null))}** (worst ${Math.min(...all.map(x => x.marginWorst ?? 99))})\n\n`;
 md += `**Best line per deck order: average ${mean(all.map(x => x.fit))}** (worst order ${all.length ? Math.min(...all.map(x => x.fit)) : '-'}). Winner came from: ${Object.entries(all.reduce((m, x) => (m[x.from] = (m[x.from] || 0) + 1, m), {})).map(([k, v]) => `${k} ${v}`).join(', ')}\n\n`;
 if (seedAsIs.length) md += `| seed line | works as written | its score when it works | seed start + search finish (all orders) |\n|---|---|---|---|\n` + seedAsIs.map(s => `| ${s.nm} | ${s.works}/${ORD} | ${s.fit ?? '-'} | ${s.rec ?? '-'} |`).join('\n') + '\n\n';
 md += `## Weak points found automatically\n` + (weak.length ? `Cards whose face-down banish (by your own costs) hurt the best line most (average best line without vs with that card banished):\n\n| card | orders where it was banished | drop |\n|---|---|---|\n` + weak.slice(0, 10).map(x => `| ${x.card} | ${x.hit}/${ORD} | ${x.drop} |`).join('\n') + '\n\n' : 'None this run.\n\n');
@@ -113,7 +122,7 @@ md += Object.keys(fails).length ? `Where the hand-designed lines broke (next ste
 md += props.length ? `List changes proposed for the list test (data/proposals-${LIST}.json):\n${props.map(p => `- ${p.v.map(c => (c.op === 'add' ? '+1 ' : '−1 ') + c.card).join(', ')} — ${p.why}`).join('\n')}\n\n` : '';
 const tri = Object.entries(COV).filter(([, v]) => v.tried && v.best != null).sort((a, b) => b[1].best - a[1].best).slice(0, 8);
 md += tri.length ? `Effects the search had not used, tried on purpose (best result so far):\n${tri.map(([k, v]) => `- ${k.split(':')[0]}: ${v.best}`).join('\n')}\n\n` : '';
-for (const p of perOrd) { const w = p.cands[0]; if (!w) continue; md += `## Order ${p.ord}: best ${w.fit} (${Object.entries(w.byOpp || {}).map(([o, v]) => o.replace(/^o_/, '') + ' ' + v).join(', ')}, worst ${w.worst}) — from ${w.from}${w.followed != null ? ` (seed followed ${w.followed}/${w.of} steps)` : ''}\n`;
+for (const p of perOrd) { const w = p.cands[0]; if (!w) continue; md += `## Order ${p.ord}: best ${w.fit}${w.margin != null ? ` [margin ${w.margin}: ${Object.entries(w.marginByOpp || {}).map(([o, v]) => o.replace(/^o_/, '') + ' ' + v).join(', ')}]` : ''} (${Object.entries(w.byOpp || {}).map(([o, v]) => o.replace(/^o_/, '') + ' ' + v).join(', ')}, worst ${w.worst}) — from ${w.from}${w.followed != null ? ` (seed followed ${w.followed}/${w.of} steps)` : ''}\n`;
   md += `Others: ${p.cands.slice(1).map(c => `${c.from} ${c.fit}`).join(' · ')}\n\n${w.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}\n\nEnd board: ${w.board.replace(/\n/g, ' ')}\n\n`; }
 fs.mkdirSync('reports', { recursive: true }); fs.writeFileSync(`reports/evolve-${NAME}.md`, md); fs.writeFileSync(`reports/evolve-${NAME}.json`, JSON.stringify(perOrd));
 clearInterval(hsTimer); try { (await import('child_process')).execFileSync(process.execPath, ['--no-warnings', 'bridges.mjs'], { stdio: 'ignore', timeout: 60000 }); } catch {} log(`done -> reports/evolve-${NAME}.md`);
