@@ -1,1 +1,88 @@
-{"id":"2000","deck":"decks/findlist-1100.ydk","opts":{"min":0.2,"h1":2,"h2":0,"h3":0,"hv":2},"versions":[[{"op":"cut","card":"Artmage Graflare"}]],"note":"pipeline test"}
+{
+ "id": "2001",
+ "deck": "decks/findlist-1100.ydk",
+ "opts": {
+  "min": 5,
+  "h1": 12,
+  "h2": 24,
+  "h3": 36,
+  "hv": 60,
+  "keep2": 12,
+  "keep3": 6
+ },
+ "versions": [
+  [
+   {
+    "op": "cut",
+    "card": "Artmage Graflare"
+   }
+  ],
+  [
+   {
+    "op": "add",
+    "card": "Prohibited Power Patron Portal - Terminus"
+   }
+  ],
+  [
+   {
+    "op": "cut",
+    "card": "Prohibited Power Patron Portal - Terminus"
+   }
+  ],
+  [
+   {
+    "op": "add",
+    "card": "Mind Shuffle"
+   }
+  ],
+  [
+   {
+    "op": "add",
+    "card": "Skull Archfiend of Chaos"
+   }
+  ],
+  [
+   {
+    "op": "cut",
+    "card": "Black Chaos"
+   }
+  ],
+  [
+   {
+    "op": "add",
+    "card": "Light and Darkness Ritual"
+   }
+  ],
+  [
+   {
+    "op": "add",
+    "card": "Ars Magna of Infinity and Finity"
+   }
+  ],
+  [
+   {
+    "op": "add",
+    "card": "Small World"
+   }
+  ],
+  [
+   {
+    "op": "cut",
+    "card": "Fiendsmith Engraver"
+   }
+  ],
+  [
+   {
+    "op": "cut",
+    "card": "Fiendsmith's Tract"
+   }
+  ],
+  [
+   {
+    "op": "cut",
+    "card": "Pendulum Treasure"
+   }
+  ]
+ ],
+ "note": "deep list re-check: key decisions at 5-min searches (list tests used 1 min)"
+}
