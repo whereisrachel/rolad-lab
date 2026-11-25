@@ -1,88 +1,164 @@
 {
  "hands": [
   {
-   "name": "c2-div-smallworld",
+   "name": "c2-t30-medius",
    "hand": [
-    "Small World",
+    "Medius the Pure",
     "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 5,
-   "rounds": 6,
-   "explore": 6,
-   "hints": false,
-   "seeds": [],
-   "tries": [
-    "^Activate Griffoh",
-    "^Activate Light and Darkness Ritual: Ritual Summon",
-    "^Activate Mind Shuffle",
-    "^Link Summon S:P Little Knight",
-    "^Activate Theorealize Liberation",
-    "^Activate Theorealize Past Lull",
-    "^Activate Fiendsmith's Sequence",
-    "^Special Summon \\(procedure\\) Dark Magician of Destruction",
-    "^Activate Artmage Graflare",
-    "^Synchro Summon Chaos Angel"
+   "minutes": 30,
+   "only": [
+    1,
+    2,
+    3,
+    4
    ],
-   "seedBase": 9100
+   "rounds": 4,
+   "explore": 2,
+   "seedBase": 7030
   },
   {
-   "name": "c2-div-engraver",
-   "hand": [
-    "Fiendsmith Engraver",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 5,
-   "rounds": 6,
-   "explore": 6,
-   "hints": false,
-   "seeds": [],
-   "tries": [
-    "^Activate Griffoh",
-    "^Activate Light and Darkness Ritual: Ritual Summon",
-    "^Activate Mind Shuffle",
-    "^Link Summon S:P Little Knight",
-    "^Activate Theorealize Liberation",
-    "^Activate Theorealize Past Lull",
-    "^Activate Fiendsmith's Sequence",
-    "^Special Summon \\(procedure\\) Dark Magician of Destruction",
-    "^Activate Artmage Graflare",
-    "^Synchro Summon Chaos Angel"
-   ],
-   "seedBase": 9100
-  },
-  {
-   "name": "c2-div-blackchaos",
+   "name": "c2-t30-bcmed",
    "hand": [
     "Black Chaos",
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 30,
+   "only": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "rounds": 4,
+   "explore": 2,
+   "seedBase": 7030
+  },
+  {
+   "name": "c2-t30-infinity",
+   "hand": [
+    "Ars Magna of Infinity and Finity",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 5,
-   "rounds": 6,
-   "explore": 6,
-   "hints": false,
-   "seeds": [],
-   "tries": [
-    "^Activate Griffoh",
-    "^Activate Light and Darkness Ritual: Ritual Summon",
-    "^Activate Mind Shuffle",
-    "^Link Summon S:P Little Knight",
-    "^Activate Theorealize Liberation",
-    "^Activate Theorealize Past Lull",
-    "^Activate Fiendsmith's Sequence",
-    "^Special Summon \\(procedure\\) Dark Magician of Destruction",
-    "^Activate Artmage Graflare",
-    "^Synchro Summon Chaos Angel"
+   "minutes": 30,
+   "only": [
+    1,
+    2,
+    3,
+    4
    ],
-   "seedBase": 9100
+   "rounds": 4,
+   "explore": 2,
+   "seedBase": 7030
+  },
+  {
+   "name": "c2-t15-medius",
+   "hand": [
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 15,
+   "only": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "rounds": 4,
+   "explore": 2,
+   "seedBase": 7015
+  },
+  {
+   "name": "c2-t15-bcmed",
+   "hand": [
+    "Black Chaos",
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 15,
+   "only": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "rounds": 4,
+   "explore": 2,
+   "seedBase": 7015
+  },
+  {
+   "name": "c2-t15-infinity",
+   "hand": [
+    "Ars Magna of Infinity and Finity",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 15,
+   "only": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "rounds": 4,
+   "explore": 2,
+   "seedBase": 7015
+  },
+  {
+   "name": "c2-t5-medius",
+   "hand": [
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 5,
+   "only": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "rounds": 4,
+   "explore": 2,
+   "seedBase": 7005
+  },
+  {
+   "name": "c2-t5-bcmed",
+   "hand": [
+    "Black Chaos",
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 5,
+   "only": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "rounds": 4,
+   "explore": 2,
+   "seedBase": 7005
   }
  ],
  "deck": "decks/findlist-1100.ydk",
@@ -92,5 +168,5 @@
  "orders": 8,
  "minutes": 5,
  "rounds": 4,
- "note": "ceiling-2 part 3/3: time test (5/15/30 min, new seeds, orders 1-4) + diversity run (no hints, no seed lines, forced finishes, 8 orders)"
+ "note": "ceiling-2 part 1/3: time test (5/15/30 min, new seeds, orders 1-4) + diversity run (no hints, no seed lines, forced finishes, 8 orders)"
 }
