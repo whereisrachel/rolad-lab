@@ -1,0 +1,42 @@
+name: h2h
+# Head-to-head of two line sets after the opponent's turn (h2h.mjs) on a GitHub coordinator; pieces go to the hub helpers.
+# Started by a push to ceiling/h2h.json (the h2h.mjs task). Results go to branch h2h-<id>. The hub address is the HUB_URL secret.
+on:
+  push:
+    branches: [main]
+    paths: ['ceiling/h2h.json']
+permissions:
+  contents: write   # results branch only
+jobs:
+  h2h:
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: req }
+      - uses: actions/checkout@v4
+        with: { ref: vm, path: lab }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - name: h2h
+        working-directory: lab
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+        run: |
+          npm ci --no-audit --no-fund
+          python3 -c "import json,os;json.dump({'url':os.environ['HUB_URL']},open('data/hub.json','w'))"
+          python3 -c "import json;print(json.load(open('../req/ceiling/h2h.json'))['id'])" > /tmp/id.txt
+          node --no-warnings h2h.mjs "$(cat ../req/ceiling/h2h.json)" 2>&1 | grep -v -i "http" | tee /tmp/h2h.out
+          rm -f data/hub.json
+      - name: push results
+        if: always()
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ID=$(cat /tmp/id.txt); rm -f lab/data/hub.json
+          mkdir -p /tmp/res/reports && cd /tmp/res
+          cp "$GITHUB_WORKSPACE"/lab/reports/$ID.* reports/ || true
+          cp /tmp/h2h.out . || true
+          git init -q . && git config user.name rolad-ceiling && git config user.email noreply@github.com
+          git add -A && git commit -qm "h2h results $ID"
+          git push -f "https://x-access-token:${TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:refs/heads/h2h-$ID

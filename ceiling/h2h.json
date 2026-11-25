@@ -1,0 +1,174 @@
+{
+ "id": "h2h-1",
+ "A": "v8 lines (survival search)",
+ "B": "board search",
+ "pairs": [
+  {
+   "hand": "medius",
+   "a": [
+    "lines/h2h/deep-medius-o1.json",
+    "lines/h2h/deep-medius-o2.json",
+    "lines/h2h/deep-medius-o3.json",
+    "lines/h2h/deep-medius-o4.json",
+    "lines/h2h/deep-medius-o5.json",
+    "lines/h2h/deep-medius-o6.json",
+    "lines/h2h/deep-medius-o7.json",
+    "lines/h2h/deep-medius-o8.json"
+   ],
+   "b": [
+    "lines/h2h/board-medius-o1.json",
+    "lines/h2h/board-medius-o2.json",
+    "lines/h2h/board-medius-o3.json",
+    "lines/h2h/board-medius-o4.json",
+    "lines/h2h/board-medius-o5.json",
+    "lines/h2h/board-medius-o6.json",
+    "lines/h2h/board-medius-o7.json",
+    "lines/h2h/board-medius-o8.json"
+   ]
+  },
+  {
+   "hand": "terminus",
+   "a": [
+    "lines/h2h/deep-terminus-o1.json",
+    "lines/h2h/deep-terminus-o2.json",
+    "lines/h2h/deep-terminus-o3.json",
+    "lines/h2h/deep-terminus-o4.json",
+    "lines/h2h/deep-terminus-o5.json",
+    "lines/h2h/deep-terminus-o6.json",
+    "lines/h2h/deep-terminus-o7.json",
+    "lines/h2h/deep-terminus-o8.json"
+   ],
+   "b": [
+    "lines/h2h/board-terminus-o1.json",
+    "lines/h2h/board-terminus-o2.json",
+    "lines/h2h/board-terminus-o3.json",
+    "lines/h2h/board-terminus-o4.json",
+    "lines/h2h/board-terminus-o5.json",
+    "lines/h2h/board-terminus-o6.json",
+    "lines/h2h/board-terminus-o7.json",
+    "lines/h2h/board-terminus-o8.json"
+   ]
+  },
+  {
+   "hand": "engmed",
+   "a": [
+    "lines/h2h/deep-engmed-o1.json",
+    "lines/h2h/deep-engmed-o2.json",
+    "lines/h2h/deep-engmed-o3.json",
+    "lines/h2h/deep-engmed-o4.json",
+    "lines/h2h/deep-engmed-o5.json",
+    "lines/h2h/deep-engmed-o6.json",
+    "lines/h2h/deep-engmed-o7.json",
+    "lines/h2h/deep-engmed-o8.json"
+   ],
+   "b": [
+    "lines/h2h/board-engmed-o1.json",
+    "lines/h2h/board-engmed-o2.json",
+    "lines/h2h/board-engmed-o3.json",
+    "lines/h2h/board-engmed-o4.json",
+    "lines/h2h/board-engmed-o5.json",
+    "lines/h2h/board-engmed-o6.json",
+    "lines/h2h/board-engmed-o7.json",
+    "lines/h2h/board-engmed-o8.json"
+   ]
+  },
+  {
+   "hand": "bcmed",
+   "a": [
+    "lines/h2h/deep-bcmed-o1.json",
+    "lines/h2h/deep-bcmed-o2.json",
+    "lines/h2h/deep-bcmed-o3.json",
+    "lines/h2h/deep-bcmed-o4.json",
+    "lines/h2h/deep-bcmed-o5.json",
+    "lines/h2h/deep-bcmed-o6.json",
+    "lines/h2h/deep-bcmed-o7.json",
+    "lines/h2h/deep-bcmed-o8.json"
+   ],
+   "b": [
+    "lines/h2h/board-bcmed-o1.json",
+    "lines/h2h/board-bcmed-o2.json",
+    "lines/h2h/board-bcmed-o3.json",
+    "lines/h2h/board-bcmed-o4.json",
+    "lines/h2h/board-bcmed-o5.json",
+    "lines/h2h/board-bcmed-o6.json",
+    "lines/h2h/board-bcmed-o7.json",
+    "lines/h2h/board-bcmed-o8.json"
+   ]
+  },
+  {
+   "hand": "infinity",
+   "a": [
+    "lines/h2h/deep-infinity-o1.json",
+    "lines/h2h/deep-infinity-o2.json",
+    "lines/h2h/deep-infinity-o3.json",
+    "lines/h2h/deep-infinity-o4.json",
+    "lines/h2h/deep-infinity-o5.json",
+    "lines/h2h/deep-infinity-o6.json",
+    "lines/h2h/deep-infinity-o7.json",
+    "lines/h2h/deep-infinity-o8.json"
+   ],
+   "b": [
+    "lines/h2h/board-infinity-o1.json",
+    "lines/h2h/board-infinity-o2.json",
+    "lines/h2h/board-infinity-o3.json",
+    "lines/h2h/board-infinity-o4.json",
+    "lines/h2h/board-infinity-o5.json",
+    "lines/h2h/board-infinity-o6.json",
+    "lines/h2h/board-infinity-o7.json",
+    "lines/h2h/board-infinity-o8.json"
+   ]
+  },
+  {
+   "hand": "smallworld",
+   "a": [
+    "lines/h2h/deep-smallworld-o1.json",
+    "lines/h2h/deep-smallworld-o2.json",
+    "lines/h2h/deep-smallworld-o3.json",
+    "lines/h2h/deep-smallworld-o4.json",
+    "lines/h2h/deep-smallworld-o5.json",
+    "lines/h2h/deep-smallworld-o6.json",
+    "lines/h2h/deep-smallworld-o7.json",
+    "lines/h2h/deep-smallworld-o8.json"
+   ],
+   "b": [
+    "lines/h2h/board-smallworld-o1.json",
+    "lines/h2h/board-smallworld-o2.json",
+    "lines/h2h/board-smallworld-o3.json",
+    "lines/h2h/board-smallworld-o4.json",
+    "lines/h2h/board-smallworld-o5.json",
+    "lines/h2h/board-smallworld-o6.json",
+    "lines/h2h/board-smallworld-o7.json",
+    "lines/h2h/board-smallworld-o8.json"
+   ]
+  },
+  {
+   "hand": "citrinitas",
+   "a": [
+    "lines/h2h/deep-citrinitas-o1.json",
+    "lines/h2h/deep-citrinitas-o2.json",
+    "lines/h2h/deep-citrinitas-o3.json",
+    "lines/h2h/deep-citrinitas-o4.json",
+    "lines/h2h/deep-citrinitas-o5.json",
+    "lines/h2h/deep-citrinitas-o6.json",
+    "lines/h2h/deep-citrinitas-o7.json",
+    "lines/h2h/deep-citrinitas-o8.json"
+   ],
+   "b": [
+    "lines/h2h/board-citrinitas-o1.json",
+    "lines/h2h/board-citrinitas-o2.json",
+    "lines/h2h/board-citrinitas-o3.json",
+    "lines/h2h/board-citrinitas-o4.json",
+    "lines/h2h/board-citrinitas-o5.json",
+    "lines/h2h/board-citrinitas-o6.json",
+    "lines/h2h/board-citrinitas-o7.json",
+    "lines/h2h/board-citrinitas-o8.json"
+   ]
+  }
+ ],
+ "seeds": [
+  5001,
+  5002,
+  5003
+ ],
+ "minutes": 0.5
+}
