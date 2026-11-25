@@ -1,0 +1,66 @@
+name: helper2
+# Second set of cloud helpers (Belal, Nov 24: add more GitHub machines; 8 search jobs + 6 + 6 helpers = the free plan's 20 at once).
+# Started only by a push to ceiling/helpers2.txt, never on a schedule. Same 55-min limit per machine.
+# Cloud helpers for the ROLAD lab: up to 4 GitHub machines join the same hub as the helper PCs and take test pieces
+# (one game each) while a lab job is running. Raised Nov 24 (Belal: try again, keep usage proper): up to 6 at once, 55 min
+# each, started every hour, and only while the hub has work (they leave after 10 idle minutes) -> near-continuous during lab jobs.
+# The hub address is the HUB_URL secret (never in the repo).
+on:
+  push:
+    branches: [main]
+    paths: ['ceiling/helpers2.txt']
+  workflow_dispatch:
+    inputs:
+      machines: { description: "machines (max 6)", default: "6", type: string }
+      minutes: { description: "minutes each (max 55)", default: "55", type: string }
+permissions:
+  contents: read
+concurrency:
+  group: rolad-helper2
+  cancel-in-progress: false
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      go: ${{ steps.c.outputs.go }}
+      matrix: ${{ steps.c.outputs.matrix }}
+      minutes: ${{ steps.c.outputs.minutes }}
+    steps:
+      - id: c
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+          M_IN: ${{ inputs.machines }}
+          T_IN: ${{ inputs.minutes }}
+        run: |
+          W=0; for t in 1 2 3 4 5 6 7 8; do  # the lab sends pieces in waves: look for work for ~2.5 min, not one instant
+            S=$(curl -s -m 15 "$HUB_URL/status" || echo '{}')
+            W=$(echo "$S" | python3 -c "import sys,json;d=json.load(sys.stdin);print(int(d.get('waiting',0))+int(d.get('running',0)))" 2>/dev/null || echo 0)
+            [ "$W" -gt 0 ] && break; sleep 20; done
+          M=$(python3 -c "import os;print(max(1,min(6,int(os.environ.get('M_IN') or 6))))")
+          T=$(python3 -c "import os;print(max(5,min(55,int(os.environ.get('T_IN') or 55))))")
+          echo "hub pieces waiting+running: $W"
+          if [ "$W" -gt 0 ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "go=1" >> "$GITHUB_OUTPUT"; else echo "go=0" >> "$GITHUB_OUTPUT"; fi
+          python3 -c "import json;print('matrix='+json.dumps({'m':list(range($M))}))" >> "$GITHUB_OUTPUT"
+          echo "minutes=$T" >> "$GITHUB_OUTPUT"
+  help:
+    needs: gate
+    if: needs.gate.outputs.go == '1'
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJson(needs.gate.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: vm }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: npm ci --no-audit --no-fund
+      - name: join the hub
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+        run: |
+          python3 -c "import json,os;json.dump({'hub':os.environ['HUB_URL'],'library':False},open('worker.json','w'))"
+          node --no-warnings worker.mjs --slots $(nproc) --name "github-b${{ matrix.m }}" --nolib --nopull --maxmin ${{ needs.gate.outputs.minutes }} --idleexit 10
