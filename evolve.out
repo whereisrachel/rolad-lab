@@ -1,0 +1,51 @@
+evolve board-treasure: 2 seed lines, 8 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 54
+progress 5 pieces
+progress 10 pieces
+progress 15 pieces
+progress 20 pieces
+helper slots now 62
+helper slots now 50
+progress 25 pieces
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+progress 45 pieces
+progress 50 pieces
+progress 55 pieces
+progress 60 pieces
+order 5: best 12.1 (tries Special Summon (procedure) Nervedo the Shadebeast Power Patron)
+helper slots now 62
+progress 65 pieces
+progress 70 pieces
+helper slots now 58
+progress 75 pieces
+helper slots now 62
+progress 80 pieces
+progress 85 pieces
+progress 90 pieces
+progress 95 pieces
+order 3: best 12.4 (tries Activate Light and Darkness Ritual)
+progress 100 pieces
+progress 105 pieces
+progress 110 pieces
+progress 115 pieces
+progress 120 pieces
+progress 125 pieces
+progress 130 pieces
+progress 135 pieces
+progress 140 pieces
+order 7: best 12.05 (search)
+progress 145 pieces
+progress 150 pieces
+progress 155 pieces
+progress 160 pieces
+progress 165 pieces
+order 1: best 12.2 (opening lanes → new early order)
+progress 170 pieces
+order 2: best 12.15 (tries Activate Theorealize Liberation)
+order 4: best 12.1 (tries Normal Summon Theorealize Medius)
+order 8: best 13.9 (opening lanes → new ending)
+progress 175 pieces
+order 6: best 13.9 (opening lanes → new ending)
+done -> reports/evolve-board-treasure.md
