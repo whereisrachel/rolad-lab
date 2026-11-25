@@ -1,19 +1,9 @@
 {
  "hands": [
   {
-   "name": "board-medius",
+   "name": "board-citrinitas",
    "hand": [
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "board-terminus",
-   "hand": [
-    "Prohibited Power Patron Portal - Terminus",
+    "Ars Magna - \"Citrinitas\"",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Droll & Lock Bird",
@@ -21,39 +11,29 @@
    ]
   },
   {
-   "name": "board-engmed",
+   "name": "board-treasure",
+   "hand": [
+    "Pendulum Treasure",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "board-engraver",
    "hand": [
     "Fiendsmith Engraver",
-    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ]
   },
   {
-   "name": "board-bcmed",
+   "name": "board-blackchaos",
    "hand": [
     "Black Chaos",
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "board-infinity",
-   "hand": [
-    "Ars Magna of Infinity and Finity",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "board-smallworld",
-   "hand": [
-    "Small World",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Droll & Lock Bird",
@@ -67,5 +47,5 @@
  "rounds": 4,
  "fitness": "board",
  "explore": 2,
- "note": "board-strength line search run A: rank by end-board interruptions; v5.2 max combos as seeds; winners also played into the 4 opponent decks"
+ "note": "board-strength line search run B: rank by end-board interruptions; v5.2 max combos as seeds; winners also played into the 4 opponent decks"
 }
