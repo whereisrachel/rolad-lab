@@ -4,13 +4,16 @@ name: ceiling
 # Same settings as the PC's evolve job except the ones given below. Reports come back as an artifact.
 # The hub address is the HUB_URL secret (never in the repo).
 on:
+  push:
+    branches: [main]
+    paths: ['ceiling/request.json']   # pushing a request file starts a run (same fields as the inputs below)
   workflow_dispatch:
     inputs:
       deck: { default: "decks/findlist-1100.ydk", type: string }
       minutes: { description: "search minutes per line (PC runs used 1)", default: "5", type: string }
       rounds: { default: "4", type: string }
       orders: { default: "8", type: string }
-      hands: { description: 'JSON list of {"name","hand":[...]}', type: string, required: true }
+      hands: { description: 'JSON list of {"name","hand":[...]}', type: string, default: "" }
 permissions:
   contents: read
 jobs:
@@ -19,11 +22,25 @@ jobs:
     timeout-minutes: 5
     outputs:
       matrix: ${{ steps.m.outputs.matrix }}
+      cfg: ${{ steps.m.outputs.cfg }}
     steps:
+      - uses: actions/checkout@v4
       - id: m
         env:
           HANDS: ${{ inputs.hands }}
-        run: python3 -c "import json,os;h=json.loads(os.environ['HANDS']);assert 1<=len(h)<=6;print('matrix='+json.dumps({'h':h}))" >> "$GITHUB_OUTPUT"
+          DECK: ${{ inputs.deck }}
+          MIN: ${{ inputs.minutes }}
+          ROUNDS: ${{ inputs.rounds }}
+          ORD: ${{ inputs.orders }}
+        run: |
+          python3 - >> "$GITHUB_OUTPUT" <<'PY'
+          import json,os
+          if os.environ.get('HANDS'): c={'hands':json.loads(os.environ['HANDS']),'deck':os.environ['DECK'],'minutes':float(os.environ['MIN']),'rounds':int(os.environ['ROUNDS']),'orders':int(os.environ['ORD'])}
+          else: c=json.load(open('ceiling/request.json'))
+          h=c.pop('hands'); assert 1<=len(h)<=6
+          c={'deck':'decks/findlist-1100.ydk','minutes':5,'rounds':4,'orders':8,**c}
+          print('matrix='+json.dumps({'h':h})); print('cfg='+json.dumps(c))
+          PY
   evolve:
     needs: plan
     runs-on: ubuntu-latest
@@ -41,13 +58,10 @@ jobs:
         env:
           HUB_URL: ${{ secrets.HUB_URL }}
           H: ${{ toJson(matrix.h) }}
-          DECK: ${{ inputs.deck }}
-          MIN: ${{ inputs.minutes }}
-          ROUNDS: ${{ inputs.rounds }}
-          ORD: ${{ inputs.orders }}
+          CFG: ${{ needs.plan.outputs.cfg }}
         run: |
           python3 -c "import json,os;json.dump({'url':os.environ['HUB_URL']},open('data/hub.json','w'))"
-          T=$(python3 -c "import json,os;h=json.loads(os.environ['H']);print(json.dumps({'deck':os.environ['DECK'],'hand':h['hand'],'name':h['name'],'orders':int(os.environ['ORD']),'rounds':int(os.environ['ROUNDS']),'minutes':float(os.environ['MIN']),'hands':3,'oppMinutes':0.5}))")
+          T=$(python3 -c "import json,os;h=json.loads(os.environ['H']);c=json.loads(os.environ['CFG']);print(json.dumps({'deck':c['deck'],'hand':h['hand'],'name':h['name'],'orders':c['orders'],'rounds':c['rounds'],'minutes':c['minutes'],'hands':3,'oppMinutes':0.5}))")
           node --no-warnings evolve.mjs "$T" 2>&1 | grep -v -i "http" | tee evolve.out
           rm -f data/hub.json
       - uses: actions/upload-artifact@v4
