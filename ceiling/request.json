@@ -1,45 +1,21 @@
 {
  "hands": [
   {
-   "name": "deep-medius",
-   "hand": [
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 5,
-   "rounds": 4
-  },
-  {
-   "name": "deep-terminus",
-   "hand": [
-    "Prohibited Power Patron Portal - Terminus",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 5,
-   "rounds": 4
-  },
-  {
-   "name": "deep-engraver",
-   "hand": [
-    "Fiendsmith Engraver",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 5,
-   "rounds": 4
-  },
-  {
-   "name": "deep-blackchaos",
+   "name": "deep-bcmed",
    "hand": [
     "Black Chaos",
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 5,
+   "rounds": 4
+  },
+  {
+   "name": "deep-citrinitas",
+   "hand": [
+    "Ars Magna - \"Citrinitas\"",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Droll & Lock Bird",
@@ -49,57 +25,55 @@
    "rounds": 4
   },
   {
-   "name": "base-medius",
-   "hand": [
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 1,
-   "rounds": 3
-  },
-  {
-   "name": "base-terminus",
-   "hand": [
-    "Prohibited Power Patron Portal - Terminus",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 1,
-   "rounds": 3
-  },
-  {
-   "name": "base-engraver",
+   "name": "deep-engmed",
    "hand": [
     "Fiendsmith Engraver",
-    "Ash Blossom & Joyous Spring",
+    "Medius the Pure",
     "Ash Blossom & Joyous Spring",
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 1,
-   "rounds": 3
+   "minutes": 5,
+   "rounds": 4
   },
   {
-   "name": "base-blackchaos",
+   "name": "deep-infinity",
    "hand": [
-    "Black Chaos",
+    "Ars Magna of Infinity and Finity",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 1,
-   "rounds": 3
+   "minutes": 5,
+   "rounds": 4
+  },
+  {
+   "name": "deep-smallworld",
+   "hand": [
+    "Small World",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 5,
+   "rounds": 4
+  },
+  {
+   "name": "deep-treasure",
+   "hand": [
+    "Pendulum Treasure",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ],
+   "minutes": 5,
+   "rounds": 4
   }
  ],
  "deck": "decks/findlist-1100.ydk",
  "orders": 8,
- "minutes": 5,
- "rounds": 4,
- "note": "ceiling search: deep-* = 5-min searches + 4 rounds; base-* = the old 1-min/3-round settings on the same current code, run side by side"
+ "note": "ceiling run 2a: the other 6 guide openers at 5-min searches"
 }
