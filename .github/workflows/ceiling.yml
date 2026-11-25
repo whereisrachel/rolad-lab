@@ -1,0 +1,62 @@
+name: ceiling
+# Ceiling search for opening lines without Belal's PC: each hand runs evolve.mjs on its own GitHub machine
+# (coordinator + 3 local slots) and sends pieces to the same hub as the helper machines and the Oracle servers.
+# Same settings as the PC's evolve job except the ones given below. Reports come back as an artifact.
+# The hub address is the HUB_URL secret (never in the repo).
+on:
+  workflow_dispatch:
+    inputs:
+      deck: { default: "decks/findlist-1100.ydk", type: string }
+      minutes: { description: "search minutes per line (PC runs used 1)", default: "5", type: string }
+      rounds: { default: "4", type: string }
+      orders: { default: "8", type: string }
+      hands: { description: 'JSON list of {"name","hand":[...]}', type: string, required: true }
+permissions:
+  contents: read
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - id: m
+        env:
+          HANDS: ${{ inputs.hands }}
+        run: python3 -c "import json,os;h=json.loads(os.environ['HANDS']);assert 1<=len(h)<=6;print('matrix='+json.dumps({'h':h}))" >> "$GITHUB_OUTPUT"
+  evolve:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 355
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: vm }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: npm ci --no-audit --no-fund
+      - name: evolve
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+          H: ${{ toJson(matrix.h) }}
+          DECK: ${{ inputs.deck }}
+          MIN: ${{ inputs.minutes }}
+          ROUNDS: ${{ inputs.rounds }}
+          ORD: ${{ inputs.orders }}
+        run: |
+          python3 -c "import json,os;json.dump({'url':os.environ['HUB_URL']},open('data/hub.json','w'))"
+          T=$(python3 -c "import json,os;h=json.loads(os.environ['H']);print(json.dumps({'deck':os.environ['DECK'],'hand':h['hand'],'name':h['name'],'orders':int(os.environ['ORD']),'rounds':int(os.environ['ROUNDS']),'minutes':float(os.environ['MIN']),'hands':3,'oppMinutes':0.5}))")
+          node --no-warnings evolve.mjs "$T" 2>&1 | grep -v -i "http" | tee evolve.out
+          rm -f data/hub.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.h.name }}
+          retention-days: 14
+          path: |
+            reports/evolve-${{ matrix.h.name }}.md
+            reports/evolve-${{ matrix.h.name }}.json
+            lines/evolved/
+            evolve.out
