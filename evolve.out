@@ -1,0 +1,62 @@
+evolve board-terminus: 2 seed lines, 8 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 62
+helper slots now 4
+helper slots now 58
+progress 5 pieces
+progress 10 pieces
+progress 15 pieces
+progress 20 pieces
+helper slots now 46
+helper slots now 58
+progress 25 pieces
+helper slots now 26
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+progress 45 pieces
+progress 50 pieces
+progress 55 pieces
+progress 60 pieces
+helper slots now 46
+progress 65 pieces
+progress 70 pieces
+order 8: best 12.4 (tries Activate Mind Shuffle)
+progress 75 pieces
+progress 80 pieces
+progress 85 pieces
+order 2: best 12.15 (opening lanes)
+helper slots now 62
+helper slots now 38
+progress 90 pieces
+helper slots now 62
+progress 95 pieces
+progress 100 pieces
+helper slots now 50
+progress 105 pieces
+order 1: best 12.1 (tries Activate Fiendsmith's Tract)
+progress 110 pieces
+progress 115 pieces
+order 4: best 12.55 (opening lanes)
+progress 120 pieces
+helper slots now 62
+helper slots now 54
+helper slots now 56
+progress 125 pieces
+progress 130 pieces
+progress 135 pieces
+helper slots now 58
+order 6: best 14.1 (tries Activate Vidolium the Unstable Power Patron of Unity → new early order)
+helper slots now 60
+progress 140 pieces
+helper slots now 62
+progress 145 pieces
+progress 150 pieces
+order 5: best 13.65 (opening lanes)
+progress 155 pieces
+progress 160 pieces
+progress 165 pieces
+order 3: best 13.65 (tries Activate Theorealize Past Lull → new ending → new early order)
+progress 170 pieces
+progress 175 pieces
+order 7: best 13.05 (tries Activate Black Chaos → new early order)
+done -> reports/evolve-board-terminus.md
