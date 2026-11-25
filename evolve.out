@@ -1,0 +1,63 @@
+evolve board-infinity: 2 seed lines, 8 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 62
+helper slots now 4
+progress 5 pieces
+progress 10 pieces
+helper slots now 58
+progress 15 pieces
+progress 20 pieces
+helper slots now 46
+progress 25 pieces
+progress 30 pieces
+progress 35 pieces
+helper slots now 58
+helper slots now 26
+progress 40 pieces
+progress 45 pieces
+order 6: best 13.9 (opening lanes)
+helper slots now 46
+progress 50 pieces
+progress 55 pieces
+progress 60 pieces
+progress 65 pieces
+progress 70 pieces
+helper slots now 62
+progress 75 pieces
+helper slots now 38
+progress 80 pieces
+progress 85 pieces
+order 2: best 12.85 (search)
+progress 90 pieces
+helper slots now 62
+progress 95 pieces
+progress 100 pieces
+order 5: best 13.3 (opening lanes)
+helper slots now 50
+helper slots now 46
+progress 105 pieces
+helper slots now 62
+helper slots now 54
+helper slots now 56
+progress 110 pieces
+helper slots now 58
+helper slots now 60
+progress 115 pieces
+progress 120 pieces
+progress 125 pieces
+progress 130 pieces
+order 1: best 13.3 (opening lanes → new ending)
+progress 135 pieces
+progress 140 pieces
+helper slots now 62
+progress 145 pieces
+order 3: best 10.94 (v52-infinity)
+progress 150 pieces
+order 8: best 13 (search)
+progress 155 pieces
+progress 160 pieces
+progress 165 pieces
+order 7: best 13.3 (search → new early order)
+progress 170 pieces
+progress 175 pieces
+order 4: best 13 (search)
+done -> reports/evolve-board-infinity.md
