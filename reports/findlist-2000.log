@@ -1,0 +1,17 @@
+12:34:50 no library servers configured
+12:34:50 findlist 2000: list decks/findlist-1100.ydk (47 Main / 15 Extra), 0.2 min per game, 3 games at a time
+12:34:50 stage 0/5: learning hints for this list (first time only)
+12:34:52 knowledge for this run: 0 learned moves from 0 logged games (+ earlier learning); this run's games are added for next time
+12:34:52 blank slot: every version is played as a 48-card list with Petit Moth in the spare slot (a +1 takes its place, a cut is replaced by it), so deck size and order match across versions
+12:34:52 stage 1/5: your list twice (noise): 4 games
+12:34:52 stage 1/5: your list twice (noise): helper PCs add 4 cores (3 here)
+12:35:22 stage 1/5: your list twice (noise): 1 games so far played on helper PCs
+12:35:22 stage 1/5: your list twice (noise): line sharing on 2 hands -> 2 results improved by another version's legal line
+12:35:22 noise: same hands, different search luck -> per-hand spread 2.09, average -0.43 ± 1.47
+12:35:22 Extra Deck use in your list's games: least used = Chaos Angel (0 uses)
+12:35:23 candidates: 30 cuts, 24 +1s, 40 new Main Deck cards, 10 new Extra Deck cards, 0 packages -> testing 1 versions (connected cards come from 640 of all legal cards)
+12:35:23 stage 2/5: round 1 (1 versions x 2 hands): 2 games
+12:35:23 stage 2/5: round 1 (1 versions x 2 hands): helper PCs add 4 cores (3 here)
+12:35:36 stage 2/5: round 1 (1 versions x 2 hands): 1 games so far played on helper PCs
+12:35:37 stage 2/5: round 1 (1 versions x 2 hands): line sharing on 2 hands -> 3 results improved by another version's legal line
+12:35:37 done: reports/findlist-2000.md
