@@ -19,7 +19,8 @@ async function poll() { if (!pending.size) { clearInterval(poller); poller = nul
   const now = Date.now(); for (const [id, p] of pending) if (now > p.deadline) { pending.delete(id); get('/cancel', { method: 'POST', body: JSON.stringify({ ids: [id] }) }).catch(() => {}); p.ok(null); } }
 // run `node <script> <args>` on a helper PC. files: local input files it needs; outputs: files it writes that we want back.
 // Resolves { stdout } (outputs written locally), or null if no helper finished it in time (then run it here instead).
-export async function runRemote(script, args, { files = [], outputs = [], timeoutMs = 20 * 60000 } = {}) {
+export async function runRemote(script, args, { files = [], outputs = [], timeoutMs = 20 * 60000, est = 0 } = {}) {
+  if (est > 0) timeoutMs = Math.max(timeoutMs, (3 * est + 30) * 60000); // long pieces: wait for a helper long enough (queue + run), Nov 25
   if (!hub) return null; const id = `${process.pid}-${Date.now().toString(36)}-${seq++}`;
   // files travel with the piece under paths relative to the lab folder; the piece's input is rewritten to those paths
   const rel = (f) => path.relative(process.cwd(), path.resolve(f)).replace(/\\/g, '/');
@@ -27,7 +28,7 @@ export async function runRemote(script, args, { files = [], outputs = [], timeou
   for (const f of files) if (f && fs.existsSync(f)) { const r = rel(f); if (r.startsWith('..')) return null; fileMap[r] = fs.readFileSync(f, 'utf8'); for (const form of [f, JSON.stringify(f).slice(1, -1)]) argStr = argStr.split(form).join(r); }
   const outRel = outputs.map(o => { const r = rel(o); if (r !== o) argStr = argStr.split(JSON.stringify(o).slice(1, -1)).join(r); return [o, r]; });
   args = JSON.parse(argStr);
-  try { await get('/tasks', { method: 'POST', body: JSON.stringify({ tasks: [{ id, script, args, files: fileMap, outputs: outRel.map(x => x[1]), ver: VER }] }) }); } catch { return null; }
+  try { await get('/tasks', { method: 'POST', body: JSON.stringify({ tasks: [{ id, script, args, files: fileMap, outputs: outRel.map(x => x[1]), ver: VER, ...(est > 0 ? { est: +est.toFixed(1), lease: Math.round((1.5 * est + 10) * 60000) } : {}) }] }) }); } catch { return null; }
   const r = await new Promise(ok => { pending.set(id, { ok, deadline: Date.now() + timeoutMs, at: Date.now() }); if (!poller) poller = setInterval(poll, 3000); });
   if (!r || r.error) return null;
   for (const [o, rr] of outRel) { const c = (r.outputs || {})[rr]; if (c == null) continue; fs.mkdirSync(path.dirname(o), { recursive: true }); fs.writeFileSync(o, c); }
@@ -36,8 +37,8 @@ export async function runRemote(script, args, { files = [], outputs = [], timeou
 
 // run one script: on a helper PC when remote (falls back to here if no helper finishes it), else here. Returns stdout.
 import { spawn as spawn0 } from 'child_process';
-export async function runNode(script, args, { remote = false, files = [], outputs = [], heap = 2500, timeoutMin = 25 } = {}) {
-  if (remote) { const r = await runRemote(script, args, { files, outputs }); if (r) return r.stdout; }
+export async function runNode(script, args, { remote = false, files = [], outputs = [], heap = 2500, timeoutMin = 25, est = 0 } = {}) {
+  if (remote) { const r = await runRemote(script, args, { files, outputs, est }); if (r) return r.stdout; }
   // a piece that hangs (never exits) is killed after `timeoutMin` so one stuck game cannot stall a whole job (Nov 22: evolve job 1076 hung for 45+ min)
   return new Promise(ok => { const p = spawn0(process.execPath, ['--no-warnings', `--max-old-space-size=${heap}`, script, JSON.stringify(args)], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = ''; p.stdout.on('data', b => o += b);
     const tm = setTimeout(() => { try { p.kill(); } catch {} }, Math.max(1, timeoutMin) * 60000); p.on('close', () => { clearTimeout(tm); ok(o); }); });

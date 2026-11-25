@@ -12,10 +12,11 @@ const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' 
 const PORT = +f('port', 8080), TOKEN = f('token', ''), DIR = f('dir', 'data');
 if (!TOKEN || TOKEN.length < 16) { console.error('need --token (16+ chars)'); process.exit(1); }
 const LEASE = 15 * 60000; // a piece a helper took but did not return in 15 min goes back in the queue
+const leaseOf = (t) => Math.min(6 * 3600000, Math.max(LEASE, +t.lease || 0)); // long pieces (e.g. 15-30 min searches) carry their own lease (Nov 25)
 const waiting = [], running = new Map(), finished = new Map(), workers = new Map();
 const body = (req) => new Promise((ok, no) => { let s = ''; req.on('data', d => { s += d; if (s.length > 64e6) { req.destroy(); no(new Error('too big')); } }); req.on('end', () => { try { ok(s ? JSON.parse(s) : {}); } catch (e) { no(e); } }); });
 const send = (res, code, obj) => { res.writeHead(code, { 'content-type': 'application/json', 'access-control-allow-origin': '*' }); res.end(JSON.stringify(obj)); };
-setInterval(() => { const now = Date.now(); for (const [id, t] of running) if (now - t.at > LEASE) { running.delete(id); delete t.at; delete t.by; waiting.unshift(t); }
+setInterval(() => { const now = Date.now(); for (const [id, t] of running) if (now - t.at > leaseOf(t)) { running.delete(id); delete t.at; delete t.by; waiting.unshift(t); }
   for (const [id, r] of finished) if (now - r.at > 6 * 3600000) finished.delete(id); }, 30000);
 http.createServer(async (req, res) => {
   try {
@@ -34,9 +35,9 @@ http.createServer(async (req, res) => {
       if (fs.existsSync(d)) for (const fn of fs.readdirSync(d).filter(x => x.endsWith('.json'))) { try { const x = JSON.parse(fs.readFileSync(path.join(d, fn), 'utf8')); if (!since || (x.when || '') > since) out.push(x); } catch {} }
       return send(res, 200, out); }
     if (route === 'tasks' && req.method === 'POST') { const b = await body(req); for (const t of b.tasks || []) if (t.id && t.script) waiting.push(t); return send(res, 200, { ok: true, waiting: waiting.length }); }
-    if (route === 'claim') { const w = u.searchParams.get('worker') || '?', n = Math.max(1, Math.min(64, +(u.searchParams.get('n') || 1))), ver = u.searchParams.get('ver') || '';
+    if (route === 'claim') { const w = u.searchParams.get('worker') || '?', n = Math.max(1, Math.min(64, +(u.searchParams.get('n') || 1))), ver = u.searchParams.get('ver') || '', left = +(u.searchParams.get('left') || 0); /* minutes this helper has left (cloud runners): skip pieces that would not finish */
       workers.set(w, { at: Date.now(), slots: +(u.searchParams.get('slots') || n), ver, busy: +(u.searchParams.get('busy') || 0) }); const out = [];
-      for (let i = 0; i < waiting.length && out.length < n;) { const t = waiting[i]; if (t.ver && ver && t.ver !== ver) { i++; continue; } waiting.splice(i, 1); t.at = Date.now(); t.by = w; running.set(t.id, t); out.push(t); }
+      for (let i = 0; i < waiting.length && out.length < n;) { const t = waiting[i]; if ((t.ver && ver && t.ver !== ver) || (left > 0 && +t.est > 0 && +t.est > left)) { i++; continue; } waiting.splice(i, 1); t.at = Date.now(); t.by = w; running.set(t.id, t); out.push(t); }
       return send(res, 200, { tasks: out }); }
     if (route === 'done' && req.method === 'POST') { const r = await body(req); if (!r.id) return send(res, 400, {}); const t = running.get(r.id); running.delete(r.id);
       if (r.reject && t) { t.rejects = (t.rejects || 0) + 1; delete t.at; delete t.by; if (t.rejects < 3) { waiting.push(t); return send(res, 200, { ok: true }); } finished.set(t.id, { id: t.id, error: 'helpers could not run it', at: Date.now() }); return send(res, 200, { ok: true }); } // helper could not run it (e.g. different code): give it back

@@ -25,7 +25,7 @@ async function doTask(t) {
   if (!ALLOW.has(t.script)) return hub('/done', { method: 'POST', body: JSON.stringify({ id: t.id, reject: true }) });
   try { for (const [p, c] of Object.entries(t.files || {})) { const n = safe(p); fs.mkdirSync(path.dirname(n), { recursive: true }); fs.writeFileSync(n, c); }
     for (const o of t.outputs || []) { const n = safe(o); fs.mkdirSync(path.dirname(n), { recursive: true }); }
-    const r = await run(t.script, t.args, 30 * 60000); const outputs = {};
+    const r = await run(t.script, t.args, Math.max(30, 1.5 * (+t.est || 0) + 10) * 60000); const outputs = {};
     for (const o of t.outputs || []) { const n = safe(o); if (fs.existsSync(n)) { outputs[o] = fs.readFileSync(n, 'utf8'); fs.unlinkSync(n); } }
     await hub('/done', { method: 'POST', body: JSON.stringify({ id: t.id, stdout: r.stdout.slice(-200000), outputs, by: NAME }) }); done++;
   } catch (e) { try { await hub('/done', { method: 'POST', body: JSON.stringify({ id: t.id, reject: true }) }); } catch {} log('piece failed: ' + e.message); } }
@@ -54,7 +54,7 @@ const BUSYF = f('busyfile', ''); if (BUSYF) setInterval(() => { try { fs.writeFi
 async function slot(i) {
   while (!stop) {
     if (MAXMIN && Date.now() - START > MAXMIN * 60000) break; if (IDLEEXIT && Date.now() - Math.max(lastTask, START) > IDLEEXIT * 60000 && !busy) break;
-    let t = null; try { const r = await hub(`/claim?worker=${encodeURIComponent(NAME)}&n=1&slots=${SLOTS}&busy=${busy}&ver=${VER}`); t = (r.tasks || [])[0]; } catch { await new Promise(r => setTimeout(r, 30000)); continue; }
+    let t = null; try { const r = await hub(`/claim?worker=${encodeURIComponent(NAME)}&n=1&slots=${SLOTS}&busy=${busy}&ver=${VER}${MAXMIN ? `&left=${Math.max(1, Math.floor(MAXMIN + 8 - (Date.now() - START) / 60000))}` : ''}`); t = (r.tasks || [])[0]; } catch { await new Promise(r => setTimeout(r, 30000)); continue; }
     // while the PC is sending test pieces (one came in the last 10 min), at most a quarter of the cores do idle work, so pieces are taken at once
     if (t) lastTask = Date.now(); const pcActive = Date.now() - lastTask < 10 * 60000;
     if (!t && pcActive && idleBusy >= Math.max(1, Math.floor(SLOTS / 4))) { await new Promise(r => setTimeout(r, 3000)); continue; }

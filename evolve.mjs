@@ -32,8 +32,10 @@ async function orderOf(ord) { const out = `${TMP}/ord-o${ord}.json`; if (fs.exis
   await runNode('play.mjs', { deck: DECK, hand: t.hand, seed: ord, steps: [], out }, {}); return JSON.parse(fs.readFileSync(out, 'utf8')); }
 // search the rest of the turn from a fixed start (or from scratch)
 async function search(ord, order, prefixRaw, tag, remote, extra = {}) { const out = `${TMP}/s-${tag}.json`;
-  const task = { deck: DECK, hand: t.hand, main: order, minutes: MIN, rawOut: out, ...(prefixRaw && prefixRaw.length ? { prefixRaw } : {}), ...extra };
-  const so = await withSlot((rm) => runNode('deepw.mjs', task, { remote: rm && remote, files: [DECK], outputs: [out], heap: 3000 })); tick(); const m = /RESULT (.*)/.exec(so || '');
+  // Nov 25: every search gets its own random seed (t.seedBase + order + stage), so a rerun or a longer search explores new ground instead of
+  // replaying the same trajectory; t.hints === false turns off the hint steering (designed / earlier best lines) for a no-prior run
+  const task = { deck: DECK, hand: t.hand, main: order, minutes: MIN, rawOut: out, ...(prefixRaw && prefixRaw.length ? { prefixRaw } : {}), ...(t.seedBase != null ? { sseed: +t.seedBase + 1000 * ord + (Math.abs(hashS(tag)) % 997) } : {}), ...(t.hints === false ? { hints: false } : {}), ...extra };
+  const so = await withSlot((rm) => runNode('deepw.mjs', task, { remote: rm && remote, files: [DECK], outputs: [out], heap: 3000, est: 1.3 * MIN + 3, timeoutMin: Math.max(25, 1.6 * MIN + 10) })); tick(); const m = /RESULT (.*)/.exec(so || '');
   if (!fs.existsSync(out)) return null; const L = JSON.parse(fs.readFileSync(out, 'utf8')); L.res = m ? JSON.parse(m[1]) : null; L.file = out; L.tag = tag; L.ord = ord; return L; }
 // judge a line: the opponent's turn into it, H hands from each opponent deck; fitness = average margin (board left minus theirs, −10 more if OTK)
 // t.fitness 'board' (Belal, Nov 25): rank lines by the end board's interruptions (src/disrupt.mjs, the guide's count) instead of the margin
@@ -59,11 +61,12 @@ const steps = (L) => (L.raw || []).filter(e => e.seat === 0 && !e.auto && e.labe
 
 let SEM = null; const waiters = []; // one shared set of cores for every piece: helper slots first, then this PC
 const withSlot = async (job) => { for (;;) { if (SEM.r > 0) { SEM.r--; try { return await job(true); } finally { SEM.r++; const w = waiters.shift(); if (w) w(); } } if (SEM.l > 0) { SEM.l--; try { return await job(false); } finally { SEM.l++; const w = waiters.shift(); if (w) w(); } } await new Promise(r => waiters.push(r)); } };
-const C = ORD; /* every deck order at once: the long chains (search, judge, mutate) overlap and keep all cores busy */ const HS = await helperSlots(); SEM = { l: LOCAL, r: HS }; let HS0 = HS; // helpers that join or update to this code version later are picked up every 2 min
-const hsTimer = setInterval(async () => { const h = await helperSlots(); if (h !== HS0) { SEM.r += h - HS0; HS0 = h; log(`helper slots now ${h}`); for (let i = 0; i < Math.max(0, h); i++) { const w = waiters.shift(); if (w) w(); } } }, 120000);
+const C = ORD; /* every deck order at once: the long chains (search, judge, mutate) overlap and keep all cores busy */ const SHARE = Math.max(1, +(t.share || 1)); /* Nov 25: when several evolve runs share the hub at once, each takes its share of the helper cores, so its own cores don't sit idle waiting on an overfull queue */ const hsMine = async () => Math.ceil((await helperSlots()) / SHARE);
+const HS = await hsMine(); SEM = { l: LOCAL, r: HS }; let HS0 = HS; // helpers that join or update to this code version later are picked up every 2 min
+const hsTimer = setInterval(async () => { const h = await hsMine(); if (h !== HS0) { SEM.r += h - HS0; HS0 = h; log(`helper slots now ${h}`); for (let i = 0; i < Math.max(0, h); i++) { const w = waiters.shift(); if (w) w(); } } }, 120000);
 log(`evolve ${NAME}: ${seeds.length} seed lines, ${ORD} deck orders, ${ROUNDS} mutation rounds, ${MIN} min searches, ${H} hands x ${OPPS.length} decks per line`);
 const perOrd = [];
-await poolN(Array.from({ length: ORD }, (_, i) => i + 1), C, 0, async (ord) => {
+await poolN((t.only || Array.from({ length: ORD }, (_, i) => i + 1)), C, 0, async (ord) => {
   const base = await orderOf(ord); const cands = [];
   // 1) seeds followed as far as they work, then the search finishes; a seed that works to the end is also judged as written
   // (all searches of this step run at once, on helper PCs where possible, then every candidate is judged at once)
@@ -84,6 +87,7 @@ await poolN(Array.from({ length: ORD }, (_, i) => i + 1), C, 0, async (ord) => {
   for (const k of untried.slice(0, +(t.explore ?? 2))) { COV[k].tried++; ex.push((async () => { const mu = '^' + k.split(':')[0].replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const X = await search(ord, base.order, null, `try${Math.abs(hashS(k)) % 1e6}-o${ord}`, true, { mustUse: mu }); if (!X) return; X.from = 'tries ' + k.split(':')[0].slice(0, 70); X.mu = mu; await judge(X); cands.push(X);
     if (X.fit != null && (COV[k].best == null || X.fit > COV[k].best)) COV[k].best = X.fit; })()); }
+  for (const mu of (t.tries || [])) ex.push((async () => { const X = await search(ord, base.order, null, `force${Math.abs(hashS(mu)) % 1e6}-o${ord}`, true, { mustUse: mu }); if (!X) return; X.from = 'forced ' + mu.replace(/^\^/, '').replace(/\\/g, '').slice(0, 70); X.mu = mu; await judge(X); cands.push(X); })());
   await Promise.all(ex);
   // 4) mutation: keep the first part of the best line so far and re-search the rest; rounds alternate a late cut (30-85%: new ending)
   //    and an early cut (first 5-30%: new order of the early plays)
