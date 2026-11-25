@@ -1,0 +1,64 @@
+evolve board-smallworld: 2 seed lines, 8 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 62
+helper slots now 4
+progress 5 pieces
+progress 10 pieces
+helper slots now 58
+progress 15 pieces
+progress 20 pieces
+progress 25 pieces
+helper slots now 46
+helper slots now 58
+helper slots now 14
+helper slots now 46
+progress 30 pieces
+helper slots now 62
+progress 35 pieces
+helper slots now 38
+progress 40 pieces
+helper slots now 62
+helper slots now 54
+progress 45 pieces
+helper slots now 46
+progress 50 pieces
+progress 55 pieces
+progress 60 pieces
+progress 65 pieces
+helper slots now 62
+progress 70 pieces
+order 2: best 11.1 (search)
+helper slots now 54
+progress 75 pieces
+helper slots now 56
+progress 80 pieces
+helper slots now 62
+progress 85 pieces
+progress 90 pieces
+order 6: best 11.1 (opening lanes)
+helper slots now 54
+progress 95 pieces
+progress 100 pieces
+progress 105 pieces
+order 1: best 12.9 (v52-smallworld)
+helper slots now 60
+progress 110 pieces
+helper slots now 62
+progress 115 pieces
+progress 120 pieces
+progress 125 pieces
+order 8: best 11.85 (opening lanes)
+progress 130 pieces
+order 4: best 11.9 (opening lanes → new early order)
+progress 135 pieces
+progress 140 pieces
+progress 145 pieces
+progress 150 pieces
+progress 155 pieces
+progress 160 pieces
+progress 165 pieces
+progress 170 pieces
+order 5: best 12.9 (v52-smallworld)
+order 3: best 11 (opening lanes → new early order)
+progress 175 pieces
+order 7: best 13.05 (opening lanes → new ending → new early order)
+done -> reports/evolve-board-smallworld.md
