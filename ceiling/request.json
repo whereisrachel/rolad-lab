@@ -1,7 +1,7 @@
 {
  "hands": [
   {
-   "name": "deep-bcmed",
+   "name": "base-bcmed",
    "hand": [
     "Black Chaos",
     "Medius the Pure",
@@ -9,11 +9,11 @@
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 5,
-   "rounds": 4
+   "minutes": 1,
+   "rounds": 3
   },
   {
-   "name": "deep-citrinitas",
+   "name": "base-citrinitas",
    "hand": [
     "Ars Magna - \"Citrinitas\"",
     "Ash Blossom & Joyous Spring",
@@ -21,11 +21,11 @@
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 5,
-   "rounds": 4
+   "minutes": 1,
+   "rounds": 3
   },
   {
-   "name": "deep-engmed",
+   "name": "base-engmed",
    "hand": [
     "Fiendsmith Engraver",
     "Medius the Pure",
@@ -33,11 +33,11 @@
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 5,
-   "rounds": 4
+   "minutes": 1,
+   "rounds": 3
   },
   {
-   "name": "deep-infinity",
+   "name": "base-infinity",
    "hand": [
     "Ars Magna of Infinity and Finity",
     "Ash Blossom & Joyous Spring",
@@ -45,11 +45,11 @@
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 5,
-   "rounds": 4
+   "minutes": 1,
+   "rounds": 3
   },
   {
-   "name": "deep-smallworld",
+   "name": "base-smallworld",
    "hand": [
     "Small World",
     "Ash Blossom & Joyous Spring",
@@ -57,11 +57,11 @@
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 5,
-   "rounds": 4
+   "minutes": 1,
+   "rounds": 3
   },
   {
-   "name": "deep-treasure",
+   "name": "base-treasure",
    "hand": [
     "Pendulum Treasure",
     "Ash Blossom & Joyous Spring",
@@ -69,11 +69,11 @@
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 5,
-   "rounds": 4
+   "minutes": 1,
+   "rounds": 3
   }
  ],
  "deck": "decks/findlist-1100.ydk",
  "orders": 8,
- "note": "ceiling run 2a: the other 6 guide openers at 5-min searches"
+ "note": "ceiling run 2b: same 6 openers at the old 1-min settings (same-code baseline)"
 }
