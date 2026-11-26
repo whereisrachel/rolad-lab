@@ -1,0 +1,107 @@
+evolve c2-div-engmed: 0 seed lines, 8 deck orders, 6 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 2
+progress 5 pieces
+helper slots now 6
+helper slots now 3
+progress 10 pieces
+progress 15 pieces
+helper slots now 7
+helper slots now 4
+progress 20 pieces
+helper slots now 2
+progress 25 pieces
+helper slots now 7
+helper slots now 5
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+progress 45 pieces
+helper slots now 6
+progress 50 pieces
+progress 55 pieces
+helper slots now 4
+helper slots now 5
+progress 60 pieces
+progress 65 pieces
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+progress 70 pieces
+progress 75 pieces
+progress 80 pieces
+helper slots now 7
+helper slots now 6
+progress 85 pieces
+helper slots now 7
+progress 90 pieces
+helper slots now 6
+progress 95 pieces
+helper slots now 7
+progress 100 pieces
+helper slots now 6
+helper slots now 4
+helper slots now 6
+progress 105 pieces
+helper slots now 7
+progress 110 pieces
+helper slots now 6
+helper slots now 7
+helper slots now 6
+progress 115 pieces
+progress 120 pieces
+helper slots now 7
+progress 125 pieces
+progress 130 pieces
+helper slots now 5
+progress 135 pieces
+helper slots now 7
+helper slots now 6
+progress 140 pieces
+progress 145 pieces
+progress 150 pieces
+helper slots now 7
+progress 155 pieces
+progress 160 pieces
+progress 165 pieces
+helper slots now 4
+progress 170 pieces
+order 2: best 11.8 (forced Activate Griffoh)
+helper slots now 5
+progress 175 pieces
+helper slots now 4
+progress 180 pieces
+progress 185 pieces
+progress 190 pieces
+order 7: best 12 (forced Special Summon (procedure) Dark Magician of Destruction)
+helper slots now 5
+progress 195 pieces
+helper slots now 4
+progress 200 pieces
+helper slots now 5
+progress 205 pieces
+progress 210 pieces
+progress 215 pieces
+order 1: best 13.3 (tries Activate Artmage Finmel → new ending → new early order)
+progress 220 pieces
+progress 225 pieces
+progress 230 pieces
+helper slots now 3
+progress 235 pieces
+progress 240 pieces
+progress 245 pieces
+progress 250 pieces
+progress 255 pieces
+helper slots now 5
+order 5: best 13.7 (tries Activate Junoldo the Shadespirit Power Patron → new ending)
+progress 260 pieces
+progress 265 pieces
+progress 270 pieces
+progress 275 pieces
+order 6: best 12.85 (tries Activate Junoldo the Shadespirit Power Patron → new ending)
+progress 280 pieces
+progress 285 pieces
+order 8: best 13.3 (tries Normal Summon Lacrima the Crimson Tears → new early order)
+order 4: best 11.3 (forced Activate Theorealize Liberation → new ending)
+order 3: best 12.9 (forced Activate Theorealize Liberation → new ending)
+done -> reports/evolve-c2-div-engmed.md
