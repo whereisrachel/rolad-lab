@@ -1,0 +1,48 @@
+evalboards eb-1: 372 boards x 5 decks x 1 = 1860 opponent turns
+progress 50/1860 (28 usable)
+progress 100/1860 (60 usable)
+progress 150/1860 (98 usable)
+progress 200/1860 (126 usable)
+progress 250/1860 (161 usable)
+progress 300/1860 (183 usable)
+progress 350/1860 (218 usable)
+progress 400/1860 (245 usable)
+progress 450/1860 (279 usable)
+progress 500/1860 (313 usable)
+progress 550/1860 (343 usable)
+progress 600/1860 (378 usable)
+progress 650/1860 (416 usable)
+progress 700/1860 (441 usable)
+progress 750/1860 (473 usable)
+progress 800/1860 (503 usable)
+progress 850/1860 (540 usable)
+progress 900/1860 (566 usable)
+progress 950/1860 (594 usable)
+progress 1000/1860 (621 usable)
+progress 1050/1860 (659 usable)
+progress 1100/1860 (693 usable)
+progress 1150/1860 (728 usable)
+progress 1200/1860 (753 usable)
+progress 1250/1860 (776 usable)
+progress 1300/1860 (811 usable)
+progress 1350/1860 (837 usable)
+progress 1400/1860 (868 usable)
+progress 1450/1860 (898 usable)
+progress 1500/1860 (930 usable)
+progress 1550/1860 (968 usable)
+progress 1600/1860 (993 usable)
+progress 1650/1860 (1026 usable)
+progress 1700/1860 (1057 usable)
+progress 1750/1860 (1079 usable)
+progress 1800/1860 (1106 usable)
+progress 1850/1860 (1130 usable)
+1140 usable samples -> data/evals-findlist-1100.jsonl
+pulled 0 new samples from the hub
+1140 samples
+# Learned scoring — findlist-1100
+2026-11-26T17:25:22.318Z
+
+- Samples (opponent turns played into your boards): **1140**; features: 45
+- How well it predicts the result after their turn (cross-validated correlation): **0.574**  vs the hand-set turn-1 score: **0.575**
+- Not better than the hand-set scoring yet — needs more data.
+
