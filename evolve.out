@@ -1,0 +1,39 @@
+evolve c2-t5-bcmed: 2 seed lines, 8 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 7
+helper slots now 3
+progress 5 pieces
+helper slots now 5
+helper slots now 6
+progress 10 pieces
+helper slots now 5
+progress 15 pieces
+progress 20 pieces
+helper slots now 6
+progress 25 pieces
+progress 30 pieces
+progress 35 pieces
+helper slots now 4
+progress 40 pieces
+order 3: best 13.75 (opening lanes)
+progress 45 pieces
+helper slots now 5
+helper slots now 7
+helper slots now 5
+helper slots now 7
+helper slots now 6
+progress 50 pieces
+helper slots now 7
+progress 55 pieces
+progress 60 pieces
+helper slots now 6
+progress 65 pieces
+progress 70 pieces
+helper slots now 7
+order 1: best 13.9 (opening lanes)
+progress 75 pieces
+order 2: best 14.05 (tries Activate Vidolium the Unstable Power Patron of Unity)
+helper slots now 6
+progress 80 pieces
+progress 85 pieces
+order 4: best 13.9 (search)
+done -> reports/evolve-c2-t5-bcmed.md
