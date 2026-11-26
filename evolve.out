@@ -1,0 +1,75 @@
+evolve br3-berfomet-blackchaos: 0 seed lines, 8 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 4
+progress 5 pieces
+helper slots now 3
+progress 10 pieces
+progress 15 pieces
+progress 20 pieces
+helper slots now 2
+progress 25 pieces
+helper slots now 3
+helper slots now 4
+progress 30 pieces
+helper slots now 6
+progress 35 pieces
+helper slots now 4
+progress 40 pieces
+progress 45 pieces
+helper slots now 3
+helper slots now 5
+helper slots now 1
+helper slots now 5
+progress 50 pieces
+helper slots now 4
+progress 55 pieces
+helper slots now 6
+helper slots now 3
+progress 60 pieces
+helper slots now 2
+helper slots now 3
+progress 65 pieces
+progress 70 pieces
+helper slots now 4
+helper slots now 2
+helper slots now 4
+progress 75 pieces
+helper slots now 6
+helper slots now 3
+progress 80 pieces
+helper slots now 5
+helper slots now 1
+progress 85 pieces
+helper slots now 3
+progress 90 pieces
+helper slots now 4
+helper slots now 2
+progress 95 pieces
+helper slots now 6
+helper slots now 2
+progress 100 pieces
+helper slots now 4
+progress 105 pieces
+helper slots now 3
+progress 110 pieces
+helper slots now 2
+progress 115 pieces
+helper slots now 1
+helper slots now 3
+progress 120 pieces
+helper slots now 2
+helper slots now 1
+helper slots now 2
+progress 125 pieces
+order 6: best 5.98 (search)
+helper slots now 1
+progress 130 pieces
+order 1: best 5.98 (opening lanes)
+order 5: best 5.98 (search)
+order 8: best 7.3 (tries Activate Theorealize Medius)
+progress 135 pieces
+order 3: best 5.98 (forced Normal Summon Medius)
+order 7: best 5.98 (forced Activate Artmage Power Patron)
+order 4: best 5.98 (search)
+progress 140 pieces
+order 2: best 5.98 (search)
+done -> reports/evolve-br3-berfomet-blackchaos.md
