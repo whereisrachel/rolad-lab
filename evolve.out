@@ -1,0 +1,107 @@
+evolve c2-div-treasure: 0 seed lines, 8 deck orders, 6 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 2
+progress 5 pieces
+helper slots now 6
+helper slots now 3
+progress 10 pieces
+progress 15 pieces
+helper slots now 7
+helper slots now 4
+progress 20 pieces
+helper slots now 2
+progress 25 pieces
+helper slots now 7
+helper slots now 5
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+helper slots now 6
+progress 45 pieces
+progress 50 pieces
+helper slots now 4
+progress 55 pieces
+helper slots now 5
+progress 60 pieces
+helper slots now 7
+progress 65 pieces
+helper slots now 6
+helper slots now 7
+helper slots now 6
+progress 70 pieces
+progress 75 pieces
+progress 80 pieces
+helper slots now 7
+helper slots now 6
+helper slots now 7
+progress 85 pieces
+helper slots now 6
+progress 90 pieces
+helper slots now 7
+progress 95 pieces
+helper slots now 6
+helper slots now 4
+progress 100 pieces
+helper slots now 6
+helper slots now 7
+progress 105 pieces
+progress 110 pieces
+helper slots now 6
+helper slots now 7
+helper slots now 6
+progress 115 pieces
+helper slots now 7
+progress 120 pieces
+progress 125 pieces
+helper slots now 5
+progress 130 pieces
+progress 135 pieces
+helper slots now 7
+helper slots now 6
+helper slots now 7
+progress 140 pieces
+progress 145 pieces
+helper slots now 4
+progress 150 pieces
+progress 155 pieces
+progress 160 pieces
+helper slots now 5
+progress 165 pieces
+order 2: best 11.35 (tries Activate Light and Darkness Ritual)
+helper slots now 4
+progress 170 pieces
+helper slots now 5
+progress 175 pieces
+progress 180 pieces
+helper slots now 4
+helper slots now 5
+progress 185 pieces
+progress 190 pieces
+progress 195 pieces
+helper slots now 3
+progress 200 pieces
+progress 205 pieces
+progress 210 pieces
+progress 215 pieces
+progress 220 pieces
+helper slots now 5
+progress 225 pieces
+progress 230 pieces
+order 7: best 12.05 (forced Activate Fiendsmith's Sequence)
+progress 235 pieces
+order 3: best 12.1 (tries Activate Vidolium the Unstable Power Patron of Unity)
+progress 240 pieces
+progress 245 pieces
+progress 250 pieces
+order 5: best 12.05 (forced Activate Fiendsmith's Sequence → new early order)
+progress 255 pieces
+progress 260 pieces
+order 4: best 12.15 (tries Normal Summon Medius the Pure)
+progress 265 pieces
+progress 270 pieces
+progress 275 pieces
+order 6: best 13.95 (tries Activate Vidolium the Unstable Power Patron of Unity → new ending)
+progress 280 pieces
+order 8: best 13.9 (tries Activate Vidolium the Unstable Power Patron of Unity → new ending → new early order)
+progress 285 pieces
+order 1: best 12.1 (tries Activate Prohibited Power Patron Portal - Terminus)
+done -> reports/evolve-c2-div-treasure.md
