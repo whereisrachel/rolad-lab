@@ -21,6 +21,9 @@ const versions = [{ v: 'base', file: DECK }];
 for (const c of MAIN) { const f = `decks/ct/m-${c.replace(/[^\w]+/g, '_').slice(0, 50)}.ydk`; fs.writeFileSync(f, ydk([...base.main, codeOf(c)], base.extra)); versions.push({ v: c, zone: 'main', file: f }); }
 for (const sw of (t.swaps || [])) { const m = base.main.slice(); const i = m.findIndex(k => name(k) === sw.out); if (i < 0) throw new Error('not in list: ' + sw.out); m.splice(i, 1, codeOf(sw.in));
   const f = `decks/ct/s-${(sw.in + '-for-' + sw.out).replace(/[^\w]+/g, '_').slice(0, 70)}.ydk`; fs.writeFileSync(f, ydk(m, base.extra)); versions.push({ v: `${sw.in} for ${sw.out}`, zone: 'swap', inCard: sw.in, outCard: sw.out, file: f }); }
+for (const pk of (t.packages || [])) { const m = base.main.slice(); for (const c of pk.add || []) m.push(codeOf(c)); const ex = base.extra.slice();
+  (pk.extraIn || []).forEach((c, i) => { const out = (pk.extraOut || [])[i]; const j = ex.findIndex(k => name(k) === out); ex.splice(j >= 0 ? j : ex.length - 1, 1, codeOf(c)); });
+  const f = `decks/ct/p-${pk.name.replace(/[^\w]+/g, '_').slice(0, 50)}.ydk`; fs.writeFileSync(f, ydk(m, ex)); versions.push({ v: pk.name, zone: 'package', cards: [...(pk.add || []), ...(pk.extraIn || [])], file: f }); }
 for (const c of EXTRA) { const ex = base.extra.slice(); const i = ex.findIndex(k => name(k) === ED_OUT); ex.splice(i >= 0 ? i : ex.length - 1, 1, codeOf(c)); const f = `decks/ct/e-${c.replace(/[^\w]+/g, '_').slice(0, 50)}.ydk`; fs.writeFileSync(f, ydk(base.main, ex)); versions.push({ v: c, zone: 'extra', file: f }); }
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const pieces = [];
@@ -31,10 +34,10 @@ if (t.random) { const rng = (s0) => { let x = (s0 >>> 0) || 1; return () => (x =
     const pos = Math.floor(r() * (a.length + 1)); const hb = a.slice(0, 5).map(name); const withC = (c) => { const b = a.slice(); b.splice(pos, 0, codeOf(c)); return b.slice(0, 5).map(name); };
     t.hands['r' + h] = hb; t.handsFor['r' + h] = withC; t.swapFor = t.swapFor || {}; t.swapFor['r' + h] = (inC, outC) => { const b = a.slice(); const j = b.findIndex(k => name(k) === outC); if (j >= 0) b.splice(j, 1, codeOf(inC)); return b.slice(0, 5).map(name); }; } }
 for (const ver of versions) for (const [hn, hand0] of Object.entries(t.hands)) for (let o = 1; o <= ORD; o++) {
-  const hand = t.random ? (ver.zone === 'main' ? t.handsFor[hn](ver.v) : ver.zone === 'swap' ? t.swapFor[hn](ver.inCard, ver.outCard) : hand0.slice()) : ver.zone === 'main' ? [...hand0.slice(0, 4), ver.v] : hand0.slice();
+  const hand = t.random ? (ver.zone === 'main' ? t.handsFor[hn](ver.v) : ver.zone === 'swap' ? t.swapFor[hn](ver.inCard, ver.outCard) : hand0.slice()) : (ver.zone === 'main' && !t.inDeck) ? [...hand0.slice(0, 4), ver.v] : hand0.slice(); // inDeck: the card is only in the Deck (bridges are searched, not drawn)
   const hs = t.random ? 1000 * (+hn.slice(1)) : 0; const kinds = [{ k: 's1', x: { sseed: 4100 + o + hs } }, ...(t.lean ? [] : [{ k: 's2', x: { sseed: 5200 + o + hs } }]), { k: 'open', x: { sseed: 6300 + o + hs, open: true } }];
-  const mc = ver.zone === 'swap' ? ver.inCard : ver.v;
-  if (ver.v !== 'base') kinds.push({ k: 'must', x: { sseed: 7400 + o + hs, mustUse: `^(Activate|Normal Summon|Special Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Set Spell/Trap) ${esc(mc)}` } });
+  const mc = ver.zone === 'swap' ? ver.inCard : ver.zone === 'package' ? `(${ver.cards.map(esc).join('|')})` : ver.v;
+  if (ver.v !== 'base') kinds.push({ k: 'must', x: { sseed: 7400 + o + hs, mustUse: `^(Activate|Normal Summon|Special Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Set Spell/Trap|Special Summon \\(procedure\\)) ${ver.zone === 'package' ? mc : esc(mc)}` } });
   else if (t.lean) kinds.push({ k: 's3', x: { sseed: 8500 + o + hs } }); // the list without the card gets the same number of searches
   for (const kd of kinds) pieces.push({ ver, hn, o, k: kd.k, task: { deck: ver.file, hand, seed: o, minutes: MIN, hints: false, learn: false, ...kd.x } }); }
 console.log(`cardtest ${ID}: ${versions.length - 1} cards (${MAIN.length} Main, ${EXTRA.length} Extra) x ${Object.keys(t.hands).length} hands x ${ORD} orders = ${pieces.length} searches`);
