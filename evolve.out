@@ -1,0 +1,8 @@
+evolve c2-drawfair2-terminus: 3 seed lines, 8 deck orders, 0 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+progress 5 pieces
+progress 10 pieces
+order 8: best 12.1 (search)
+order 1: best 13.2 (opening lanes)
+progress 15 pieces
+order 3: best 14.05 (drawpre-terminus-a)
+done -> reports/evolve-c2-drawfair2-terminus.md
