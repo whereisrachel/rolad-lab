@@ -1,50 +1,13 @@
 {
- "id": "piv-ug",
- "script": "pivots.mjs",
+ "id": "de-1",
+ "script": "deckevo.mjs",
  "args": {
-  "lines": [
-   {
-    "name": "ug-engmed",
-    "file": "lines/piv/ug-engmed.json"
-   },
-   {
-    "name": "ug-terminus",
-    "file": "lines/piv/ug-terminus.json"
-   },
-   {
-    "name": "ug-bcmed",
-    "file": "lines/piv/ug-bcmed.json"
-   },
-   {
-    "name": "ug-treasure",
-    "file": "lines/piv/ug-treasure.json"
-   },
-   {
-    "name": "engmed",
-    "file": "lines/piv/engmed.json"
-   },
-   {
-    "name": "terminus",
-    "file": "lines/piv/terminus.json"
-   },
-   {
-    "name": "bcmed",
-    "file": "lines/piv/bcmed.json"
-   },
-   {
-    "name": "treasure",
-    "file": "lines/piv/treasure.json"
-   }
-  ],
-  "threats": [
-   "ash",
-   "imperm",
-   "droll",
-   "nibiru",
-   "ogre",
-   "belle"
-  ],
-  "minutes": 4,
-  "maxK": 24
+  "deck": "decks/findlist-1100.ydk",
+  "minutes": 15,
+  "hands": 16,
+  "pop": 16,
+  "keep": 4,
+  "more": 8,
+  "stopMin": 325
  }
 }
