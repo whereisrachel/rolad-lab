@@ -1,0 +1,37 @@
+evolve br2-berfomet-citrinitas: 0 seed lines, 4 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 5
+helper slots now 3
+progress 5 pieces
+helper slots now 5
+progress 10 pieces
+helper slots now 4
+progress 15 pieces
+helper slots now 5
+progress 20 pieces
+helper slots now 6
+helper slots now 5
+progress 25 pieces
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+progress 45 pieces
+helper slots now 4
+helper slots now 3
+helper slots now 5
+progress 50 pieces
+helper slots now 4
+helper slots now 5
+helper slots now 2
+progress 55 pieces
+helper slots now 4
+helper slots now 3
+progress 60 pieces
+order 3: best 11.55 (search)
+helper slots now 2
+order 4: best 11.55 (tries Activate Nervedo the Shadebeast Power Patron)
+helper slots now 3
+helper slots now 4
+order 1: best 11.55 (tries Activate Vidolium the Unstable Power Patron of Unity)
+helper slots now 3
+order 2: best 13.25 (forced Activate Griffoh → new ending)
+done -> reports/evolve-br2-berfomet-citrinitas.md
