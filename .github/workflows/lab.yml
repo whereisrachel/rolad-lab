@@ -22,6 +22,8 @@ jobs:
         working-directory: lab
         env:
           HUB_URL: ${{ secrets.HUB_URL }}
+          LIVE_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LIVE_REPO: ${{ github.repository }}
         run: |
           npm ci --no-audit --no-fund
           python3 -c "import json,os;json.dump({'url':os.environ['HUB_URL']},open('data/hub.json','w'))"
