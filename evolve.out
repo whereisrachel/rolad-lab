@@ -1,0 +1,51 @@
+evolve ug-rand5: 0 seed lines, 8 deck orders, 4 mutation rounds, 15 min searches, 3 hands x 4 decks per line
+helper slots now 4
+helper slots now 3
+helper slots now 2
+helper slots now 4
+helper slots now 5
+helper slots now 4
+helper slots now 3
+helper slots now 4
+helper slots now 3
+progress 5 pieces
+helper slots now 4
+progress 10 pieces
+helper slots now 2
+helper slots now 3
+progress 15 pieces
+helper slots now 6
+helper slots now 3
+helper slots now 5
+helper slots now 2
+progress 20 pieces
+helper slots now 5
+helper slots now 1
+helper slots now 3
+helper slots now 6
+helper slots now 2
+progress 25 pieces
+helper slots now 4
+helper slots now 3
+progress 30 pieces
+helper slots now 2
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 2
+progress 35 pieces
+order 2: best 14.45 (tries Normal Summon Junoldo the Shadespirit Power Patron)
+helper slots now 1
+progress 40 pieces
+order 4: best 13.5 (tries Activate Prohibited Power Patron Portal - Terminus → new early order)
+helper slots now 2
+helper slots now 1
+progress 45 pieces
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 4
+order 3: best 14.6 (tries Activate Junoldo the Shadespirit Power Patron → new early order)
+helper slots now 3
+order 1: best 14.45 (tries Activate Junoldo the Shadespirit Power Patron → new ending)
+done -> reports/evolve-ug-rand5.md
