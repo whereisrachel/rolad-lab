@@ -1,0 +1,35 @@
+{
+"hand": [
+"Black Chaos",
+"Ash Blossom & Joyous Spring",
+"Ash Blossom & Joyous Spring",
+"Droll & Lock Bird",
+"Ghost Ogre & Snow Rabbit"
+],
+"steps": [
+"Activate Black Chaos (hand): Special Summon (\"Black Chaos\")",
+"Mind Shuffle (Deck)",
+"your S1",
+"Pass (do not chain)",
+"Activate Mind Shuffle (S1): Add 1 appropriate monster to your hand",
+"Pass (do not chain)",
+"Skull Archfiend of Chaos (Deck)",
+"Skull Archfiend of Chaos (hand)",
+"Yes",
+"Light and Darkness Ritual (Deck)",
+"Pass (do not chain)",
+"Magician of Dark Chaos - Black Chaos (Deck)",
+"Activate Light and Darkness Ritual (GY): Add both this card and 1 card that mentions \"Light and Darkness Ritual\" from your GY to your hand",
+"Skull Archfiend of Chaos (GY)",
+"Set Spell/Trap Light and Darkness Ritual",
+"your S2",
+"Activate Light and Darkness Ritual (S2): Ritual Summon 1 \"Magician of Dark Chaos - Black Chaos\" or \"Black Luster Soldier - Soldier of Light and Darkness\" from your hand",
+"Magician of Dark Chaos - Black Chaos (hand)",
+"Black Chaos (GY)",
+"your M3",
+"face-up Attack",
+"Yes",
+"Pass (do not chain)",
+"Light and Darkness Ritual (GY)"
+]
+}

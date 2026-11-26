@@ -47,3 +47,10 @@ export async function runNode(script, args, { remote = false, files = [], output
 export async function pool(items, local, fn) { const hs = await helperSlots(); const q = items.slice(); const out = new Map();
   await Promise.all(Array.from({ length: Math.max(1, local) + hs }, async (_, w) => { while (q.length) { const it = q.shift(); out.set(it, await fn(it, w >= local)); } }));
   return items.map(it => out.get(it)); }
+// like pool(), but helper machines that join later (cloud helpers start a few minutes after the coordinator) are used too: the number of
+// remote workers follows helperSlots(), re-checked every minute (Nov 25)
+export async function poolDyn(items, local, fn) { const q = items.slice(); let live = 0, hs = await helperSlots(); const ws = [];
+  const work = async (remote) => { while (q.length) { if (remote && live > hs) break; const it = q.shift(); await fn(it, remote); } };
+  const grow = () => { while (live < hs && q.length) { live++; ws.push(work(true).finally(() => { live--; })); } };
+  grow(); const tm = setInterval(async () => { try { hs = await helperSlots(); } catch {} grow(); }, 60000);
+  await Promise.all(Array.from({ length: Math.max(1, local) }, () => work(false))); while (ws.length) await ws.shift(); clearInterval(tm); }

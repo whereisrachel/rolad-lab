@@ -48,8 +48,24 @@ for (let guard = 0; guard < 60 && !over(S) && S.turn <= MAXT; guard++) {
   const evalFn = (S2) => { const th = disruption(S2, B), mi = disruption(S2, A); const lpB = lpOf(S2, B); return 0.8 * mi - 1.2 * th + (th < 1 ? Math.min(atkOf(S2, A), Math.max(0, lpB)) / 1500 : 0) + (lpB <= 0 ? 20 : 0); };
   const search = (gg, mins) => searchT1(clone(gg), { seat: A, turn: T, ms: mins * 60000, nrpa: 3, seed: (t.sseed || 1) + T, evalFn });
   // 2) plan without seeing B's hand, play the plan until one of B's hand cards goes off, then re-plan
-  let plan = null; try { const gp = clone(g0); gp.noHand = { [B]: true }; const rp = await search(gp, MIN[A] * 0.4); plan = (rp.raw || []).slice(pre.length).filter(e => e.seat === A && !e.auto); } catch {}
-  let gq = g0;
+  // Nov 25: going first with a guide line (t.t1steps): turn 1 plays the guide's steps as written (labels matched like play.mjs) until one no longer
+  // fits (a hand trap hit it, or a face-down banish took a piece), then the search finishes the turn from there
+  let gq = g0, scripted = false;
+  if (T === 1 && A === 0 && Array.isArray(t.t1steps) && t.t1steps.length) { try { const S0 = await sim(g0); let k = 0;
+    for (let gd = 0; gd < 900 && S0.pending && !over(S0) && S0.turn === T && k < t.t1steps.length; gd++) { autoAdvance(S0); if (!S0.pending || over(S0)) break; if (pseat(S0) !== A) break;
+      const d = E.decision(S0, A); if (!d || !d.options.length) break; const st = String(t.t1steps[k]).trim().toLowerCase(); const j = d.options.findIndex(o => o.label.toLowerCase().includes(st));
+      if (process.env.DBGT1 === '2') console.error('STEP', k, JSON.stringify(st).slice(0, 60), '| prompt', d.prompt, '|', d.options.slice(0, 4).map(o => o.label.slice(0, 50)).join(' || '));
+      const take = (jj) => { const o = d.options[jj]; if (o.resp === undefined) { const a = E.answer(S0, A, String(jj + 1)); if (!a || !a.resps) return false; for (const r of a.resps) E.push(S0, { seat: A, resp: r.resp, label: r.label }); return true; } return !!E.push(S0, { seat: A, resp: o.resp, label: o.label }); };
+      if (j >= 0) { if (!take(j)) break; k++; continue; }
+      // a recorded window / yes-no / zone / position step that this game didn't ask for: skip it; also skip one step when the next one fits
+      if (/^(pass\b|yes$|no$|your [ms]\d|face-(up|down)|default order|finish selection)/i.test(st)) { k++; continue; }
+      if (k + 1 < t.t1steps.length) { const s2 = String(t.t1steps[k + 1]).trim().toLowerCase(); if (d.options.some(o => o.label.toLowerCase().includes(s2))) { k++; continue; } }
+      if (/battle position|^Zone for/i.test(d.prompt || '') || d.options.every(o => /^your [MS]\d|^face-up|^face-down/i.test(o.label))) { if (!take(0)) break; continue; }
+      const pz = d.options.findIndex(o => /^Pass\b/i.test(o.label)); if (pz >= 0) { if (!take(pz)) break; continue; }
+      if (process.env.DBGT1) { const dd = E.decision(S0, A); console.error('T1 stop at', k, JSON.stringify(t.t1steps[k]), dd && dd.prompt, JSON.stringify((dd && dd.options || []).map(o => o.label)).slice(0, 800)); } break; }
+    gq = clone(g0); gq.responses = S0.game.responses.map(e => ({ ...e })); scripted = true; log.push(`T1 guide line: ${k}/${t.t1steps.length} steps as written, then the search`); } catch (e) { log.push('T1 guide line failed: ' + String(e).slice(0, 100)); } }
+  let plan = null; if (!scripted) try { const gp = clone(g0); gp.noHand = { [B]: true }; const rp = await search(gp, MIN[A] * 0.4); plan = (rp.raw || []).slice(pre.length).filter(e => e.seat === A && !e.auto); } catch {}
+
   if (plan && plan.length) { const S0 = await sim(g0); let k = 0; const hit = () => S0.game.responses.slice(pre.length).some(e => e.seat === B && /^Activate .*\(hand\)/.test(e.label || ''));
     for (let i = 0; i < 5000 && S0.pending && !over(S0) && S0.turn === T && k < plan.length && !hit(); i++) { autoAdvance(S0); if (!S0.pending || over(S0) || hit()) break; if (pseat(S0) !== A) break; const e = plan[k]; let ok = false;
       try { if (e.label) { const d = E.decision(S0, A); const o = d && d.options.find(x => x.label === e.label); if (o && o.resp) ok = E.push(S0, { seat: A, resp: o.resp, label: o.label }); else ok = E.push(S0, { seat: A, resp: e.resp, label: e.label }); } else ok = E.push(S0, { seat: A, resp: e.resp }); } catch { ok = false; }
