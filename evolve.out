@@ -1,0 +1,19 @@
+evolve c2-drawfair-bcmed: 2 seed lines, 8 deck orders, 0 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 9
+progress 5 pieces
+progress 10 pieces
+progress 15 pieces
+helper slots now 14
+helper slots now 9
+progress 20 pieces
+progress 25 pieces
+order 4: best 14.2 (opening lanes)
+order 2: best 13.45 (search)
+order 5: best 13.75 (search)
+progress 30 pieces
+order 6: best 13.9 (search)
+order 3: best 13.9 (search)
+order 7: best 14.35 (drawpre-bcmed-b)
+order 8: best 13.75 (search)
+order 1: best 14.05 (opening lanes)
+done -> reports/evolve-c2-drawfair-bcmed.md
