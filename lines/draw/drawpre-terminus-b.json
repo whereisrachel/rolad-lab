@@ -1,0 +1,39 @@
+{
+ "hand": [
+  "Prohibited Power Patron Portal - Terminus",
+  "Ash Blossom & Joyous Spring",
+  "Ash Blossom & Joyous Spring",
+  "Droll & Lock Bird",
+  "Ghost Ogre & Snow Rabbit"
+ ],
+ "script": [
+  "Activate Prohibited Power Patron Portal - Terminus (hand): Send 1 \"Power Patron\" monster from your Deck or Extra Deck to the GY, then you can add 1 DARK Fairy monster from your Deck to your hand",
+  "your S1",
+  "Pass (do not chain)",
+  "Nervedo the Shadebeast Power Patron (Deck)",
+  "Yes",
+  "Vidolium the Unstable Power Patron of Unity (Deck)",
+  "Activate Vidolium the Unstable Power Patron of Unity (hand): Activate it as a Pendulum Spell",
+  "your S1",
+  "Activate Vidolium the Unstable Power Patron of Unity (S1): Activate 1 of these effects",
+  "Special Summon 1 \"Power Patron\" monster",
+  "Pass (do not chain)",
+  "Nervedo the Shadebeast Power Patron (GY)",
+  "your M3",
+  "face-up Attack",
+  "Yes",
+  "Pass (do not chain)",
+  "Junoldo the Shadespirit Power Patron (Deck)",
+  "Activate Junoldo the Shadespirit Power Patron (hand): Activate it as a Pendulum Spell",
+  "your S1",
+  "Activate Nervedo the Shadebeast Power Patron (M3): Special Summon 1 \"Nerva the Power Patron of Creation\" from your Extra Deck",
+  "Pass (do not chain)",
+  "Nerva the Power Patron of Creation (Extra Deck)",
+  "your M4",
+  "face-up Attack",
+  "Yes",
+  "Activate Junoldo the Shadespirit Power Patron (S1): Destroy this card, draw 2 cards, then discard 1 card"
+ ],
+ "from": "c2-div-terminus-o6",
+ "note": "prefix up to the Junoldo draw; the search finishes after seeing the 2 drawn cards"
+}
