@@ -1,18 +1,36 @@
 {
- "id": "ct-2",
+ "id": "ct-3-0",
  "script": "cardtest.mjs",
  "args": {
   "deck": "decks/findlist-1100.ydk",
-  "random": 80,
+  "random": 100,
+  "randomFrom": 0,
+  "lean": true,
   "orders": 1,
-  "minutes": 3,
+  "minutes": 2,
   "main": [
    "Artmage Power Patron",
    "Artmage Academic Arcane Arts Acropolis",
-   "Jupredo the Shademachine Power Patron",
-   "Theorealize Medius",
-   "Artmage Graflare"
+   "Theorealize Medius"
   ],
-  "extra": []
+  "extra": [],
+  "swaps": [
+   {
+    "in": "Artmage Power Patron",
+    "out": "Plundered Power Patron Plane - Vidolia"
+   },
+   {
+    "in": "Artmage Power Patron",
+    "out": "Artmage Vandalism -Assault-"
+   },
+   {
+    "in": "Artmage Academic Arcane Arts Acropolis",
+    "out": "Plundered Power Patron Plane - Vidolia"
+   },
+   {
+    "in": "Artmage Academic Arcane Arts Acropolis",
+    "out": "Artmage Vandalism -Assault-"
+   }
+  ]
  }
 }
