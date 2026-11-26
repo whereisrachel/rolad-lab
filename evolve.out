@@ -1,0 +1,73 @@
+evolve lk-treasure: 0 seed lines, 8 deck orders, 4 mutation rounds, 20 min searches, 3 hands x 4 decks per line
+helper slots now 6
+helper slots now 1
+helper slots now 3
+helper slots now 0
+helper slots now 2
+helper slots now 5
+helper slots now 1
+helper slots now 2
+helper slots now 3
+helper slots now 2
+progress 5 pieces
+helper slots now 3
+helper slots now 0
+progress 10 pieces
+helper slots now 1
+helper slots now 2
+helper slots now 4
+helper slots now 2
+helper slots now 0
+helper slots now 1
+helper slots now 2
+helper slots now 4
+helper slots now 2
+progress 15 pieces
+helper slots now 1
+progress 20 pieces
+helper slots now 4
+helper slots now 3
+helper slots now 2
+helper slots now 1
+helper slots now 0
+helper slots now 1
+helper slots now 3
+helper slots now 4
+helper slots now 3
+helper slots now 5
+progress 25 pieces
+helper slots now 2
+helper slots now 0
+helper slots now 2
+helper slots now 4
+helper slots now 3
+helper slots now 1
+progress 30 pieces
+helper slots now 0
+helper slots now 3
+helper slots now 2
+helper slots now 1
+helper slots now 3
+helper slots now 2
+helper slots now 1
+progress 35 pieces
+order 1: best 7.5 (opening lanes)
+helper slots now 0
+helper slots now 3
+helper slots now 2
+helper slots now 0
+helper slots now 1
+helper slots now 3
+order 2: best 7.5 (tries Link Summon Purification Power Patron)
+progress 40 pieces
+helper slots now 5
+helper slots now 3
+helper slots now 1
+helper slots now 0
+helper slots now 1
+helper slots now 2
+order 4: best 6.5 (tries Link Summon Knightmare Cerberus)
+helper slots now 5
+helper slots now 4
+order 3: best 8.65 (tries Link Summon Knightmare Phoenix)
+done -> reports/evolve-lk-treasure.md
