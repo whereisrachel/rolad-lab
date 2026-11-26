@@ -23,7 +23,7 @@ const game = { id: 'fg', seed: String(t.seed ?? 7), first: FIRST, lab: true,
 const chokeFile = `data/choke-${(t.opp || 'decks/o_ss_panama.ydk').replace(/^.*\//, '').replace(/\.ydk$/, '')}.json`;
 if (fs.existsSync(chokeFile)) { const values = JSON.parse(fs.readFileSync(chokeFile, 'utf8')); const sorted = Object.values(values).sort((p, q) => q - p);
   game.choke = { 0: { values, must: ['Sky Striker Mobilize - Engage!', 'Sky Striker Ace - Kagari', 'Branded Fusion', 'Aluber the Jester of Despia', 'Fallen of Albaz'], thr: Math.max(0.5, sorted[Math.min(3, sorted.length - 1)] ?? 0.5), top: Math.max(1, sorted[Math.min(1, sorted.length - 1)] ?? 1) } }; }
-const clone = (x) => JSON.parse(JSON.stringify(x));
+const clone = (x) => JSON.parse(JSON.stringify(x, (k, v) => typeof v === 'bigint' ? { $big: v.toString() } : v), (k, v) => (v && typeof v === 'object' && typeof v.$big === 'string') ? BigInt(v.$big) : v); // some answers (e.g. Elfnote's announces) are BigInt (fixed Nov 26)
 const lpOf = (S2, seat) => S2.lp ? S2.lp[E.teamOf(S2.game, seat)] : 8000;
 const atkOf = (S2, seat) => { let s = 0; try { for (const c of (S2.field && S2.field[E.teamOf(S2.game, seat)] && S2.field[E.teamOf(S2.game, seat)].monsters) || []) if (c && c.faceup && c.attack) s += c.atk || 0; } catch {} return s; };
 const sim = async (g) => { E.resetLib(); return autoAdvance(await E.simulate(clone(g))); };
