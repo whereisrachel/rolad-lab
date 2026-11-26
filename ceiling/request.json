@@ -1,47 +1,102 @@
 {
  "hands": [
   {
-   "name": "br3-berfomet-blackchaos",
+   "name": "ug-bcmed",
+   "hand": [
+    "Black Chaos",
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "ug-blackchaos",
    "hand": [
     "Black Chaos",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Black Luster Soldier - Soldier of Light and Darkness"
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
    ]
   },
   {
-   "name": "br3-berfomet-engraver",
+   "name": "ug-citrinitas",
+   "hand": [
+    "Ars Magna - \"Citrinitas\"",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "ug-engmed",
+   "hand": [
+    "Fiendsmith Engraver",
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "ug-engraver",
    "hand": [
     "Fiendsmith Engraver",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "ug-infinity",
+   "hand": [
+    "Ars Magna of Infinity and Finity",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "ug-medius",
+   "hand": [
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
     "Infinite Impermanence",
-    "Black Luster Soldier - Soldier of Light and Darkness"
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "ug-smallworld",
+   "hand": [
+    "Small World",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
    ]
   }
  ],
- "deck": "decks/br-berfomet.ydk",
+ "deck": "decks/findlist-1100.ydk",
  "orders": 8,
- "minutes": 5,
+ "only": [
+  1,
+  2,
+  3,
+  4
+ ],
+ "minutes": 15,
  "rounds": 4,
- "explore": 4,
+ "explore": 6,
  "hints": false,
  "seeds": [],
- "tries": [
-  "^Activate Artmage Power Patron",
-  "^Activate Artmage Academic Arcane Arts Acropolis",
-  "^Xyz Summon Evilswarm Exciton Knight",
-  "^Fusion Summon Berfomet",
-  "^Activate Artmage Non-Finito",
-  "^Activate Ars Magna",
-  "^Normal Summon Medius",
-  "^Activate Plundered Power Patron Plane",
-  "^Activate Small World"
- ],
- "seedBase": 9950,
+ "seedBase": 12000,
  "fitness": "board",
  "judgeWinner": false,
  "share": 12,
- "note": "bridging br3 (berfomet): one-engine hands that reach no other engine (Black Chaos alone, Engraver alone); 5-min searches, 4 rounds, hints off, own seeds, forced tries; same hands/orders/seeds across base/APP/Acropolis/Exciton/Berfomet"
+ "note": "unguided bridging search part 1/3: 15-min searches, no hints, no seed lines, no forced tries; all guide openers + 6 random hands; looking for better engine-to-engine routes"
 }
