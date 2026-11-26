@@ -1,60 +1,70 @@
 {
  "hands": [
   {
-   "name": "c3-sw-real",
+   "name": "br2-base-medius",
    "hand": [
-    "Small World",
+    "Medius the Pure",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Infinite Impermanence",
     "Dark Magical Circle"
-   ],
-   "minutes": 5,
-   "rounds": 6,
-   "explore": 6,
-   "seedBase": 9600,
-   "tries": [
-    "^Activate Griffoh",
-    "^Activate Light and Darkness Ritual: Ritual Summon",
-    "^Activate Mind Shuffle",
-    "^Link Summon S:P Little Knight",
-    "^Activate Theorealize Liberation",
-    "^Activate Theorealize Past Lull",
-    "^Activate Fiendsmith's Sequence",
-    "^Activate Artmage Graflare"
    ]
   },
   {
-   "name": "c3-sw-real-div",
+   "name": "br2-base-terminus",
    "hand": [
-    "Small World",
+    "Prohibited Power Patron Portal - Terminus",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Infinite Impermanence",
     "Dark Magical Circle"
-   ],
-   "minutes": 5,
-   "rounds": 6,
-   "explore": 6,
-   "hints": false,
-   "seeds": [],
-   "seedBase": 9700,
-   "tries": [
-    "^Activate Griffoh",
-    "^Activate Light and Darkness Ritual: Ritual Summon",
-    "^Activate Mind Shuffle",
-    "^Link Summon S:P Little Knight",
-    "^Activate Theorealize Liberation",
-    "^Activate Theorealize Past Lull",
-    "^Activate Fiendsmith's Sequence",
-    "^Activate Artmage Graflare"
+   ]
+  },
+  {
+   "name": "br2-base-citrinitas",
+   "hand": [
+    "Ars Magna - \"Citrinitas\"",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ]
+  },
+  {
+   "name": "br2-base-treasure",
+   "hand": [
+    "Pendulum Treasure",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
    ]
   }
  ],
  "deck": "decks/findlist-1100.ydk",
- "orders": 8,
+ "orders": 4,
+ "only": [
+  1,
+  2,
+  3,
+  4
+ ],
+ "minutes": 5,
+ "rounds": 4,
+ "explore": 4,
+ "hints": false,
+ "seeds": [],
+ "tries": [
+  "^Xyz Summon Evilswarm Exciton Knight",
+  "^Fusion Summon Berfomet",
+  "^Activate Artmage Non-Finito",
+  "^Link Summon Fiendsmith's Requiem",
+  "^Activate Griffoh",
+  "^Activate Theorealize Liberation"
+ ],
+ "seedBase": 9900,
  "fitness": "board",
  "judgeWinner": false,
- "share": 4,
- "note": "Small World with real cards only (Ash, Ash, Imperm, Dark Magical Circle as the other 4): the guide line revealed Ghost Ogre, which is not in the list"
+ "share": 12,
+ "note": "bridging ED test (base): same hands, orders and seeds across base / Exciton / Berfomet decks"
 }
