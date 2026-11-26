@@ -1,0 +1,107 @@
+evolve c2-div-bcmed: 0 seed lines, 8 deck orders, 6 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 2
+progress 5 pieces
+helper slots now 6
+helper slots now 3
+progress 10 pieces
+progress 15 pieces
+helper slots now 7
+helper slots now 4
+progress 20 pieces
+helper slots now 2
+progress 25 pieces
+helper slots now 7
+helper slots now 5
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+progress 45 pieces
+helper slots now 6
+progress 50 pieces
+progress 55 pieces
+helper slots now 4
+helper slots now 5
+progress 60 pieces
+progress 65 pieces
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+progress 70 pieces
+progress 75 pieces
+progress 80 pieces
+helper slots now 7
+helper slots now 6
+progress 85 pieces
+helper slots now 7
+progress 90 pieces
+helper slots now 6
+progress 95 pieces
+helper slots now 7
+progress 100 pieces
+helper slots now 6
+helper slots now 4
+helper slots now 6
+progress 105 pieces
+helper slots now 7
+progress 110 pieces
+helper slots now 6
+helper slots now 7
+helper slots now 6
+progress 115 pieces
+helper slots now 7
+progress 120 pieces
+progress 125 pieces
+helper slots now 5
+progress 130 pieces
+progress 135 pieces
+helper slots now 7
+helper slots now 6
+progress 140 pieces
+helper slots now 7
+helper slots now 4
+progress 145 pieces
+progress 150 pieces
+progress 155 pieces
+helper slots now 5
+progress 160 pieces
+progress 165 pieces
+helper slots now 4
+progress 170 pieces
+progress 175 pieces
+order 4: best 13.9 (forced Activate Light and Darkness Ritual: Ritual Summon)
+helper slots now 5
+progress 180 pieces
+helper slots now 4
+progress 185 pieces
+helper slots now 5
+progress 190 pieces
+progress 195 pieces
+progress 200 pieces
+progress 205 pieces
+progress 210 pieces
+progress 215 pieces
+order 8: best 14.4 (forced Activate Theorealize Liberation → new ending)
+progress 220 pieces
+order 5: best 14.05 (tries Normal Summon Griffoh)
+progress 225 pieces
+helper slots now 3
+progress 230 pieces
+progress 235 pieces
+progress 240 pieces
+helper slots now 5
+progress 245 pieces
+order 3: best 13.75 (search)
+progress 250 pieces
+order 7: best 14.05 (search)
+progress 255 pieces
+progress 260 pieces
+order 6: best 14.4 (tries Activate Ars Magna of Infinity and Finity → new ending)
+progress 265 pieces
+progress 270 pieces
+progress 275 pieces
+order 1: best 13.8 (tries Activate Medius the Pure)
+progress 280 pieces
+progress 285 pieces
+order 2: best 13.9 (forced Activate Theorealize Liberation → new ending)
+done -> reports/evolve-c2-div-bcmed.md
