@@ -1,0 +1,21 @@
+evolve c2-drawfair-terminus: 3 seed lines, 8 deck orders, 0 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 9
+progress 5 pieces
+progress 10 pieces
+progress 15 pieces
+progress 20 pieces
+progress 25 pieces
+helper slots now 14
+helper slots now 9
+order 1: best 13.05 (search)
+order 3: best 12.1 (search)
+progress 30 pieces
+order 4: best 14.05 (drawpre-terminus-c)
+order 8: best 13.05 (search)
+progress 35 pieces
+order 7: best 13.75 (drawpre-terminus-c)
+order 6: best 13.95 (drawpre-terminus-a)
+order 5: best 12.85 (drawpre-terminus-c)
+progress 40 pieces
+order 2: best 14.05 (opening lanes)
+done -> reports/evolve-c2-drawfair-terminus.md
