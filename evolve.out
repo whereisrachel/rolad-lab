@@ -1,0 +1,86 @@
+evolve c3-sw-real: 0 seed lines, 8 deck orders, 6 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 19
+helper slots now 12
+progress 5 pieces
+helper slots now 13
+helper slots now 12
+helper slots now 16
+progress 10 pieces
+progress 15 pieces
+progress 20 pieces
+helper slots now 19
+helper slots now 17
+progress 25 pieces
+progress 30 pieces
+helper slots now 14
+helper slots now 13
+progress 35 pieces
+progress 40 pieces
+progress 45 pieces
+helper slots now 11
+progress 50 pieces
+progress 55 pieces
+progress 60 pieces
+helper slots now 12
+helper slots now 13
+progress 65 pieces
+progress 70 pieces
+progress 75 pieces
+helper slots now 11
+progress 80 pieces
+helper slots now 12
+progress 85 pieces
+helper slots now 10
+helper slots now 13
+progress 90 pieces
+helper slots now 10
+progress 95 pieces
+helper slots now 13
+progress 100 pieces
+helper slots now 12
+progress 105 pieces
+helper slots now 13
+progress 110 pieces
+progress 115 pieces
+helper slots now 11
+progress 120 pieces
+progress 125 pieces
+order 5: best 11.9 (forced Activate Light and Darkness Ritual: Ritual Summon)
+progress 130 pieces
+helper slots now 13
+progress 135 pieces
+helper slots now 1
+progress 140 pieces
+progress 145 pieces
+order 6: best 11.95 (forced Activate Light and Darkness Ritual: Ritual Summon)
+order 1: best 12.05 (opening lanes)
+progress 150 pieces
+helper slots now 7
+helper slots now 6
+progress 155 pieces
+helper slots now 12
+helper slots now 8
+helper slots now 13
+progress 160 pieces
+helper slots now 9
+helper slots now 10
+order 3: best 12.05 (tries Activate Mind Shuffle → new early order)
+helper slots now 13
+helper slots now 12
+progress 165 pieces
+helper slots now 17
+helper slots now 13
+helper slots now 15
+progress 170 pieces
+order 8: best 12.1 (tries Activate Theorealize Past Lull → new early order)
+helper slots now 19
+helper slots now 17
+helper slots now 18
+helper slots now 15
+helper slots now 18
+order 2: best 12.1 (forced Activate Light and Darkness Ritual: Ritual Summon → new early order)
+helper slots now 16
+progress 175 pieces
+order 4: best 12.1 (forced Activate Theorealize Liberation → new ending)
+order 7: best 11.95 (tries Activate Theorealize Liberation)
+done -> reports/evolve-c3-sw-real.md
