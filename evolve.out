@@ -1,0 +1,61 @@
+evolve c2-t30-bcmed: 2 seed lines, 8 deck orders, 4 mutation rounds, 30 min searches, 3 hands x 4 decks per line
+helper slots now 7
+helper slots now 3
+helper slots now 5
+helper slots now 6
+helper slots now 5
+helper slots now 6
+helper slots now 4
+helper slots now 5
+progress 5 pieces
+helper slots now 7
+progress 10 pieces
+helper slots now 5
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+helper slots now 4
+helper slots now 6
+progress 15 pieces
+helper slots now 7
+progress 20 pieces
+helper slots now 6
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 5
+helper slots now 4
+helper slots now 5
+helper slots now 4
+helper slots now 5
+helper slots now 3
+progress 25 pieces
+helper slots now 5
+progress 30 pieces
+progress 35 pieces
+helper slots now 3
+helper slots now 5
+helper slots now 3
+progress 40 pieces
+progress 45 pieces
+progress 50 pieces
+order 2: best 14.2 (tries Activate Artmage Diactorus → new early order)
+progress 55 pieces
+progress 60 pieces
+order 3: best 14.2 (opening lanes)
+progress 65 pieces
+progress 70 pieces
+progress 75 pieces
+order 1: best 14.2 (tries Activate Theorealize Liberation → new early order)
+helper slots now 5
+helper slots now 4
+helper slots now 3
+progress 80 pieces
+progress 85 pieces
+order 4: best 14.2 (tries Activate Theorealize Liberation → new ending)
+done -> reports/evolve-c2-t30-bcmed.md
