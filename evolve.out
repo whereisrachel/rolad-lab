@@ -1,0 +1,51 @@
+evolve ug-terminus: 0 seed lines, 8 deck orders, 4 mutation rounds, 15 min searches, 3 hands x 4 decks per line
+helper slots now 4
+helper slots now 3
+helper slots now 1
+helper slots now 2
+helper slots now 4
+helper slots now 5
+helper slots now 4
+helper slots now 3
+helper slots now 4
+helper slots now 3
+progress 5 pieces
+helper slots now 4
+helper slots now 5
+progress 10 pieces
+helper slots now 3
+helper slots now 2
+helper slots now 3
+progress 15 pieces
+helper slots now 6
+helper slots now 2
+progress 20 pieces
+helper slots now 4
+helper slots now 5
+helper slots now 2
+helper slots now 5
+helper slots now 1
+helper slots now 3
+helper slots now 6
+helper slots now 2
+progress 25 pieces
+helper slots now 4
+helper slots now 3
+progress 30 pieces
+progress 35 pieces
+order 3: best 13.9 (tries Normal Summon Ars Magna of Purification and Corruption)
+order 2: best 14.35 (opening lanes)
+helper slots now 2
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 2
+progress 40 pieces
+helper slots now 0
+progress 45 pieces
+order 4: best 14.95 (search)
+helper slots now 2
+helper slots now 1
+helper slots now 3
+order 1: best 15.2 (search)
+done -> reports/evolve-ug-terminus.md
