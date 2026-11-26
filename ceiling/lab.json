@@ -1,22 +1,54 @@
 {
- "id": "g1-2001",
- "script": "games1.mjs",
+ "id": "piv-1",
+ "script": "pivots.mjs",
  "args": {
-  "deck": "decks/findlist-1100.ydk",
-  "lines": {
-   "medius": "lines/t1/medius.json",
-   "bcmed": "lines/t1/bcmed.json",
-   "infinity": "lines/t1/infinity.json",
-   "terminus": "lines/t1/terminus.json",
-   "treasure": "lines/t1/treasure.json",
-   "citrinitas": "lines/t1/citrinitas.json",
-   "engmed": "lines/t1/engmed.json",
-   "engraver": "lines/t1/engraver.json",
-   "blackchaos": "lines/t1/blackchaos.json"
-  },
-  "n": 8,
-  "min": 0.75,
-  "omin": 2.25,
-  "turns": 10
+  "lines": [
+   {
+    "name": "medius",
+    "file": "lines/piv/medius.json"
+   },
+   {
+    "name": "bcmed",
+    "file": "lines/piv/bcmed.json"
+   },
+   {
+    "name": "infinity",
+    "file": "lines/piv/infinity.json"
+   },
+   {
+    "name": "terminus",
+    "file": "lines/piv/terminus.json"
+   },
+   {
+    "name": "treasure",
+    "file": "lines/piv/treasure.json"
+   },
+   {
+    "name": "citrinitas",
+    "file": "lines/piv/citrinitas.json"
+   },
+   {
+    "name": "engmed",
+    "file": "lines/piv/engmed.json"
+   },
+   {
+    "name": "engraver",
+    "file": "lines/piv/engraver.json"
+   },
+   {
+    "name": "blackchaos",
+    "file": "lines/piv/blackchaos.json"
+   }
+  ],
+  "threats": [
+   "ash",
+   "imperm",
+   "droll",
+   "nibiru",
+   "ogre",
+   "belle"
+  ],
+  "minutes": 3,
+  "maxK": 24
  }
 }
