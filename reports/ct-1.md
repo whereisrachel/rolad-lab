@@ -1,0 +1,50 @@
+# Card test ct-1
+2026-11-26T07:39:09.613Z · 3 min searches, 3 deck orders, no hints, own seeds, forced use of the card
+
+List without the card, best board per hand: engraver 5.85 · blackchaos 5.8 · vidolia 7 · apprentice 4.23
+
+| card | zone | gain per hand (± se) | engraver | blackchaos | vidolia | apprentice | forced line used it |
+|---|---|---|---|---|---|---|---|
+| Artmage Power Patron | main | +4.97 ± 0.73 (n 12) | 1.92 | 6.12 | 3.72 | 8.12 | 12/12 |
+| Artmage Academic Arcane Arts Acropolis | main | +4.44 ± 0.5 (n 12) | 3.7 | 6.5 | 2.35 | 5.2 | 12/12 |
+| Theorealize Medius | main | +2.84 ± 0.88 (n 12) | 0 | 6.73 | 4.48 | 0.15 | 12/12 |
+| Jupredo the Shademachine Power Patron | main | +2.43 ± 0.66 (n 12) | 1.38 | 4.42 | 3.78 | 0.15 | 12/12 |
+| Magical Musketeer Kidbrave | main | +1.59 ± 0.3 (n 12) | 0.15 | 1.85 | 2.78 | 1.59 | 10/12 |
+| Artmage Litera | main | +1.57 ± 0.62 (n 12) | 0 | 0.74 | 5.08 | 0.46 | 12/12 |
+| Fabled Ashenveil | main | +1.55 ± 0.33 (n 12) | 0.15 | 1.85 | 2.48 | 1.7 | 12/12 |
+| Artmage Graflare | main | +1.54 ± 0.78 (n 12) | 0 | 0 | 6 | 0.16 | 12/12 |
+| White Duston | main | +1.53 ± 0.29 (n 12) | 0.15 | 1.85 | 2.52 | 1.59 | 12/12 |
+| Evil HERO Adusted Gold | main | +1.52 ± 0.29 (n 12) | 0.15 | 1.85 | 2.38 | 1.7 | 12/12 |
+| Emperor Sem | main | +1.52 ± 0.29 (n 12) | 0.15 | 1.85 | 2.38 | 1.7 | 12/12 |
+| Fabled Krus | main | +1.43 ± 0.24 (n 12) | 0.15 | 1.85 | 2.02 | 1.7 | 12/12 |
+| Power Patron Shade of the Final Hour | main | +1.41 ± 0.37 (n 12) | 1.1 | 0.65 | 3.28 | 0.62 | 12/12 |
+| Chain Resonator | main | +1.31 ± 0.28 (n 12) | 0.15 | 1.85 | 1.67 | 1.59 | 12/12 |
+| Elfnote Power Patron | main | +1.25 ± 0.58 (n 12) | 0 | 2.03 | 2.8 | 0.15 | 12/12 |
+| Rainbow Kuriboh | main | +1.21 ± 0.22 (n 12) | 0.15 | 1.85 | 1.25 | 1.59 | 11/12 |
+| Highness Archfiend | main | +1.16 ± 0.21 (n 12) | 0.15 | 1.85 | 1.05 | 1.59 | 12/12 |
+| Fabled Miztoji | main | +1.03 ± 0.22 (n 12) | 0.15 | 1.85 | 0.52 | 1.59 | 10/12 |
+| Maginificent Magikey Mafteal | main | +1.01 ± 0.22 (n 12) | 0.15 | 1.85 | 0.47 | 1.59 | 12/12 |
+| Fiendsmith's Tract | main | +0.97 ± 0.29 (n 12) | 0 | 1.7 | 1.07 | 1.12 | 12/12 |
+| Prohibitive Power Patron Purview - Vilaea | main | +0.83 ± 0.12 (n 12) | 1.1 | 0.65 | 0.93 | 0.62 | 12/12 |
+| Artmage Peripeteia -Turmoil- | main | +0.81 ± 0.16 (n 12) | 0.85 | 1.15 | 0.68 | 0.57 | 12/12 |
+| Artmage Pact -Awakening- | main | +0.77 ± 0.13 (n 12) | 0.85 | 1.15 | 0.5 | 0.57 | 12/12 |
+| Ars Magna - "Philosophirum" | main | +0.66 ± 0.12 (n 12) | 0.85 | 1.15 | 0.08 | 0.57 | 12/12 |
+| Archfiend Matriarch | main | +0.51 ± 0.28 (n 12) | 0 | 0 | 2.03 | 0 | 12/12 |
+| Ars Magna DoomZ | extra | +0.49 ± 0.35 (n 12) | 0 | 0 | 1.95 | 0 | 1/12 |
+| Magnum the Reliever | extra | +0.45 ± 0.31 (n 12) | 0 | 0 | 1.8 | 0 | 0/12 |
+| Ars Magna of Unification and Separation | main | +0.44 ± 0.26 (n 12) | 0 | 0 | 1.77 | 0 | 6/12 |
+| Ars Magna Academic Arcane Apparition Acropolis | main | +0.36 ± 0.25 (n 12) | 0 | 0 | 1.45 | 0 | 12/12 |
+| Ars Magna Artmage | extra | +0.32 ± 0.26 (n 12) | 0 | 0 | 1.29 | 0 | 2/12 |
+| Fiendsmith's Lacrima | extra | +0.25 ± 0.25 (n 12) | 0 | 0 | 1 | 0 | 3/12 |
+| Ars Magna Elfnote | extra | +0.24 ± 0.24 (n 12) | 0 | 0 | 0.95 | 0 | 2/12 |
+| SPYRAL Sleeper | main | +0.22 ± 0.26 (n 12) | 0 | 0 | 0.87 | 0 | 0/12 |
+| Fiendsmith's Rextremende | extra | +0.2 ± 0.2 (n 12) | 0 | 0 | 0.78 | 0 | 3/12 |
+| Omega Vidolium the Power Patron of Heaven's End | extra | +0.2 ± 0.2 (n 12) | 0 | 0 | 0.78 | 0 | 0/12 |
+| Fiendsmith's Agnumday | extra | +0.2 ± 0.2 (n 12) | 0 | 0 | 0.78 | 0 | 3/12 |
+| Zebufera, Vaalmonican Hallow Heathen | extra | +0.2 ± 0.2 (n 12) | 0 | 0 | 0.78 | 0 | 0/12 |
+| Power Patron DoomZ | main | +0.19 ± 0.27 (n 12) | 0 | 0 | 0.63 | 0.15 | 12/12 |
+| Artmage Varnish -Alteration- | main | +0.16 ± 0.16 (n 12) | 0 | 0 | 0.63 | 0 | 12/12 |
+| Artmage Masterwork -Succession- | main | +0.16 ± 0.14 (n 12) | 0.05 | 0.01 | 0.57 | 0 | 12/12 |
+| Power Patron Portal Plugging -Sword of Mutual Destruction- | main | +0.1 ± 0.1 (n 12) | 0 | 0 | 0.42 | 0 | 12/12 |
+| Artmage Movement -Pedigree- | main | +0.07 ± 0.07 (n 12) | 0 | 0 | 0.28 | 0 | 12/12 |
+| Jupiter the Power Patron of Destruction | extra | +0 ± 0 (n 12) | 0 | 0 | 0 | 0 | 0/12 |
