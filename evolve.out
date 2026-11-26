@@ -1,0 +1,83 @@
+evolve br3-acro-blackchaos: 0 seed lines, 8 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 3
+helper slots now 2
+helper slots now 3
+progress 5 pieces
+helper slots now 4
+progress 10 pieces
+helper slots now 3
+progress 15 pieces
+helper slots now 4
+progress 20 pieces
+helper slots now 3
+helper slots now 1
+progress 25 pieces
+helper slots now 2
+helper slots now 4
+progress 30 pieces
+helper slots now 5
+helper slots now 4
+progress 35 pieces
+progress 40 pieces
+helper slots now 3
+helper slots now 5
+progress 45 pieces
+helper slots now 2
+helper slots now 4
+progress 50 pieces
+progress 55 pieces
+helper slots now 6
+helper slots now 3
+helper slots now 2
+progress 60 pieces
+helper slots now 3
+progress 65 pieces
+helper slots now 4
+helper slots now 3
+progress 70 pieces
+helper slots now 6
+progress 75 pieces
+helper slots now 2
+progress 80 pieces
+helper slots now 5
+progress 85 pieces
+helper slots now 2
+helper slots now 5
+helper slots now 1
+progress 90 pieces
+helper slots now 3
+helper slots now 6
+progress 95 pieces
+helper slots now 2
+progress 100 pieces
+helper slots now 4
+helper slots now 3
+helper slots now 2
+progress 105 pieces
+helper slots now 3
+progress 110 pieces
+helper slots now 2
+helper slots now 3
+progress 115 pieces
+helper slots now 2
+progress 120 pieces
+helper slots now 0
+helper slots now 2
+helper slots now 1
+progress 125 pieces
+progress 130 pieces
+progress 135 pieces
+progress 140 pieces
+order 6: best 5.98 (search)
+progress 145 pieces
+order 4: best 5.98 (tries Special Summon (procedure) Black Chaos)
+helper slots now 3
+order 8: best 5.98 (search)
+order 1: best 5.98 (search)
+order 2: best 5.98 (forced Activate Ars Magna)
+helper slots now 2
+progress 150 pieces
+order 5: best 10.1 (tries Activate Purification Power Patron)
+order 3: best 5.98 (search)
+order 7: best 11.05 (tries Activate Purification Power Patron)
+done -> reports/evolve-br3-acro-blackchaos.md
