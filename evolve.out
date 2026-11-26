@@ -1,0 +1,57 @@
+evolve ug-smallworld: 0 seed lines, 8 deck orders, 4 mutation rounds, 15 min searches, 3 hands x 4 decks per line
+helper slots now 2
+helper slots now 4
+helper slots now 3
+helper slots now 4
+helper slots now 5
+helper slots now 6
+helper slots now 4
+helper slots now 5
+helper slots now 2
+helper slots now 3
+helper slots now 5
+progress 5 pieces
+helper slots now 3
+helper slots now 4
+progress 10 pieces
+helper slots now 6
+helper slots now 3
+helper slots now 2
+helper slots now 3
+progress 15 pieces
+helper slots now 2
+helper slots now 6
+helper slots now 5
+helper slots now 3
+progress 20 pieces
+helper slots now 5
+helper slots now 2
+progress 25 pieces
+helper slots now 5
+helper slots now 2
+helper slots now 3
+helper slots now 6
+progress 30 pieces
+helper slots now 2
+helper slots now 4
+order 1: best 11.8 (search)
+progress 35 pieces
+order 3: best 11.8 (opening lanes)
+helper slots now 2
+progress 40 pieces
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 2
+helper slots now 1
+helper slots now 2
+helper slots now 0
+helper slots now 1
+helper slots now 0
+helper slots now 1
+progress 45 pieces
+order 2: best 12.2 (tries Activate Junoldo the Shadespirit Power Patron → new ending → new early order)
+helper slots now 4
+helper slots now 3
+order 4: best 12.8 (tries Activate Artmage Vandalism -Assault- → new early order)
+done -> reports/evolve-ug-smallworld.md
