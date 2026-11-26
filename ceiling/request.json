@@ -1,27 +1,22 @@
 {
  "hands": [
   {
-   "name": "c2-t30-medius",
+   "name": "c2-drawfair-terminus",
    "hand": [
-    "Medius the Pure",
+    "Prohibited Power Patron Portal - Terminus",
     "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
+    "Ash Blossom & Joyous Spring",
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 30,
-   "only": [
-    1,
-    2,
-    3,
-    4
-   ],
-   "rounds": 4,
-   "explore": 2,
-   "seedBase": 7030
+   "seeds": [
+    "lines/draw/drawpre-terminus-a.json",
+    "lines/draw/drawpre-terminus-b.json",
+    "lines/draw/drawpre-terminus-c.json"
+   ]
   },
   {
-   "name": "c2-t30-bcmed",
+   "name": "c2-drawfair-bcmed",
    "hand": [
     "Black Chaos",
     "Medius the Pure",
@@ -29,144 +24,20 @@
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
-   "minutes": 30,
-   "only": [
-    1,
-    2,
-    3,
-    4
-   ],
-   "rounds": 4,
-   "explore": 2,
-   "seedBase": 7030
-  },
-  {
-   "name": "c2-t30-infinity",
-   "hand": [
-    "Ars Magna of Infinity and Finity",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 30,
-   "only": [
-    1,
-    2,
-    3,
-    4
-   ],
-   "rounds": 4,
-   "explore": 2,
-   "seedBase": 7030
-  },
-  {
-   "name": "c2-t15-medius",
-   "hand": [
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 15,
-   "only": [
-    1,
-    2,
-    3,
-    4
-   ],
-   "rounds": 4,
-   "explore": 2,
-   "seedBase": 7015
-  },
-  {
-   "name": "c2-t15-bcmed",
-   "hand": [
-    "Black Chaos",
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 15,
-   "only": [
-    1,
-    2,
-    3,
-    4
-   ],
-   "rounds": 4,
-   "explore": 2,
-   "seedBase": 7015
-  },
-  {
-   "name": "c2-t15-infinity",
-   "hand": [
-    "Ars Magna of Infinity and Finity",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 15,
-   "only": [
-    1,
-    2,
-    3,
-    4
-   ],
-   "rounds": 4,
-   "explore": 2,
-   "seedBase": 7015
-  },
-  {
-   "name": "c2-t5-medius",
-   "hand": [
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 5,
-   "only": [
-    1,
-    2,
-    3,
-    4
-   ],
-   "rounds": 4,
-   "explore": 2,
-   "seedBase": 7005
-  },
-  {
-   "name": "c2-t5-bcmed",
-   "hand": [
-    "Black Chaos",
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ],
-   "minutes": 5,
-   "only": [
-    1,
-    2,
-    3,
-    4
-   ],
-   "rounds": 4,
-   "explore": 2,
-   "seedBase": 7005
+   "seeds": [
+    "lines/draw/drawpre-bcmed-a.json",
+    "lines/draw/drawpre-bcmed-b.json"
+   ]
   }
  ],
  "deck": "decks/findlist-1100.ydk",
- "fitness": "board",
- "judgeWinner": true,
- "share": 12,
  "orders": 8,
  "minutes": 5,
- "rounds": 4,
- "note": "ceiling-2 part 1/3: time test (5/15/30 min, new seeds, orders 1-4) + diversity run (no hints, no seed lines, forced finishes, 8 orders)"
+ "rounds": 0,
+ "explore": 0,
+ "fitness": "board",
+ "judgeWinner": false,
+ "seedBase": 9300,
+ "share": 4,
+ "note": "fair score for the Junoldo-draw lines: play the line up to the draw as written on each deck order, then the search finishes with whatever was drawn"
 }
