@@ -1,0 +1,38 @@
+evolve br2-exciton-terminus: 0 seed lines, 4 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 6
+helper slots now 4
+helper slots now 6
+helper slots now 2
+progress 5 pieces
+helper slots now 5
+progress 10 pieces
+helper slots now 4
+progress 15 pieces
+helper slots now 5
+progress 20 pieces
+helper slots now 6
+progress 25 pieces
+helper slots now 5
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+progress 45 pieces
+order 4: best 14.35 (forced Fusion Summon Berfomet)
+progress 50 pieces
+helper slots now 3
+helper slots now 6
+helper slots now 5
+progress 55 pieces
+helper slots now 3
+helper slots now 4
+helper slots now 2
+helper slots now 3
+progress 60 pieces
+helper slots now 2
+order 2: best 13.6 (forced Fusion Summon Berfomet → new ending → new early order)
+helper slots now 3
+helper slots now 4
+helper slots now 3
+order 3: best 13.9 (forced Link Summon Fiendsmith's Requiem)
+order 1: best 13.6 (tries Activate Nervedo the Shadebeast Power Patron)
+done -> reports/evolve-br2-exciton-terminus.md
