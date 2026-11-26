@@ -1,10 +1,10 @@
 {
- "id": "ct-3-0",
+ "id": "ct-3-1",
  "script": "cardtest.mjs",
  "args": {
   "deck": "decks/findlist-1100.ydk",
   "random": 100,
-  "randomFrom": 0,
+  "randomFrom": 100,
   "lean": true,
   "orders": 1,
   "minutes": 2,
