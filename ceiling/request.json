@@ -1,70 +1,47 @@
 {
  "hands": [
   {
-   "name": "br2-berfomet-medius",
+   "name": "br3-base-blackchaos",
    "hand": [
-    "Medius the Pure",
+    "Black Chaos",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Infinite Impermanence",
-    "Dark Magical Circle"
+    "Black Luster Soldier - Soldier of Light and Darkness"
    ]
   },
   {
-   "name": "br2-berfomet-terminus",
+   "name": "br3-base-engraver",
    "hand": [
-    "Prohibited Power Patron Portal - Terminus",
+    "Fiendsmith Engraver",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Infinite Impermanence",
-    "Dark Magical Circle"
-   ]
-  },
-  {
-   "name": "br2-berfomet-citrinitas",
-   "hand": [
-    "Ars Magna - \"Citrinitas\"",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Dark Magical Circle"
-   ]
-  },
-  {
-   "name": "br2-berfomet-treasure",
-   "hand": [
-    "Pendulum Treasure",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Dark Magical Circle"
+    "Black Luster Soldier - Soldier of Light and Darkness"
    ]
   }
  ],
- "deck": "decks/br-berfomet.ydk",
- "orders": 4,
- "only": [
-  1,
-  2,
-  3,
-  4
- ],
+ "deck": "decks/findlist-1100.ydk",
+ "orders": 8,
  "minutes": 5,
  "rounds": 4,
  "explore": 4,
  "hints": false,
  "seeds": [],
  "tries": [
+  "^Activate Artmage Power Patron",
+  "^Activate Artmage Academic Arcane Arts Acropolis",
   "^Xyz Summon Evilswarm Exciton Knight",
   "^Fusion Summon Berfomet",
   "^Activate Artmage Non-Finito",
-  "^Link Summon Fiendsmith's Requiem",
-  "^Activate Griffoh",
-  "^Activate Theorealize Liberation"
+  "^Activate Ars Magna",
+  "^Normal Summon Medius",
+  "^Activate Plundered Power Patron Plane",
+  "^Activate Small World"
  ],
- "seedBase": 9900,
+ "seedBase": 9950,
  "fitness": "board",
  "judgeWinner": false,
  "share": 12,
- "note": "bridging ED test (berfomet): same hands, orders and seeds across base / Exciton / Berfomet decks"
+ "note": "bridging br3 (base): one-engine hands that reach no other engine (Black Chaos alone, Engraver alone); 5-min searches, 4 rounds, hints off, own seeds, forced tries; same hands/orders/seeds across base/APP/Acropolis/Exciton/Berfomet"
 }
