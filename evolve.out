@@ -1,0 +1,39 @@
+evolve br2-berfomet-treasure: 0 seed lines, 4 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 4
+helper slots now 5
+helper slots now 3
+progress 5 pieces
+helper slots now 5
+progress 10 pieces
+helper slots now 4
+progress 15 pieces
+helper slots now 5
+progress 20 pieces
+helper slots now 6
+helper slots now 5
+progress 25 pieces
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+progress 45 pieces
+helper slots now 4
+progress 50 pieces
+helper slots now 3
+helper slots now 5
+helper slots now 4
+helper slots now 5
+progress 55 pieces
+helper slots now 2
+order 3: best 12.3 (forced Activate Theorealize Liberation)
+helper slots now 4
+helper slots now 2
+progress 60 pieces
+order 2: best 12.3 (forced Xyz Summon Evilswarm Exciton Knight → new early order)
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 4
+helper slots now 3
+order 1: best 13.3 (tries Activate Junoldo the Shadespirit Power Patron)
+order 4: best 12.3 (forced Activate Artmage Non-Finito)
+done -> reports/evolve-br2-berfomet-treasure.md
