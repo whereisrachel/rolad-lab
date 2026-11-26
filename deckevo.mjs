@@ -5,7 +5,7 @@
 // node deckevo.mjs '{"id":"de-1","deck":"decks/findlist-1100.ydk","minutes":15,"hands":16,"pop":16,"keep":4,"resume":"<previous id>"}'
 import fs from 'fs'; import os from 'os'; import path from 'path'; import crypto from 'crypto';
 import { parseYdk, findCard, name, banlist, cardDB } from './src/cards.mjs'; import { runRemote, helperSlots } from './src/remote.mjs'; import { synergyScores } from './src/synergy.mjs';
-import { spawn } from 'child_process';
+import { spawn } from 'child_process'; import * as require_cp from 'child_process';
 const t = JSON.parse(process.argv[2]); const ID = t.id || 'de'; const MIN = +(t.minutes || 15), H = +(t.hands || 16), POP = +(t.pop || 16), KEEP = +(t.keep || 4), MORE = +(t.more || 8);
 const STOP = +(t.stopMin || 320); const T0 = Date.now(); const el = () => (Date.now() - T0) / 60000;
 fs.mkdirSync('reports', { recursive: true }); fs.mkdirSync('results', { recursive: true }); fs.mkdirSync('decks/_evo', { recursive: true });
@@ -101,7 +101,12 @@ const rank = () => Object.keys(S.decks).filter(k => stat(k).n >= H * 0.75).sort(
 function report() { const rows = rank().slice(0, 20).map((k, i) => { const s = stat(k), b = vsBase(k); return `| ${i + 1} | ${s.m.toFixed(2)} ± ${s.se.toFixed(2)} (n ${s.n}) | ${k === S.baseKey ? '—' : `${b.m >= 0 ? '+' : ''}${b.m.toFixed(2)} ± ${b.se.toFixed(2)}`} | ${size(S.decks[k].main)}/${size(S.decks[k].extra)} | ${diff(S.decks[k])} |`; });
   const top = rank()[0]; let md = `# Whole-deck search ${ID}\n${new Date().toISOString()} · ${S.gens.length} generations · ${Object.keys(S.decks).length} decks · ${MIN}-min unguided searches · opponent hand traps rotate none/Ash/Imperm/Droll\n\nPool: ${PM.length} Main Deck + ${PE.length} Extra Deck cards. Locked: ${[...LOCK].join(', ')}; hand-trap counts fixed.\n\n| # | average board | vs start list (same hands) | Main/Extra | changes from the start list |\n|---|---|---|---|---|\n${rows.join('\n')}\n`;
   if (top) md += `\n## Best deck so far\n${diff(S.decks[top])}\n\nMain: ${Object.entries(S.decks[top].main).filter(x => x[1]).map(([n, k]) => `${k} ${n}`).join(', ')}\n\nExtra: ${Object.entries(S.decks[top].extra).filter(x => x[1]).map(([n, k]) => `${k} ${n}`).join(', ')}\n`;
-  md += `\n## Generations\n${S.gens.map(g => `- gen ${g.g}: ${g.n} new decks, best ${g.best}, ${g.min} min`).join('\n')}\n`; fs.writeFileSync(`reports/${ID}.md`, md); save(); }
+  md += `\n## Generations\n${S.gens.map(g => `- gen ${g.g}: ${g.n} new decks, best ${g.best}, ${g.min} min`).join('\n')}\n`; fs.writeFileSync(`reports/${ID}.md`, md); save(); live(); }
+// live snapshot (GitHub runs only): push the report + state to branch lab-<id> after every generation, so the run can be checked while it runs
+function live() { if (!process.env.LIVE_TOKEN || !process.env.LIVE_REPO) return; try { const dir = `/tmp/live-${ID}`; fs.rmSync(dir, { recursive: true, force: true }); fs.mkdirSync(dir + '/reports', { recursive: true }); fs.mkdirSync(dir + '/results', { recursive: true });
+  fs.copyFileSync(`reports/${ID}.md`, `${dir}/reports/${ID}.md`); if (fs.existsSync(`reports/${ID}.log`)) fs.copyFileSync(`reports/${ID}.log`, `${dir}/reports/${ID}.log`); fs.copyFileSync(`results/${ID}.json`, `${dir}/results/${ID}.json`);
+  const sh = (c) => require_cp.execSync(c, { cwd: dir, stdio: 'ignore' }); sh('git init -q . && git config user.name rolad-lab && git config user.email noreply@github.com && git add -A && git commit -qm "live ' + ID + '"');
+  sh(`git push -q -f "https://x-access-token:${process.env.LIVE_TOKEN}@github.com/${process.env.LIVE_REPO}.git" HEAD:refs/heads/lab-${ID}`); } catch { log('live snapshot push failed'); } }
 
 // ---------- run ----------
 if (!S.baseKey) { S.baseKey = key(base); S.decks[S.baseKey] = base; }
