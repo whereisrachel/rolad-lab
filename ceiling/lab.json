@@ -1,35 +1,101 @@
 {
- "id": "ct-3-2",
+ "id": "br-1",
  "script": "cardtest.mjs",
  "args": {
   "deck": "decks/findlist-1100.ydk",
-  "random": 100,
-  "randomFrom": 200,
+  "hands": {
+   "medius": [
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ],
+   "terminus": [
+    "Prohibited Power Patron Portal - Terminus",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ],
+   "citrinitas": [
+    "Ars Magna - \"Citrinitas\"",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ],
+   "treasure": [
+    "Pendulum Treasure",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ],
+   "engraver": [
+    "Fiendsmith Engraver",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ],
+   "blackchaos": [
+    "Black Chaos",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ]
+  },
+  "inDeck": true,
   "lean": true,
-  "orders": 1,
-  "minutes": 2,
+  "orders": 4,
+  "minutes": 3,
   "main": [
+   "Theorealize",
+   "Prohibitive Power Patron Purview - Vilaea",
+   "Theorealize Overdrive",
+   "Kuriphoton",
    "Artmage Power Patron",
-   "Artmage Academic Arcane Arts Acropolis",
-   "Theorealize Medius"
+   "Jupredo the Shademachine Power Patron",
+   "Celtic Mystic"
   ],
-  "extra": [],
-  "swaps": [
+  "extra": [
+   "Evilswarm Exciton Knight",
+   "Berfomet the Mythical King of Phantom Beasts"
+  ],
+  "edOut": "Chaos Angel",
+  "packages": [
    {
-    "in": "Artmage Power Patron",
-    "out": "Plundered Power Patron Plane - Vidolia"
+    "name": "bridge package (Theorealize, Vilaea, Exciton, Berfomet)",
+    "add": [
+     "Theorealize",
+     "Prohibitive Power Patron Purview - Vilaea"
+    ],
+    "extraIn": [
+     "Evilswarm Exciton Knight",
+     "Berfomet the Mythical King of Phantom Beasts"
+    ],
+    "extraOut": [
+     "Chaos Angel",
+     "Medicurius the Power Patron of Illusions"
+    ]
    },
    {
-    "in": "Artmage Power Patron",
-    "out": "Artmage Vandalism -Assault-"
-   },
-   {
-    "in": "Artmage Academic Arcane Arts Acropolis",
-    "out": "Plundered Power Patron Plane - Vidolia"
-   },
-   {
-    "in": "Artmage Academic Arcane Arts Acropolis",
-    "out": "Artmage Vandalism -Assault-"
+    "name": "bridge package + Theorealize Overdrive",
+    "add": [
+     "Theorealize",
+     "Prohibitive Power Patron Purview - Vilaea",
+     "Theorealize Overdrive"
+    ],
+    "extraIn": [
+     "Evilswarm Exciton Knight",
+     "Berfomet the Mythical King of Phantom Beasts"
+    ],
+    "extraOut": [
+     "Chaos Angel",
+     "Medicurius the Power Patron of Illusions"
+    ]
    }
   ]
  }
