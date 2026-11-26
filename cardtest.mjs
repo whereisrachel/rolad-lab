@@ -19,19 +19,23 @@ fs.mkdirSync('decks/ct', { recursive: true });
 const ydk = (main, extra) => `#main\n${main.join('\n')}\n#extra\n${extra.join('\n')}\n!side\n`;
 const versions = [{ v: 'base', file: DECK }];
 for (const c of MAIN) { const f = `decks/ct/m-${c.replace(/[^\w]+/g, '_').slice(0, 50)}.ydk`; fs.writeFileSync(f, ydk([...base.main, codeOf(c)], base.extra)); versions.push({ v: c, zone: 'main', file: f }); }
+for (const sw of (t.swaps || [])) { const m = base.main.slice(); const i = m.findIndex(k => name(k) === sw.out); if (i < 0) throw new Error('not in list: ' + sw.out); m.splice(i, 1, codeOf(sw.in));
+  const f = `decks/ct/s-${(sw.in + '-for-' + sw.out).replace(/[^\w]+/g, '_').slice(0, 70)}.ydk`; fs.writeFileSync(f, ydk(m, base.extra)); versions.push({ v: `${sw.in} for ${sw.out}`, zone: 'swap', inCard: sw.in, outCard: sw.out, file: f }); }
 for (const c of EXTRA) { const ex = base.extra.slice(); const i = ex.findIndex(k => name(k) === ED_OUT); ex.splice(i >= 0 ? i : ex.length - 1, 1, codeOf(c)); const f = `decks/ct/e-${c.replace(/[^\w]+/g, '_').slice(0, 50)}.ydk`; fs.writeFileSync(f, ydk(base.main, ex)); versions.push({ v: c, zone: 'extra', file: f }); }
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const pieces = [];
 // random-hands mode (t.random = N): N opening hands drawn from your list; a Main Deck candidate is shuffled into the deck at a random spot,
 // so it is in the opening hand only when it lands in the top 5 (as in a real game) — same hands otherwise, so the comparison stays paired
 if (t.random) { const rng = (s0) => { let x = (s0 >>> 0) || 1; return () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296; };
-  t.hands = {}; t.handsFor = {}; for (let h = 0; h < t.random; h++) { const r = rng(9000 + h); const a = base.main.slice(); for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; }
+  t.hands = {}; t.handsFor = {}; for (let h = (t.randomFrom || 0); h < (t.randomFrom || 0) + t.random; h++) { const r = rng(9000 + h); const a = base.main.slice(); for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; }
     const pos = Math.floor(r() * (a.length + 1)); const hb = a.slice(0, 5).map(name); const withC = (c) => { const b = a.slice(); b.splice(pos, 0, codeOf(c)); return b.slice(0, 5).map(name); };
-    t.hands['r' + h] = hb; t.handsFor['r' + h] = withC; } }
+    t.hands['r' + h] = hb; t.handsFor['r' + h] = withC; t.swapFor = t.swapFor || {}; t.swapFor['r' + h] = (inC, outC) => { const b = a.slice(); const j = b.findIndex(k => name(k) === outC); if (j >= 0) b.splice(j, 1, codeOf(inC)); return b.slice(0, 5).map(name); }; } }
 for (const ver of versions) for (const [hn, hand0] of Object.entries(t.hands)) for (let o = 1; o <= ORD; o++) {
-  const hand = t.random ? (ver.zone === 'main' ? t.handsFor[hn](ver.v) : hand0.slice()) : ver.zone === 'main' ? [...hand0.slice(0, 4), ver.v] : hand0.slice();
-  const kinds = [{ k: 's1', x: { sseed: 4100 + o } }, { k: 's2', x: { sseed: 5200 + o } }, { k: 'open', x: { sseed: 6300 + o, open: true } }];
-  if (ver.v !== 'base') kinds.push({ k: 'must', x: { sseed: 7400 + o, mustUse: `^(Activate|Normal Summon|Special Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Set Spell/Trap) ${esc(ver.v)}` } });
+  const hand = t.random ? (ver.zone === 'main' ? t.handsFor[hn](ver.v) : ver.zone === 'swap' ? t.swapFor[hn](ver.inCard, ver.outCard) : hand0.slice()) : ver.zone === 'main' ? [...hand0.slice(0, 4), ver.v] : hand0.slice();
+  const hs = t.random ? 1000 * (+hn.slice(1)) : 0; const kinds = [{ k: 's1', x: { sseed: 4100 + o + hs } }, ...(t.lean ? [] : [{ k: 's2', x: { sseed: 5200 + o + hs } }]), { k: 'open', x: { sseed: 6300 + o + hs, open: true } }];
+  const mc = ver.zone === 'swap' ? ver.inCard : ver.v;
+  if (ver.v !== 'base') kinds.push({ k: 'must', x: { sseed: 7400 + o + hs, mustUse: `^(Activate|Normal Summon|Special Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Set Spell/Trap) ${esc(mc)}` } });
+  else if (t.lean) kinds.push({ k: 's3', x: { sseed: 8500 + o + hs } }); // the list without the card gets the same number of searches
   for (const kd of kinds) pieces.push({ ver, hn, o, k: kd.k, task: { deck: ver.file, hand, seed: o, minutes: MIN, hints: false, learn: false, ...kd.x } }); }
 console.log(`cardtest ${ID}: ${versions.length - 1} cards (${MAIN.length} Main, ${EXTRA.length} Extra) x ${Object.keys(t.hands).length} hands x ${ORD} orders = ${pieces.length} searches`);
 let done = 0;
@@ -46,7 +50,7 @@ rows.sort((a, b) => b.gain - a.gain);
 const baseRow = {}; for (const hn of Object.keys(t.hands)) { const xs = []; for (let o = 1; o <= ORD; o++) { const b = best('base', hn, o); if (b != null) xs.push(b); } baseRow[hn] = xs.length ? +(xs.reduce((s, x) => s + x, 0) / xs.length).toFixed(2) : null; }
 fs.mkdirSync('reports', { recursive: true }); fs.writeFileSync(`reports/${ID}.json`, JSON.stringify({ base: baseRow, rows, pieces: pieces.map(({ ver, task, ...p }) => ({ card: ver.v, hand: task.hand, ...p })) }));
 if (t.random) { let md = `# Card test ${ID} (random hands)\n${new Date().toISOString()} · ${Object.keys(t.hands).length} random opening hands from your list, ${MIN} min searches, no hints, own seeds, forced use of the card\n\nList without the card: average best board ${(Object.values(baseRow).reduce((a, b) => a + (b || 0), 0) / Object.keys(baseRow).length).toFixed(2)}\n\n| card | zone | gain per hand (± se) | hands where it changed the opening hand |\n|---|---|---|---|\n`;
-  for (const r of rows) { const nIn = Object.keys(t.hands).filter(h => r.zone === 'main' && JSON.stringify(t.handsFor[h](r.card)) !== JSON.stringify(t.hands[h])).length; md += `| ${r.card} | ${r.zone} | ${r.gain >= 0 ? '+' : ''}${r.gain} ± ${r.se} (n ${r.n}) | ${nIn} |\n`; }
+  for (const r of rows) { const ver = versions.find(v => v.v === r.card); const nIn = Object.keys(t.hands).filter(h => JSON.stringify(ver.zone === 'main' ? t.handsFor[h](r.card) : ver.zone === 'swap' ? t.swapFor[h](ver.inCard, ver.outCard) : t.hands[h]) !== JSON.stringify(t.hands[h])).length; md += `| ${r.card} | ${r.zone} | ${r.gain >= 0 ? '+' : ''}${r.gain} ± ${r.se} (n ${r.n}) | ${nIn} |\n`; }
   fs.writeFileSync(`reports/${ID}.md`, md); console.log(md); process.exit(0); }
 let md = `# Card test ${ID}\n${new Date().toISOString()} · ${MIN} min searches, ${ORD} deck orders, no hints, own seeds, forced use of the card\n\nList without the card, best board per hand: ${Object.entries(baseRow).map(([h, v]) => `${h} ${v}`).join(' · ')}\n\n| card | zone | gain per hand (± se) | ${Object.keys(t.hands).join(' | ')} | forced line used it |\n|---|---|---|${Object.keys(t.hands).map(() => '---').join('|')}|---|\n`;
 for (const r of rows) md += `| ${r.card} | ${r.zone} | ${r.gain >= 0 ? '+' : ''}${r.gain} ± ${r.se} (n ${r.n}) | ${Object.keys(t.hands).map(h => r.per[h]).join(' | ')} | ${r.usedInMust}/${Object.keys(t.hands).length * ORD} |\n`;
