@@ -1,7 +1,7 @@
 {
  "hands": [
   {
-   "name": "c2-drawfair-terminus",
+   "name": "c2-drawfair2-terminus",
    "hand": [
     "Prohibited Power Patron Portal - Terminus",
     "Ash Blossom & Joyous Spring",
@@ -13,21 +13,33 @@
     "lines/draw/drawpre-terminus-a.json",
     "lines/draw/drawpre-terminus-b.json",
     "lines/draw/drawpre-terminus-c.json"
+   ],
+   "only": [
+    1,
+    3,
+    8
    ]
   },
   {
-   "name": "c2-drawfair-bcmed",
+   "name": "c2-drawfair3-terminus",
    "hand": [
-    "Black Chaos",
-    "Medius the Pure",
+    "Prohibited Power Patron Portal - Terminus",
+    "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
     "Droll & Lock Bird",
     "Ghost Ogre & Snow Rabbit"
    ],
    "seeds": [
-    "lines/draw/drawpre-bcmed-a.json",
-    "lines/draw/drawpre-bcmed-b.json"
-   ]
+    "lines/draw/drawpre-terminus-a.json",
+    "lines/draw/drawpre-terminus-b.json",
+    "lines/draw/drawpre-terminus-c.json"
+   ],
+   "only": [
+    1,
+    3,
+    8
+   ],
+   "seedBase": 9500
   }
  ],
  "deck": "decks/findlist-1100.ydk",
@@ -37,7 +49,7 @@
  "explore": 0,
  "fitness": "board",
  "judgeWinner": false,
- "seedBase": 9300,
- "share": 4,
- "note": "fair score for the Junoldo-draw lines: play the line up to the draw as written on each deck order, then the search finishes with whatever was drawn"
+ "seedBase": 9400,
+ "share": 2,
+ "note": "fair draw score, Terminus: the deck orders whose finish searches came back empty (1, 3, 8), twice with different seeds"
 }
