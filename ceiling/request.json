@@ -1,83 +1,83 @@
 {
  "hands": [
   {
-   "name": "ug-bcmed",
+   "name": "ug-terminus",
    "hand": [
-    "Black Chaos",
+    "Prohibited Power Patron Portal - Terminus",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "ug-treasure",
+   "hand": [
+    "Pendulum Treasure",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "ug-rand1",
+   "hand": [
+    "Prohibited Power Patron Portal - Terminus",
+    "Ash Blossom & Joyous Spring",
+    "Nervedo the Shadebeast Power Patron",
+    "Artmage Graflare",
+    "Lacrima the Crimson Tears"
+   ]
+  },
+  {
+   "name": "ug-rand2",
+   "hand": [
+    "Black Luster Soldier - Soldier of Light and Darkness",
+    "Fiendsmith's Tract",
+    "Theorealize Past Lull",
+    "Dark Magical Circle",
+    "Fiendsmith Engraver"
+   ]
+  },
+  {
+   "name": "ug-rand3",
+   "hand": [
+    "Mind Shuffle",
     "Medius the Pure",
     "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
+    "Prohibited Power Patron Portal - Terminus",
+    "Ars Magna of Purification and Corruption"
    ]
   },
   {
-   "name": "ug-blackchaos",
+   "name": "ug-rand4",
    "hand": [
-    "Black Chaos",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "ug-citrinitas",
-   "hand": [
-    "Ars Magna - \"Citrinitas\"",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "ug-engmed",
-   "hand": [
-    "Fiendsmith Engraver",
+    "Artmage Vandalism -Assault-",
     "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
+    "Prohibited Power Patron Portal - Terminus",
+    "Light and Darkness Ritual",
+    "Apprentice Illusion Magician"
    ]
   },
   {
-   "name": "ug-engraver",
+   "name": "ug-rand5",
    "hand": [
-    "Fiendsmith Engraver",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "ug-infinity",
-   "hand": [
-    "Ars Magna of Infinity and Finity",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "ug-medius",
-   "hand": [
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
     "Infinite Impermanence",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "ug-smallworld",
-   "hand": [
     "Small World",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
+    "Medius the Pure",
+    "Artmage Graflare",
     "Dark Magical Circle"
+   ]
+  },
+  {
+   "name": "ug-rand6",
+   "hand": [
+    "Artmage Vandalism -Assault-",
+    "Plundered Power Patron Plane - Vidolia",
+    "Fiendsmith's Tract",
+    "Magician of Dark Chaos - Black Chaos",
+    "Artmage Impasto -Recapture-"
    ]
   }
  ],
@@ -98,5 +98,5 @@
  "fitness": "board",
  "judgeWinner": false,
  "share": 12,
- "note": "unguided bridging search part 1/3: 15-min searches, no hints, no seed lines, no forced tries; all guide openers + 6 random hands; looking for better engine-to-engine routes"
+ "note": "unguided bridging search part 2/3: 15-min searches, no hints, no seed lines, no forced tries; all guide openers + 6 random hands; looking for better engine-to-engine routes"
 }
