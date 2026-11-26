@@ -1,0 +1,15 @@
+# Guide line on turn 1, full games g1-sw
+2026-11-26T06:55:23.092Z · going first · 8 deals per hand and opponent · you 0.75 min a turn, opponent 2.25 · up to 10 turns · 2 games failed
+
+| hand | opponent | guide line T1 | search T1 | guide − search (paired) | guide steps played as written |
+|---|---|---|---|---|---|
+| smallworld | o_ss_panama | 75% | 69% | +6 ± 20 pts (n 8) | 40% |
+| smallworld | o_elfnote | 50% | 0% | +50 ± 22 pts (n 6) | 7% |
+| smallworld | o_despia | 50% | 44% | +6 ± 20 pts (n 8) | 34% |
+| smallworld | o_angelechy | 100% | 88% | +13 ± 13 pts (n 8) | 51% |
+| **smallworld** | **all** | **70%** | 50% | +17 ± 9 pts (n 30) | 35% |
+| **all** | **o_ss_panama** | **75%** | 69% | +6 ± 20 pts (n 8) | |
+| **all** | **o_elfnote** | **50%** | 0% | +50 ± 22 pts (n 6) | |
+| **all** | **o_despia** | **50%** | 44% | +6 ± 20 pts (n 8) | |
+| **all** | **o_angelechy** | **100%** | 88% | +13 ± 13 pts (n 8) | |
+| **all** | **all** | **70%** | 50% | +17 ± 9 pts (n 30) | 35% |
