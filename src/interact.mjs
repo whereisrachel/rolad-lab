@@ -29,3 +29,14 @@ const cache = new Map();
 export function interact(a, b) { const k = a < b ? a + ':' + b : b + ':' + a; if (cache.has(k)) return cache.get(k);
   const A = info(a), Bi = info(b); let w = 0; if (A && Bi && a !== b) { for (const cl of clauses(a)) w = Math.max(w, fits(cl, Bi, A.name)); for (const cl of clauses(b)) w = Math.max(w, fits(cl, A, Bi.name)); }
   cache.set(k, w); return w; }
+// direction: does a lead to b? (a gets b: a's text adds / Special Summons / Sets b from the Deck, GY, banishment or Extra Deck; or b uses a:
+// b's text sends / banishes / Tributes / discards / reveals / targets a, or takes a as material). Used to find routes "X → Z → Y".
+const FETCH = /\b(add|Special Summon|Set)\b[^.]*\b(Deck|GY|Graveyard|banished|Extra Deck)\b|\b(Deck|GY|banished|Extra Deck)\b[^.]*\b(add|Special Summon|Set)\b/i;
+const USE = /\b(send|banish|Tribute|discard|reveal|target|shuffle|return|equip|material|detach|Ritual Summon|Fusion Summon)\b/i;
+const fcache = new Map();
+const matTxt = (code) => { const d = cardDB().data.get(code); if (!d || !(d.type & (0x40 | 0x2000 | 0x800000 | 0x4000000))) return null; return ((cardDB().text.get(code) || {}).desc || '').split(/\n|(?<=monsters?)\s/)[0]; };
+export function flows(a, b) { const k = a + '>' + b; if (fcache.has(k)) return fcache.get(k); const A = info(a), Bi = info(b); let w = 0;
+  if (A && Bi && a !== b) { for (const cl of clauses(a)) if (FETCH.test(cl)) w = Math.max(w, fits(cl, Bi, A.name));
+    for (const cl of clauses(b)) if (USE.test(cl)) w = Math.max(w, fits(cl, A, Bi.name));
+    const m = matTxt(b); if (m) w = Math.max(w, fits(m + ' material', A, Bi.name)); }
+  fcache.set(k, w); return w; }

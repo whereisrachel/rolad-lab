@@ -4,7 +4,7 @@
 // and their scores firm up as they play more hands each generation. The ROLAD core, the Dark Magician package and hand-trap counts are fixed.
 // node deckevo.mjs '{"id":"de-1","deck":"decks/findlist-1100.ydk","minutes":15,"hands":16,"pop":16,"keep":4,"resume":"<previous id>"}'
 import fs from 'fs'; import os from 'os'; import path from 'path'; import crypto from 'crypto';
-import { parseYdk, findCard, name, banlist, cardDB } from './src/cards.mjs'; import { runRemote, helperSlots } from './src/remote.mjs'; import { synergyScores } from './src/synergy.mjs'; import { interact } from './src/interact.mjs';
+import { parseYdk, findCard, name, banlist, cardDB } from './src/cards.mjs'; import { runRemote, helperSlots } from './src/remote.mjs'; import { synergyScores } from './src/synergy.mjs'; import { interact, flows } from './src/interact.mjs';
 import { spawn } from 'child_process'; import * as require_cp from 'child_process';
 const t = JSON.parse(process.argv[2]); const ID = t.id || 'de'; const MIN = +(t.minutes || 15), H = +(t.hands || 16), POP = +(t.pop || 16), KEEP = +(t.keep || 4), MORE = +(t.more || 8);
 const STOP = +(t.stopMin || 320); const T0 = Date.now(); const el = () => (Date.now() - T0) / 60000;
@@ -66,11 +66,27 @@ function connect(d) { const inD = [...Object.keys(d.main).filter(n => d.main[n] 
     const k = Math.min(lim(X.c) - (d.main[X.n] || 0), 1 + Math.floor(Math.random() * 2)); d.main[X.n] = (d.main[X.n] || 0) + k; return [`+${k} ${X.n} (works with ${anchor})`]; };
   const a1 = addOne(A); if (!a1) return null; if (Math.random() < 0.33) { const nm = /\+\d+ (.+?) \(works/.exec(a1[a1.length - 1]); if (nm) { const a2 = addOne(nm[1]); if (a2) a1.push(...a2); } } return a1; }
 let CUR_USED = null;
+// bridge: "X would work with Y if a card that did Z existed" — X = a card that keeps showing up in hands that went nowhere, Y = a piece good
+// lines had to fetch. Look through the whole pool for Z that works with X AND with Y (1 card), or Z1 that works with X and Z2 that works
+// with Z1 and Y (2 cards). The engine then decides whether the route is real.
+function bridge(d) { const st = Object.entries(S.strand || {}).filter(([n]) => (d.main[n] || 0) > 0); const nd = Object.entries(S.need || {}); if (!st.length || !nd.length) return null;
+  const wpick = (arr) => { let t = arr.reduce((a, b) => a + Math.log1p(b[1]), 0), r = Math.random() * t; for (const [n, w] of arr) { r -= Math.log1p(w); if (r <= 0) return n; } return arr[0][0]; };
+  const X = wpick(st); let Y = wpick(nd); for (let i = 0; i < 5 && Y === X; i++) Y = wpick(nd); if (Y === X) return null; const xc = code(X), yc = code(Y); if (!xc || !yc) return null;
+  const room = (x) => (x.e ? (d.extra[x.n] || 0) : (d.main[x.n] || 0)) < lim(x.c);
+  const one = PALL.filter(x => room(x) && x.n !== X && x.n !== Y && flows(xc, x.c) >= 0.6 && flows(x.c, yc) >= 0.6);
+  const put = (x, why) => { if (x.e) { const outs = Object.keys(d.extra).filter(o => d.extra[o] > 0 && !minOf['ED:' + o]); const idle = outs.filter(o => CUR_USED && !CUR_USED.has(o)); if (size(d.extra) >= 15) { const o = (idle.length ? idle : outs).sort(() => Math.random() - 0.5)[0]; if (!o) return null; d.extra[o]--; } d.extra[x.n] = (d.extra[x.n] || 0) + 1; return `ED +1 ${x.n} (${why})`; }
+    const k = Math.min(lim(x.c) - (d.main[x.n] || 0), 1 + Math.floor(Math.random() * 2)); d.main[x.n] = (d.main[x.n] || 0) + k; return `+${k} ${x.n} (${why})`; };
+  if (one.length && Math.random() < 0.7) { const z = rnd(one); const a = put(z, `bridge ${X} → ${Y}`); return a ? [a] : null; }
+  const n1 = PALL.filter(x => room(x) && x.n !== X && flows(xc, x.c) >= 0.6).sort(() => Math.random() - 0.5).slice(0, 40);
+  for (const z1 of n1) { const z2s = PALL.filter(x => room(x) && x.n !== z1.n && x.n !== X && x.n !== Y && flows(z1.c, x.c) >= 0.6 && flows(x.c, yc) >= 0.6); if (!z2s.length) continue; const z2 = rnd(z2s);
+    const a = put(z1, `bridge ${X} → ${z2.n} → ${Y}`), b = put(z2, `bridge ${X} → ${z1.n} → ${Y}`); return [a, b].filter(Boolean); }
+  if (one.length) { const a = put(rnd(one), `bridge ${X} → ${Y}`); return a ? [a] : null; } return null; }
 function mutate(p) { CUR_USED = p._used || null; for (let tries = 0; tries < 50; tries++) { const d = clone(p); const k = 2 + Math.floor(Math.random() * 5); const did = [];
   for (let i = 0; i < k; i++) { const r = Math.random(); const inMain = Object.keys(d.main).filter(n => d.main[n] > 0);
-    if (r < 0.22) { const x = connect(d); if (x) { did.push(...x); if (process.env.DBGC) log('connect: ' + x.join(' | ')); } }
-    else if (r < 0.30) { const n = pick(PM); const c = Math.min(lim(code(n)) - (d.main[n] || 0), 1 + Math.floor(Math.random() * 3)); if (c > 0) { d.main[n] = (d.main[n] || 0) + c; did.push(`+${c} ${n}`); } }
-    else if (r < 0.33) { const f = rnd(Object.keys(fam)); for (const n of fam[f].slice().sort(() => Math.random() - 0.5).slice(0, 2 + Math.floor(Math.random() * 2))) { if ((d.main[n] || 0) < lim(code(n))) { d.main[n] = (d.main[n] || 0) + 1; did.push(`+1 ${n}`); } } }
+    if (r < 0.12) { const x = bridge(d); if (x) { did.push(...x); if (process.env.DBGC) log('bridge: ' + x.join(' | ')); } }
+    else if (r < 0.26) { const x = connect(d); if (x) { did.push(...x); if (process.env.DBGC) log('connect: ' + x.join(' | ')); } }
+    else if (r < 0.32) { const n = pick(PM); const c = Math.min(lim(code(n)) - (d.main[n] || 0), 1 + Math.floor(Math.random() * 3)); if (c > 0) { d.main[n] = (d.main[n] || 0) + c; did.push(`+${c} ${n}`); } }
+    else if (r < 0.35) { const f = rnd(Object.keys(fam)); for (const n of fam[f].slice().sort(() => Math.random() - 0.5).slice(0, 2 + Math.floor(Math.random() * 2))) { if ((d.main[n] || 0) < lim(code(n))) { d.main[n] = (d.main[n] || 0) + 1; did.push(`+1 ${n}`); } } }
     else if (r < 0.65) { const unused = inMain.filter(n => !isHT(code(n)) && !(minOf[n] && d.main[n] <= minOf[n]) && (p._used ? !p._used.has(n) : false)); const n = unused.length && Math.random() < 0.6 ? rnd(unused) : rnd(inMain); if (n && !(minOf[n] && d.main[n] <= minOf[n])) { d.main[n]--; did.push(`-1 ${n}`); } }
     else if (r < 0.75) { const n = rnd(inMain); if (n && d.main[n] < lim(code(n)) && !isHT(code(n))) { d.main[n]++; did.push(`+1 ${n}`); } }
     else { const n = pick(PE); const cur0 = Object.keys(d.extra).filter(x => d.extra[x] > 0 && !minOf['ED:' + x]); const idle0 = cur0.filter(x => CUR_USED && !CUR_USED.has(x)); const cur = idle0.length && Math.random() < 0.75 ? idle0 : cur0; if ((d.extra[n] || 0) >= lim(code(n))) continue;
@@ -97,7 +113,7 @@ async function play(d, hi, remote) { const perm = deal(d, hi); const args = { de
   const m = /RESULT (.*)/.exec(out || ''); if (!m) return { v: null }; const x = JSON.parse(m[1]); return { v: x.v, hand: args.hand, scn: args.scn, line: (x.line || []).slice(0, 80) }; }
 const PAR = Math.max(1, Math.min(os.cpus().length - 1, Math.floor(os.freemem() / 1.3e9)));
 async function runAll(jobs) { const q = jobs.slice(); let live = 0, hs = await helperSlots(); let done = 0;
-  const work = async (remote) => { while (q.length) { if (remote && live > hs) return; const j = q.shift(); const r = await play(j.d, j.hi, remote); (S.res[j.k] ||= {})[j.hi] = r; credit(j.k, j.hi); done++; if (done % 10 === 0) { log(`  ${done}/${jobs.length} games`); save(); } } };
+  const work = async (remote) => { while (q.length) { if (remote && live > hs) return; const j = q.shift(); const r = await play(j.d, j.hi, remote); (S.res[j.k] ||= {})[j.hi] = r; credit(j.k, j.hi); strand(r); done++; if (done % 10 === 0) { log(`  ${done}/${jobs.length} games`); save(); } } };
   const ws = []; const grow = () => { while (live < hs && q.length) { live++; ws.push(work(true).finally(() => live--)); } }; grow(); const tm = setInterval(async () => { try { hs = await helperSlots(); } catch {} grow(); }, 60000);
   await Promise.all(Array.from({ length: PAR }, () => work(false))); while (ws.length) await ws.shift(); clearInterval(tm); save(); }
 
@@ -107,6 +123,9 @@ const credit = (k, hi) => { const r = S.res[k][hi], b = (S.res[S.baseKey] || {})
   // pieces the line had to go and get (searched, revived, summoned from the Deck/GY/banishment): more ways to reach them = more ways through a hand trap
   S.need ||= {}; S.link ||= {}; let by = null; for (const l of r.line) { const a = /^(?:Activate|Trigger: activate) (.+?) \(/.exec(l); if (a) { by = a[1]; continue; } const m = /^Selected (.+?) \((Deck|GY|banished|Extra Deck)/.exec(l); if (m) { S.need[m[1]] = (S.need[m[1]] || 0) + 1; if (by) S.link[by + ' > ' + m[1]] = (S.link[by + ' > ' + m[1]] || 0) + 1; } } };
 const usedIn = (k) => { const u = new Set(); for (const r of Object.values(S.res[k] || {})) for (const l of r.line || []) { const m = /^(?:Activate|Normal Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Ritual Summon|Special Summon \(procedure\)|Set Spell\/Trap|Selected|Tribute Summon) (.+?) \(/.exec(l); if (m) u.add(m[1]); } return u; };
+// stranded cards: in hands that ended well below the start list's typical board, which cards were there (nothing reached the rest of the deck)
+const strand = (r) => { if (!r || r.v == null || !r.hand) return; const bv = Object.values(S.res[S.baseKey] || {}).map(x => x.v).filter(x => x != null).sort((a, b) => a - b); const med = bv.length ? bv[bv.length >> 1] : 10;
+  if (r.v >= med * 0.7) return; S.strand ||= {}; for (const n of new Set(r.hand)) if (!isHT(code(n))) S.strand[n] = (S.strand[n] || 0) + 1; };
 // ---------- state ----------
 let S = { id: ID, decks: {}, res: {}, gens: [] };
 if (t.resume) { try { const r = await fetch(`https://raw.githubusercontent.com/whereisrachel/rolad-lab/lab-${t.resume}/results/${t.resume}.json`); if (r.ok) { const p = await r.json(); S = { ...p, id: ID }; log(`resumed from ${t.resume}: ${Object.keys(S.decks).length} decks, ${S.gens.length} generations`); } } catch (e) { log('resume failed: ' + e.message); } }
