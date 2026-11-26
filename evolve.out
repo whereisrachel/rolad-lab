@@ -1,0 +1,74 @@
+evolve lk-rand2: 0 seed lines, 8 deck orders, 4 mutation rounds, 20 min searches, 3 hands x 4 decks per line
+helper slots now 6
+helper slots now 1
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 0
+helper slots now 2
+helper slots now 5
+helper slots now 1
+helper slots now 2
+helper slots now 3
+helper slots now 2
+progress 5 pieces
+helper slots now 3
+helper slots now 0
+progress 10 pieces
+helper slots now 1
+helper slots now 2
+helper slots now 4
+helper slots now 3
+helper slots now 0
+progress 15 pieces
+helper slots now 1
+helper slots now 2
+helper slots now 4
+helper slots now 2
+helper slots now 1
+progress 20 pieces
+helper slots now 4
+helper slots now 3
+helper slots now 2
+helper slots now 1
+helper slots now 0
+helper slots now 1
+progress 25 pieces
+helper slots now 3
+helper slots now 4
+helper slots now 3
+helper slots now 5
+helper slots now 2
+helper slots now 0
+progress 30 pieces
+helper slots now 2
+helper slots now 4
+helper slots now 3
+helper slots now 1
+helper slots now 0
+helper slots now 3
+helper slots now 2
+helper slots now 1
+helper slots now 3
+helper slots now 2
+helper slots now 1
+progress 35 pieces
+order 2: best 3.61 (opening lanes)
+order 4: best 4.65 (tries Activate Fiendsmith's Requiem)
+helper slots now 0
+helper slots now 3
+helper slots now 2
+helper slots now 0
+helper slots now 1
+helper slots now 3
+progress 40 pieces
+helper slots now 5
+helper slots now 3
+helper slots now 1
+helper slots now 0
+helper slots now 1
+helper slots now 2
+order 1: best 4.65 (search → new ending)
+helper slots now 5
+order 3: best 4.65 (tries Link Summon Code Talker → new ending)
+done -> reports/evolve-lk-rand2.md
