@@ -1,0 +1,39 @@
+evolve br2-base-citrinitas: 0 seed lines, 4 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 4
+helper slots now 6
+helper slots now 2
+progress 5 pieces
+helper slots now 5
+progress 10 pieces
+helper slots now 4
+progress 15 pieces
+helper slots now 5
+progress 20 pieces
+progress 25 pieces
+helper slots now 6
+helper slots now 5
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+progress 45 pieces
+progress 50 pieces
+helper slots now 3
+helper slots now 6
+helper slots now 5
+progress 55 pieces
+helper slots now 3
+helper slots now 4
+helper slots now 2
+order 3: best 12.15 (tries Activate Mind Shuffle)
+progress 60 pieces
+order 2: best 11.55 (tries Activate Theorealize Liberation)
+helper slots now 3
+helper slots now 2
+helper slots now 3
+order 4: best 11.55 (forced Activate Griffoh → new early order)
+helper slots now 2
+helper slots now 4
+helper slots now 3
+helper slots now 4
+order 1: best 11.55 (opening lanes)
+done -> reports/evolve-br2-base-citrinitas.md
