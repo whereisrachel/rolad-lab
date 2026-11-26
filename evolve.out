@@ -1,0 +1,64 @@
+evolve c2-t30-medius: 5 seed lines, 8 deck orders, 4 mutation rounds, 30 min searches, 3 hands x 4 decks per line
+helper slots now 7
+helper slots now 3
+helper slots now 5
+helper slots now 6
+helper slots now 5
+helper slots now 6
+helper slots now 4
+helper slots now 5
+progress 5 pieces
+helper slots now 7
+progress 10 pieces
+helper slots now 5
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+helper slots now 4
+helper slots now 6
+progress 15 pieces
+progress 20 pieces
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 5
+helper slots now 4
+helper slots now 5
+progress 25 pieces
+progress 30 pieces
+helper slots now 4
+helper slots now 5
+helper slots now 3
+helper slots now 5
+progress 35 pieces
+progress 40 pieces
+helper slots now 3
+helper slots now 5
+helper slots now 3
+progress 45 pieces
+progress 50 pieces
+progress 55 pieces
+progress 60 pieces
+order 3: best 12.65 (m1b → new ending)
+progress 65 pieces
+progress 70 pieces
+order 1: best 13 (tries Activate Mind Shuffle → new ending)
+helper slots now 5
+helper slots now 4
+progress 75 pieces
+progress 80 pieces
+helper slots now 3
+progress 85 pieces
+order 4: best 12.6 (m1b)
+progress 90 pieces
+progress 95 pieces
+progress 100 pieces
+order 2: best 12.8 (m1b → new ending)
+done -> reports/evolve-c2-t30-medius.md
