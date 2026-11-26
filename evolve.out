@@ -1,0 +1,77 @@
+evolve br3-app-engraver: 0 seed lines, 8 deck orders, 4 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 2
+helper slots now 3
+progress 5 pieces
+progress 10 pieces
+progress 15 pieces
+progress 20 pieces
+helper slots now 2
+progress 25 pieces
+helper slots now 4
+helper slots now 3
+progress 30 pieces
+helper slots now 4
+helper slots now 5
+progress 35 pieces
+helper slots now 6
+helper slots now 4
+progress 40 pieces
+helper slots now 3
+progress 45 pieces
+progress 50 pieces
+helper slots now 5
+helper slots now 3
+helper slots now 4
+progress 55 pieces
+helper slots now 6
+progress 60 pieces
+helper slots now 3
+progress 65 pieces
+progress 70 pieces
+helper slots now 2
+progress 75 pieces
+helper slots now 6
+helper slots now 5
+helper slots now 3
+progress 80 pieces
+progress 85 pieces
+helper slots now 5
+helper slots now 2
+helper slots now 5
+progress 90 pieces
+helper slots now 2
+progress 95 pieces
+helper slots now 6
+progress 100 pieces
+helper slots now 2
+helper slots now 4
+progress 105 pieces
+helper slots now 2
+helper slots now 3
+progress 110 pieces
+helper slots now 2
+progress 115 pieces
+helper slots now 3
+helper slots now 2
+progress 120 pieces
+helper slots now 1
+helper slots now 2
+progress 125 pieces
+helper slots now 0
+helper slots now 1
+progress 130 pieces
+progress 135 pieces
+order 2: best 5.85 (search)
+progress 140 pieces
+order 3: best 5.85 (search)
+order 5: best 5.85 (search)
+progress 145 pieces
+order 8: best 5.85 (search)
+helper slots now 4
+order 4: best 5.85 (search)
+progress 150 pieces
+order 1: best 5.85 (search)
+order 6: best 5.85 (search)
+helper slots now 3
+order 7: best 5.85 (search)
+done -> reports/evolve-br3-app-engraver.md
