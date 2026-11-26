@@ -1,0 +1,109 @@
+evolve c2-div-smallworld: 0 seed lines, 8 deck orders, 6 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 4
+helper slots now 2
+helper slots now 6
+progress 5 pieces
+helper slots now 5
+helper slots now 4
+progress 10 pieces
+helper slots now 7
+progress 15 pieces
+helper slots now 2
+helper slots now 5
+helper slots now 6
+helper slots now 5
+progress 20 pieces
+progress 25 pieces
+progress 30 pieces
+helper slots now 6
+helper slots now 5
+progress 35 pieces
+helper slots now 7
+progress 40 pieces
+helper slots now 6
+progress 45 pieces
+helper slots now 4
+helper slots now 5
+progress 50 pieces
+helper slots now 7
+progress 55 pieces
+helper slots now 5
+progress 60 pieces
+helper slots now 7
+helper slots now 6
+progress 65 pieces
+progress 70 pieces
+helper slots now 7
+helper slots now 6
+helper slots now 7
+progress 75 pieces
+helper slots now 6
+progress 80 pieces
+progress 85 pieces
+helper slots now 7
+helper slots now 6
+helper slots now 4
+progress 90 pieces
+helper slots now 6
+progress 95 pieces
+progress 100 pieces
+helper slots now 7
+progress 105 pieces
+helper slots now 6
+progress 110 pieces
+helper slots now 7
+progress 115 pieces
+helper slots now 6
+progress 120 pieces
+helper slots now 7
+helper slots now 6
+progress 125 pieces
+helper slots now 7
+progress 130 pieces
+helper slots now 5
+progress 135 pieces
+helper slots now 4
+progress 140 pieces
+helper slots now 5
+progress 145 pieces
+progress 150 pieces
+progress 155 pieces
+helper slots now 4
+progress 160 pieces
+helper slots now 5
+progress 165 pieces
+progress 170 pieces
+progress 175 pieces
+helper slots now 3
+progress 180 pieces
+helper slots now 5
+progress 185 pieces
+progress 190 pieces
+progress 195 pieces
+progress 200 pieces
+order 7: best 11.1 (tries Normal Summon Medius the Pure)
+progress 205 pieces
+progress 210 pieces
+progress 215 pieces
+order 3: best 8.41 (search)
+progress 220 pieces
+progress 225 pieces
+order 4: best 11.85 (tries Activate Ars Magna - "Citrinitas" → new early order)
+progress 230 pieces
+progress 235 pieces
+order 6: best 12 (tries Normal Summon Medius the Pure → new ending)
+progress 240 pieces
+progress 245 pieces
+progress 250 pieces
+progress 255 pieces
+order 2: best 12.5 (tries Activate Ars Magna of Purification and Corruption → new ending)
+progress 260 pieces
+progress 265 pieces
+order 5: best 12.35 (tries Activate Ars Magna of Infinity and Finity → new ending)
+progress 270 pieces
+progress 275 pieces
+progress 280 pieces
+order 8: best 11.85 (forced Activate Theorealize Liberation → new early order)
+progress 285 pieces
+order 1: best 10.39 (forced Activate Theorealize Liberation → new early order)
+done -> reports/evolve-c2-div-smallworld.md
