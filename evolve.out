@@ -1,0 +1,59 @@
+evolve ug-bcmed: 0 seed lines, 8 deck orders, 4 mutation rounds, 15 min searches, 3 hands x 4 decks per line
+helper slots now 2
+helper slots now 4
+helper slots now 3
+helper slots now 4
+helper slots now 5
+helper slots now 6
+helper slots now 4
+helper slots now 5
+helper slots now 2
+helper slots now 3
+helper slots now 5
+progress 5 pieces
+helper slots now 3
+helper slots now 4
+progress 10 pieces
+helper slots now 6
+helper slots now 3
+helper slots now 2
+helper slots now 3
+progress 15 pieces
+helper slots now 2
+helper slots now 6
+helper slots now 5
+helper slots now 3
+progress 20 pieces
+helper slots now 5
+helper slots now 2
+progress 25 pieces
+helper slots now 5
+helper slots now 2
+helper slots now 3
+helper slots now 6
+helper slots now 2
+helper slots now 4
+progress 30 pieces
+helper slots now 2
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 2
+progress 35 pieces
+helper slots now 1
+helper slots now 2
+helper slots now 0
+helper slots now 1
+helper slots now 0
+progress 40 pieces
+helper slots now 1
+order 4: best 13.8 (tries Activate Fiendsmith Engraver)
+progress 45 pieces
+order 1: best 14.2 (tries Normal Summon Ars Magna of Purification and Corruption)
+helper slots now 4
+helper slots now 3
+helper slots now 4
+helper slots now 3
+order 2: best 13.75 (tries Activate Nervedo the Shadebeast Power Patron)
+order 3: best 14.2 (tries Activate Junoldo the Shadespirit Power Patron)
+done -> reports/evolve-ug-bcmed.md
