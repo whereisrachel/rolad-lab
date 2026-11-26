@@ -1,55 +1,60 @@
 {
  "hands": [
   {
-   "name": "c2-drawfair2-terminus",
+   "name": "c3-sw-real",
    "hand": [
-    "Prohibited Power Patron Portal - Terminus",
+    "Small World",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
+    "Infinite Impermanence",
+    "Dark Magical Circle"
    ],
-   "seeds": [
-    "lines/draw/drawpre-terminus-a.json",
-    "lines/draw/drawpre-terminus-b.json",
-    "lines/draw/drawpre-terminus-c.json"
-   ],
-   "only": [
-    1,
-    3,
-    8
+   "minutes": 5,
+   "rounds": 6,
+   "explore": 6,
+   "seedBase": 9600,
+   "tries": [
+    "^Activate Griffoh",
+    "^Activate Light and Darkness Ritual: Ritual Summon",
+    "^Activate Mind Shuffle",
+    "^Link Summon S:P Little Knight",
+    "^Activate Theorealize Liberation",
+    "^Activate Theorealize Past Lull",
+    "^Activate Fiendsmith's Sequence",
+    "^Activate Artmage Graflare"
    ]
   },
   {
-   "name": "c2-drawfair3-terminus",
+   "name": "c3-sw-real-div",
    "hand": [
-    "Prohibited Power Patron Portal - Terminus",
+    "Small World",
     "Ash Blossom & Joyous Spring",
     "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
+    "Infinite Impermanence",
+    "Dark Magical Circle"
    ],
-   "seeds": [
-    "lines/draw/drawpre-terminus-a.json",
-    "lines/draw/drawpre-terminus-b.json",
-    "lines/draw/drawpre-terminus-c.json"
-   ],
-   "only": [
-    1,
-    3,
-    8
-   ],
-   "seedBase": 9500
+   "minutes": 5,
+   "rounds": 6,
+   "explore": 6,
+   "hints": false,
+   "seeds": [],
+   "seedBase": 9700,
+   "tries": [
+    "^Activate Griffoh",
+    "^Activate Light and Darkness Ritual: Ritual Summon",
+    "^Activate Mind Shuffle",
+    "^Link Summon S:P Little Knight",
+    "^Activate Theorealize Liberation",
+    "^Activate Theorealize Past Lull",
+    "^Activate Fiendsmith's Sequence",
+    "^Activate Artmage Graflare"
+   ]
   }
  ],
  "deck": "decks/findlist-1100.ydk",
  "orders": 8,
- "minutes": 5,
- "rounds": 0,
- "explore": 0,
  "fitness": "board",
  "judgeWinner": false,
- "seedBase": 9400,
- "share": 2,
- "note": "fair draw score, Terminus: the deck orders whose finish searches came back empty (1, 3, 8), twice with different seeds"
+ "share": 4,
+ "note": "Small World with real cards only (Ash, Ash, Imperm, Dark Magical Circle as the other 4): the guide line revealed Ghost Ogre, which is not in the list"
 }
