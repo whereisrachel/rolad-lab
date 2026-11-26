@@ -1,0 +1,51 @@
+evolve ug-rand4: 0 seed lines, 8 deck orders, 4 mutation rounds, 15 min searches, 3 hands x 4 decks per line
+helper slots now 4
+helper slots now 3
+helper slots now 2
+helper slots now 4
+helper slots now 5
+helper slots now 4
+helper slots now 3
+helper slots now 4
+helper slots now 3
+progress 5 pieces
+helper slots now 4
+progress 10 pieces
+helper slots now 2
+helper slots now 3
+progress 15 pieces
+helper slots now 6
+helper slots now 3
+helper slots now 5
+helper slots now 2
+progress 20 pieces
+helper slots now 5
+helper slots now 1
+helper slots now 3
+helper slots now 6
+helper slots now 2
+progress 25 pieces
+helper slots now 4
+helper slots now 3
+progress 30 pieces
+order 3: best 12.35 (search)
+helper slots now 2
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 2
+progress 35 pieces
+helper slots now 1
+progress 40 pieces
+helper slots now 2
+order 2: best 12.9 (tries Normal Summon Nervedo the Shadebeast Power Patron)
+helper slots now 1
+progress 45 pieces
+helper slots now 3
+order 1: best 12.5 (tries Normal Summon Medius the Pure)
+helper slots now 2
+helper slots now 3
+helper slots now 4
+helper slots now 3
+order 4: best 12.6 (tries Activate Vidolium the Unstable Power Patron of Unity)
+done -> reports/evolve-ug-rand4.md
