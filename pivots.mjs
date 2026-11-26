@@ -21,16 +21,20 @@ async function one(c, threat, k, minutes) {
   const r = await replay(mk(c, threat, k), steps, (S) => { const v = disruption(S, 0); if (v > mx) mx = v; });
   if (!threat) return { v: r && r.S ? disruption(r.S, 0) : mx, hit: false };
   if (!r || r.S.ended) return { hit: false };
-  const g = r.S.game; const hitAt = (g.responses || []).findIndex(e => e.seat === 1 && /^Activate /.test(e.label || ''));
+  const g = r.S.game; const endV = +disruption(r.S, 0).toFixed(2); /* the line as written, carried on after the hit (steps that no longer fit are skipped) */ const hitAt = (g.responses || []).findIndex(e => e.seat === 1 && /^Activate /.test(e.label || ''));
   if (hitAt < 0) return { hit: false };
   const before = g.responses.slice(0, hitAt); const at = (before.slice().reverse().find(e => e.seat === 0 && /^(Activate|Normal Summon|Special Summon|Link Summon|Synchro Summon)/.test(e.label || '')) || {}).label || '';
   const nBefore = before.filter(e => e.seat === 0 && !e.auto && e.label).length;
   const r2 = await replay(mk(c, threat, k), steps.slice(0, nBefore), () => {}); const S0 = r2 && r2.S;
   if (!S0 || S0.ended || S0.turn !== 1 || !S0.pending) return { hit: true, nBefore, at, by: g.responses[hitAt].label, v: Math.max(mx, 0), why: 'no decision left after the hit' };
   const pre = S0.game.responses.length;
-  const a = await searchT1(JSON.parse(JSON.stringify(S0.game)), { ms: minutes * 60000, nrpa: 3, seed: 11 + k, evalFn: (S2) => disruption(S2, 0) });
-  const pivot = (a.raw || []).slice(pre).filter(e => !e.auto && e.label).map(e => ({ seat: e.seat, label: e.label }));
-  return { hit: true, nBefore, at, by: g.responses[hitAt].label, v: +(a.score || 0).toFixed(2), asWritten: +mx.toFixed(2), pivot, board: a.board || '' };
+  // the search gets the original line's moves as a soft head start (so where the line still works it can keep it), then finds the best finish
+  const hints = {}; for (const key of c.keys || []) hints[key] = 2;
+  const a = await searchT1(JSON.parse(JSON.stringify(S0.game)), { ms: minutes * 60000, nrpa: 3, seed: 11 + k, hints, evalFn: (S2) => disruption(S2, 0) });
+  const sv = +(a.score || 0).toFixed(2); const lab = (raw) => raw.filter(e => !e.auto && e.label).map(e => ({ seat: e.seat, label: e.label }));
+  const keep = endV >= sv; // carrying on with the written line is at least as good as anything the search found
+  const pivot = keep ? lab(g.responses.slice(hitAt)) : lab((a.raw || []).slice(pre));
+  return { hit: true, nBefore, at, by: g.responses[hitAt].label, v: Math.max(sv, endV), searched: sv, asWritten: endV, keep, pivot, board: keep ? String(E.boardView(r.S, 0)) : (a.board || '') };
 }
 if (t.evalOne) { const c = JSON.parse(fs.readFileSync(t.evalOne.file, 'utf8')); let z; try { z = await one(c, t.evalOne.threat, t.evalOne.k, t.evalOne.minutes); } catch (e) { z = { error: String(e && e.message).slice(0, 200) }; } console.log('PIVOT ' + JSON.stringify(z)); process.exit(0); }
 const TH = t.threats || Object.keys(THREATS), MIN = t.minutes ?? 3, NP = Math.max(1, os.cpus().length - 1);
