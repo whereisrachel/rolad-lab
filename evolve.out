@@ -1,0 +1,51 @@
+evolve ug-treasure: 0 seed lines, 8 deck orders, 4 mutation rounds, 15 min searches, 3 hands x 4 decks per line
+helper slots now 4
+helper slots now 3
+helper slots now 2
+helper slots now 4
+helper slots now 5
+helper slots now 4
+helper slots now 3
+helper slots now 4
+helper slots now 3
+progress 5 pieces
+helper slots now 4
+progress 10 pieces
+helper slots now 2
+helper slots now 3
+progress 15 pieces
+helper slots now 6
+helper slots now 3
+helper slots now 5
+helper slots now 2
+progress 20 pieces
+helper slots now 5
+helper slots now 1
+helper slots now 3
+helper slots now 6
+helper slots now 2
+progress 25 pieces
+helper slots now 4
+helper slots now 3
+progress 30 pieces
+helper slots now 2
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 2
+helper slots now 1
+progress 35 pieces
+helper slots now 2
+helper slots now 1
+progress 40 pieces
+order 1: best 10.65 (search)
+order 4: best 13.95 (tries Activate Vidolium the Unstable Power Patron of Unity → new early order → new early order)
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 4
+progress 45 pieces
+helper slots now 3
+order 3: best 12.15 (search → new ending)
+order 2: best 12.1 (tries Special Summon (procedure) Artmage Non-Finito)
+done -> reports/evolve-ug-treasure.md
