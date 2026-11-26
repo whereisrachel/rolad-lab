@@ -1,14 +1,18 @@
 {
- "id": "g1-sw",
- "script": "games1.mjs",
+ "id": "ct-2",
+ "script": "cardtest.mjs",
  "args": {
   "deck": "decks/findlist-1100.ydk",
-  "lines": {
-   "smallworld": "lines/t1/smallworld.json"
-  },
-  "n": 8,
-  "min": 0.75,
-  "omin": 2.25,
-  "turns": 10
+  "random": 80,
+  "orders": 1,
+  "minutes": 3,
+  "main": [
+   "Artmage Power Patron",
+   "Artmage Academic Arcane Arts Acropolis",
+   "Jupredo the Shademachine Power Patron",
+   "Theorealize Medius",
+   "Artmage Graflare"
+  ],
+  "extra": []
  }
 }
