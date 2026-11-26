@@ -1,0 +1,107 @@
+evolve c2-div-blackchaos: 0 seed lines, 8 deck orders, 6 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 4
+helper slots now 2
+progress 5 pieces
+helper slots now 6
+helper slots now 5
+helper slots now 4
+progress 10 pieces
+progress 15 pieces
+helper slots now 7
+helper slots now 3
+progress 20 pieces
+helper slots now 5
+helper slots now 6
+helper slots now 4
+progress 25 pieces
+progress 30 pieces
+helper slots now 5
+progress 35 pieces
+helper slots now 6
+progress 40 pieces
+progress 45 pieces
+progress 50 pieces
+helper slots now 4
+helper slots now 5
+progress 55 pieces
+progress 60 pieces
+helper slots now 7
+helper slots now 5
+progress 65 pieces
+helper slots now 7
+helper slots now 6
+progress 70 pieces
+progress 75 pieces
+progress 80 pieces
+helper slots now 7
+helper slots now 6
+helper slots now 7
+progress 85 pieces
+helper slots now 6
+progress 90 pieces
+helper slots now 7
+progress 95 pieces
+helper slots now 6
+helper slots now 4
+helper slots now 6
+progress 100 pieces
+progress 105 pieces
+progress 110 pieces
+helper slots now 7
+progress 115 pieces
+helper slots now 6
+progress 120 pieces
+helper slots now 7
+progress 125 pieces
+helper slots now 6
+progress 130 pieces
+helper slots now 7
+helper slots now 6
+progress 135 pieces
+helper slots now 7
+progress 140 pieces
+helper slots now 5
+progress 145 pieces
+helper slots now 4
+progress 150 pieces
+helper slots now 5
+progress 155 pieces
+progress 160 pieces
+helper slots now 4
+progress 165 pieces
+helper slots now 5
+progress 170 pieces
+progress 175 pieces
+progress 180 pieces
+progress 185 pieces
+progress 190 pieces
+helper slots now 3
+progress 195 pieces
+progress 200 pieces
+progress 205 pieces
+progress 210 pieces
+order 3: best 4.95 (search)
+progress 215 pieces
+helper slots now 5
+progress 220 pieces
+order 8: best 4.95 (search)
+progress 225 pieces
+progress 230 pieces
+progress 235 pieces
+order 4: best 4.95 (search)
+order 1: best 4.95 (search)
+progress 240 pieces
+progress 245 pieces
+progress 250 pieces
+order 2: best 4.95 (search)
+progress 255 pieces
+progress 260 pieces
+progress 265 pieces
+order 6: best 4.95 (search)
+progress 270 pieces
+progress 275 pieces
+order 5: best 4.95 (search)
+progress 280 pieces
+progress 285 pieces
+order 7: best 4.95 (search)
+done -> reports/evolve-c2-div-blackchaos.md
