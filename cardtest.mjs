@@ -22,8 +22,14 @@ for (const c of MAIN) { const f = `decks/ct/m-${c.replace(/[^\w]+/g, '_').slice(
 for (const c of EXTRA) { const ex = base.extra.slice(); const i = ex.findIndex(k => name(k) === ED_OUT); ex.splice(i >= 0 ? i : ex.length - 1, 1, codeOf(c)); const f = `decks/ct/e-${c.replace(/[^\w]+/g, '_').slice(0, 50)}.ydk`; fs.writeFileSync(f, ydk(base.main, ex)); versions.push({ v: c, zone: 'extra', file: f }); }
 const esc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const pieces = [];
+// random-hands mode (t.random = N): N opening hands drawn from your list; a Main Deck candidate is shuffled into the deck at a random spot,
+// so it is in the opening hand only when it lands in the top 5 (as in a real game) — same hands otherwise, so the comparison stays paired
+if (t.random) { const rng = (s0) => { let x = (s0 >>> 0) || 1; return () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296; };
+  t.hands = {}; t.handsFor = {}; for (let h = 0; h < t.random; h++) { const r = rng(9000 + h); const a = base.main.slice(); for (let k = a.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [a[k], a[j]] = [a[j], a[k]]; }
+    const pos = Math.floor(r() * (a.length + 1)); const hb = a.slice(0, 5).map(name); const withC = (c) => { const b = a.slice(); b.splice(pos, 0, codeOf(c)); return b.slice(0, 5).map(name); };
+    t.hands['r' + h] = hb; t.handsFor['r' + h] = withC; } }
 for (const ver of versions) for (const [hn, hand0] of Object.entries(t.hands)) for (let o = 1; o <= ORD; o++) {
-  const hand = ver.zone === 'main' ? [...hand0.slice(0, 4), ver.v] : hand0.slice();
+  const hand = t.random ? (ver.zone === 'main' ? t.handsFor[hn](ver.v) : hand0.slice()) : ver.zone === 'main' ? [...hand0.slice(0, 4), ver.v] : hand0.slice();
   const kinds = [{ k: 's1', x: { sseed: 4100 + o } }, { k: 's2', x: { sseed: 5200 + o } }, { k: 'open', x: { sseed: 6300 + o, open: true } }];
   if (ver.v !== 'base') kinds.push({ k: 'must', x: { sseed: 7400 + o, mustUse: `^(Activate|Normal Summon|Special Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Set Spell/Trap) ${esc(ver.v)}` } });
   for (const kd of kinds) pieces.push({ ver, hn, o, k: kd.k, task: { deck: ver.file, hand, seed: o, minutes: MIN, hints: false, learn: false, ...kd.x } }); }
@@ -38,7 +44,10 @@ const rows = []; for (const ver of versions.slice(1)) { const d = [], per = {}; 
   rows.push({ card: ver.v, zone: ver.zone, gain: +m.toFixed(2), se: +se.toFixed(2), n: d.length, per, usedInMust: usedN }); }
 rows.sort((a, b) => b.gain - a.gain);
 const baseRow = {}; for (const hn of Object.keys(t.hands)) { const xs = []; for (let o = 1; o <= ORD; o++) { const b = best('base', hn, o); if (b != null) xs.push(b); } baseRow[hn] = xs.length ? +(xs.reduce((s, x) => s + x, 0) / xs.length).toFixed(2) : null; }
-fs.mkdirSync('reports', { recursive: true }); fs.writeFileSync(`reports/${ID}.json`, JSON.stringify({ base: baseRow, rows, pieces: pieces.map(({ ver, task, ...p }) => ({ v: ver.v, hand: task.hand, ...p })) }));
+fs.mkdirSync('reports', { recursive: true }); fs.writeFileSync(`reports/${ID}.json`, JSON.stringify({ base: baseRow, rows, pieces: pieces.map(({ ver, task, ...p }) => ({ card: ver.v, hand: task.hand, ...p })) }));
+if (t.random) { let md = `# Card test ${ID} (random hands)\n${new Date().toISOString()} · ${Object.keys(t.hands).length} random opening hands from your list, ${MIN} min searches, no hints, own seeds, forced use of the card\n\nList without the card: average best board ${(Object.values(baseRow).reduce((a, b) => a + (b || 0), 0) / Object.keys(baseRow).length).toFixed(2)}\n\n| card | zone | gain per hand (± se) | hands where it changed the opening hand |\n|---|---|---|---|\n`;
+  for (const r of rows) { const nIn = Object.keys(t.hands).filter(h => r.zone === 'main' && JSON.stringify(t.handsFor[h](r.card)) !== JSON.stringify(t.hands[h])).length; md += `| ${r.card} | ${r.zone} | ${r.gain >= 0 ? '+' : ''}${r.gain} ± ${r.se} (n ${r.n}) | ${nIn} |\n`; }
+  fs.writeFileSync(`reports/${ID}.md`, md); console.log(md); process.exit(0); }
 let md = `# Card test ${ID}\n${new Date().toISOString()} · ${MIN} min searches, ${ORD} deck orders, no hints, own seeds, forced use of the card\n\nList without the card, best board per hand: ${Object.entries(baseRow).map(([h, v]) => `${h} ${v}`).join(' · ')}\n\n| card | zone | gain per hand (± se) | ${Object.keys(t.hands).join(' | ')} | forced line used it |\n|---|---|---|${Object.keys(t.hands).map(() => '---').join('|')}|---|\n`;
 for (const r of rows) md += `| ${r.card} | ${r.zone} | ${r.gain >= 0 ? '+' : ''}${r.gain} ± ${r.se} (n ${r.n}) | ${Object.keys(t.hands).map(h => r.per[h]).join(' | ')} | ${r.usedInMust}/${Object.keys(t.hands).length * ORD} |\n`;
 fs.writeFileSync(`reports/${ID}.md`, md); console.log(md); process.exit(0);
