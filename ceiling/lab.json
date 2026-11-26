@@ -1,22 +1,14 @@
 {
- "id": "piv-sw",
- "script": "pivots.mjs",
+ "id": "g1-sw",
+ "script": "games1.mjs",
  "args": {
-  "lines": [
-   {
-    "name": "smallworld",
-    "file": "lines/piv/smallworld.json"
-   }
-  ],
-  "threats": [
-   "ash",
-   "imperm",
-   "droll",
-   "nibiru",
-   "ogre",
-   "belle"
-  ],
-  "minutes": 4,
-  "maxK": 24
+  "deck": "decks/findlist-1100.ydk",
+  "lines": {
+   "smallworld": "lines/t1/smallworld.json"
+  },
+  "n": 8,
+  "min": 0.75,
+  "omin": 2.25,
+  "turns": 10
  }
 }
