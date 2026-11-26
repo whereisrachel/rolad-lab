@@ -1,0 +1,104 @@
+evolve c2-div-infinity: 0 seed lines, 8 deck orders, 6 mutation rounds, 5 min searches, 3 hands x 4 decks per line
+helper slots now 2
+progress 5 pieces
+helper slots now 6
+progress 10 pieces
+helper slots now 3
+progress 15 pieces
+helper slots now 7
+helper slots now 4
+progress 20 pieces
+helper slots now 2
+helper slots now 7
+helper slots now 5
+progress 25 pieces
+progress 30 pieces
+progress 35 pieces
+progress 40 pieces
+helper slots now 6
+progress 45 pieces
+helper slots now 4
+progress 50 pieces
+progress 55 pieces
+helper slots now 5
+helper slots now 7
+progress 60 pieces
+helper slots now 6
+progress 65 pieces
+helper slots now 7
+helper slots now 6
+progress 70 pieces
+progress 75 pieces
+helper slots now 7
+helper slots now 6
+helper slots now 7
+progress 80 pieces
+progress 85 pieces
+helper slots now 6
+progress 90 pieces
+helper slots now 7
+helper slots now 6
+progress 95 pieces
+helper slots now 4
+progress 100 pieces
+helper slots now 6
+helper slots now 7
+progress 105 pieces
+helper slots now 6
+progress 110 pieces
+helper slots now 7
+progress 115 pieces
+progress 120 pieces
+helper slots now 6
+progress 125 pieces
+progress 130 pieces
+helper slots now 7
+helper slots now 6
+progress 135 pieces
+helper slots now 7
+progress 140 pieces
+helper slots now 5
+progress 145 pieces
+helper slots now 4
+progress 150 pieces
+progress 155 pieces
+helper slots now 5
+progress 160 pieces
+helper slots now 4
+progress 165 pieces
+helper slots now 5
+progress 170 pieces
+progress 175 pieces
+progress 180 pieces
+progress 185 pieces
+helper slots now 3
+progress 190 pieces
+progress 195 pieces
+progress 200 pieces
+progress 205 pieces
+order 3: best 12.25 (forced Activate Mind Shuffle → new ending)
+progress 210 pieces
+helper slots now 5
+progress 215 pieces
+order 7: best 13.3 (tries Special Summon (procedure) Artmage Non-Finito)
+progress 220 pieces
+progress 225 pieces
+progress 230 pieces
+progress 235 pieces
+order 8: best 13 (search)
+progress 240 pieces
+order 4: best 13 (opening lanes → new ending)
+progress 245 pieces
+progress 250 pieces
+order 2: best 13 (search)
+progress 255 pieces
+progress 260 pieces
+order 6: best 14.5 (forced Activate Griffoh → new ending → new early order)
+progress 265 pieces
+progress 270 pieces
+progress 275 pieces
+order 1: best 13 (forced Activate Griffoh)
+progress 280 pieces
+progress 285 pieces
+order 5: best 13.3 (forced Synchro Summon Chaos Angel → new ending)
+done -> reports/evolve-c2-div-infinity.md
