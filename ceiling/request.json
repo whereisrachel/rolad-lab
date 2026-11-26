@@ -1,7 +1,7 @@
 {
  "hands": [
   {
-   "name": "br3-exciton-blackchaos",
+   "name": "br3-berfomet-blackchaos",
    "hand": [
     "Black Chaos",
     "Ash Blossom & Joyous Spring",
@@ -11,7 +11,7 @@
    ]
   },
   {
-   "name": "br3-exciton-engraver",
+   "name": "br3-berfomet-engraver",
    "hand": [
     "Fiendsmith Engraver",
     "Ash Blossom & Joyous Spring",
@@ -21,7 +21,7 @@
    ]
   }
  ],
- "deck": "decks/br-exciton.ydk",
+ "deck": "decks/br-berfomet.ydk",
  "orders": 8,
  "minutes": 5,
  "rounds": 4,
@@ -43,5 +43,5 @@
  "fitness": "board",
  "judgeWinner": false,
  "share": 12,
- "note": "bridging br3 (exciton): one-engine hands that reach no other engine (Black Chaos alone, Engraver alone); 5-min searches, 4 rounds, hints off, own seeds, forced tries; same hands/orders/seeds across base/APP/Acropolis/Exciton/Berfomet"
+ "note": "bridging br3 (berfomet): one-engine hands that reach no other engine (Black Chaos alone, Engraver alone); 5-min searches, 4 rounds, hints off, own seeds, forced tries; same hands/orders/seeds across base/APP/Acropolis/Exciton/Berfomet"
 }
