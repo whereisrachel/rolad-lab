@@ -1,43 +1,11 @@
 {
- "id": "piv-2",
+ "id": "piv-sw",
  "script": "pivots.mjs",
  "args": {
   "lines": [
    {
-    "name": "medius",
-    "file": "lines/piv/medius.json"
-   },
-   {
-    "name": "bcmed",
-    "file": "lines/piv/bcmed.json"
-   },
-   {
-    "name": "infinity",
-    "file": "lines/piv/infinity.json"
-   },
-   {
-    "name": "terminus",
-    "file": "lines/piv/terminus.json"
-   },
-   {
-    "name": "treasure",
-    "file": "lines/piv/treasure.json"
-   },
-   {
-    "name": "citrinitas",
-    "file": "lines/piv/citrinitas.json"
-   },
-   {
-    "name": "engmed",
-    "file": "lines/piv/engmed.json"
-   },
-   {
-    "name": "engraver",
-    "file": "lines/piv/engraver.json"
-   },
-   {
-    "name": "blackchaos",
-    "file": "lines/piv/blackchaos.json"
+    "name": "smallworld",
+    "file": "lines/piv/smallworld.json"
    }
   ],
   "threats": [
