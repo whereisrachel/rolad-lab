@@ -1,0 +1,37 @@
+cardtest br-1: 11 cards (7 Main, 2 Extra) x 6 hands x 4 orders = 864 searches
+progress 50/864
+progress 100/864
+progress 150/864
+progress 200/864
+progress 250/864
+progress 300/864
+progress 350/864
+progress 400/864
+progress 450/864
+progress 500/864
+progress 550/864
+progress 600/864
+progress 650/864
+progress 700/864
+progress 750/864
+progress 800/864
+progress 850/864
+# Card test br-1
+2026-11-26T15:29:31.110Z · 3 min searches, 4 deck orders, no hints, own seeds, forced use of the card
+
+List without the card, best board per hand: medius 11.45 · terminus 7.84 · citrinitas 7.1 · treasure 6.8 · engraver 5.72 · blackchaos 5.8
+
+| card | zone | gain per hand (± se) | medius | terminus | citrinitas | treasure | engraver | blackchaos | forced line used it |
+|---|---|---|---|---|---|---|---|---|---|
+| Evilswarm Exciton Knight | extra | +1.6 ± 0.49 (n 24) | -1.17 | 3.38 | 4.5 | 2.75 | 0.13 | 0 | 14/24 |
+| Berfomet the Mythical King of Phantom Beasts | extra | +1.4 ± 0.37 (n 24) | 0.11 | 2.41 | 2.82 | 2.92 | 0.13 | 0 | 0/24 |
+| bridge package + Theorealize Overdrive | package | +0.76 ± 0.54 (n 24) | -3.84 | 2.4 | 3.08 | 0.78 | 0.13 | 1.99 | 18/24 |
+| Jupredo the Shademachine Power Patron | main | +0.73 ± 0.31 (n 24) | -0.47 | 0.55 | 3.42 | 0.74 | 0.13 | 0 | 15/24 |
+| bridge package (Theorealize, Vilaea, Exciton, Berfomet) | package | +0.47 ± 0.44 (n 24) | -2.95 | 0.49 | 3.03 | 2.13 | 0.13 | 0 | 16/24 |
+| Celtic Mystic | main | +0.39 ± 0.37 (n 24) | -2 | 1.61 | 2.14 | 0.45 | 0.13 | 0 | 4/24 |
+| Prohibitive Power Patron Purview - Vilaea | main | +0.34 ± 0.47 (n 24) | -3.05 | 0.66 | 2.96 | 1.33 | 0.13 | 0 | 13/24 |
+| Theorealize | main | +0.26 ± 0.37 (n 24) | -2.66 | 0.79 | 0.16 | 1.71 | 0.13 | 1.44 | 18/24 |
+| Kuriphoton | main | +0.08 ± 0.48 (n 24) | -3.71 | 0.54 | 2.29 | 1.23 | 0.13 | 0 | 5/24 |
+| Theorealize Overdrive | main | +0.02 ± 0.46 (n 24) | -3.84 | 0.84 | 2.64 | 0.36 | 0.11 | 0 | 16/24 |
+| Artmage Power Patron | main | -0.2 ± 0.36 (n 24) | -2.93 | 1.34 | 0.34 | -0.06 | 0.11 | 0 | 15/24 |
+
