@@ -1,54 +1,87 @@
 {
- "id": "piv-1",
- "script": "pivots.mjs",
+ "id": "ct-1",
+ "script": "cardtest.mjs",
  "args": {
-  "lines": [
-   {
-    "name": "medius",
-    "file": "lines/piv/medius.json"
-   },
-   {
-    "name": "bcmed",
-    "file": "lines/piv/bcmed.json"
-   },
-   {
-    "name": "infinity",
-    "file": "lines/piv/infinity.json"
-   },
-   {
-    "name": "terminus",
-    "file": "lines/piv/terminus.json"
-   },
-   {
-    "name": "treasure",
-    "file": "lines/piv/treasure.json"
-   },
-   {
-    "name": "citrinitas",
-    "file": "lines/piv/citrinitas.json"
-   },
-   {
-    "name": "engmed",
-    "file": "lines/piv/engmed.json"
-   },
-   {
-    "name": "engraver",
-    "file": "lines/piv/engraver.json"
-   },
-   {
-    "name": "blackchaos",
-    "file": "lines/piv/blackchaos.json"
-   }
-  ],
-  "threats": [
-   "ash",
-   "imperm",
-   "droll",
-   "nibiru",
-   "ogre",
-   "belle"
-  ],
+  "deck": "decks/findlist-1100.ydk",
+  "hands": {
+   "engraver": [
+    "Fiendsmith Engraver",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ],
+   "blackchaos": [
+    "Black Chaos",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ],
+   "vidolia": [
+    "Plundered Power Patron Plane - Vidolia",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ],
+   "apprentice": [
+    "Apprentice Illusion Magician",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ]
+  },
+  "orders": 3,
   "minutes": 3,
-  "maxK": 24
+  "main": [
+   "Prohibitive Power Patron Purview - Vilaea",
+   "Artmage Pact -Awakening-",
+   "Artmage Power Patron",
+   "Artmage Varnish -Alteration-",
+   "Artmage Academic Arcane Arts Acropolis",
+   "Ars Magna Academic Arcane Apparition Acropolis",
+   "Elfnote Power Patron",
+   "Artmage Peripeteia -Turmoil-",
+   "Artmage Movement -Pedigree-",
+   "Power Patron Shade of the Final Hour",
+   "Artmage Masterwork -Succession-",
+   "Jupredo the Shademachine Power Patron",
+   "Artmage Litera",
+   "Power Patron Portal Plugging -Sword of Mutual Destruction-",
+   "Ars Magna - \"Philosophirum\"",
+   "Highness Archfiend",
+   "Archfiend Matriarch",
+   "Power Patron DoomZ",
+   "Ars Magna of Unification and Separation",
+   "SPYRAL Sleeper",
+   "Rainbow Kuriboh",
+   "White Duston",
+   "Magical Musketeer Kidbrave",
+   "Fabled Miztoji",
+   "Fabled Ashenveil",
+   "Evil HERO Adusted Gold",
+   "Chain Resonator",
+   "Maginificent Magikey Mafteal",
+   "Fabled Krus",
+   "Emperor Sem",
+   "Fiendsmith's Tract",
+   "Artmage Graflare",
+   "Theorealize Medius"
+  ],
+  "extra": [
+   "Ars Magna Artmage",
+   "Fiendsmith's Rextremende",
+   "Omega Vidolium the Power Patron of Heaven's End",
+   "Ars Magna Elfnote",
+   "Fiendsmith's Agnumday",
+   "Fiendsmith's Lacrima",
+   "Jupiter the Power Patron of Destruction",
+   "Ars Magna DoomZ",
+   "Magnum the Reliever",
+   "Zebufera, Vaalmonican Hallow Heathen"
+  ],
+  "edOut": "Chaos Angel"
  }
 }
