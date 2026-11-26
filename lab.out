@@ -1,0 +1,64 @@
+cardtest ct-3-1: 7 cards (3 Main, 0 Extra) x 100 hands x 1 orders = 2400 searches
+progress 50/2400
+progress 100/2400
+progress 150/2400
+progress 200/2400
+progress 250/2400
+progress 300/2400
+progress 350/2400
+progress 400/2400
+progress 450/2400
+progress 500/2400
+progress 550/2400
+progress 600/2400
+progress 650/2400
+progress 700/2400
+progress 750/2400
+progress 800/2400
+progress 850/2400
+progress 900/2400
+progress 950/2400
+progress 1000/2400
+progress 1050/2400
+progress 1100/2400
+progress 1150/2400
+progress 1200/2400
+progress 1250/2400
+progress 1300/2400
+progress 1350/2400
+progress 1400/2400
+progress 1450/2400
+progress 1500/2400
+progress 1550/2400
+progress 1600/2400
+progress 1650/2400
+progress 1700/2400
+progress 1750/2400
+progress 1800/2400
+progress 1850/2400
+progress 1900/2400
+progress 1950/2400
+progress 2000/2400
+progress 2050/2400
+progress 2100/2400
+progress 2150/2400
+progress 2200/2400
+progress 2250/2400
+progress 2300/2400
+progress 2350/2400
+progress 2400/2400
+# Card test ct-3-1 (random hands)
+2026-11-26T15:46:11.105Z · 100 random opening hands from your list, 2 min searches, no hints, own seeds, forced use of the card
+
+List without the card: average best board 10.88
+
+| card | zone | gain per hand (± se) | hands where it changed the opening hand |
+|---|---|---|---|
+| Theorealize Medius | main | -0.02 ± 0.15 (n 100) | 14 |
+| Artmage Power Patron | main | -0.21 ± 0.16 (n 100) | 14 |
+| Artmage Academic Arcane Arts Acropolis | main | -0.4 ± 0.17 (n 100) | 14 |
+| Artmage Power Patron for Plundered Power Patron Plane - Vidolia | swap | -0.48 ± 0.16 (n 100) | 7 |
+| Artmage Academic Arcane Arts Acropolis for Artmage Vandalism -Assault- | swap | -0.64 ± 0.2 (n 100) | 31 |
+| Artmage Power Patron for Artmage Vandalism -Assault- | swap | -1.04 ± 0.18 (n 100) | 31 |
+| Artmage Academic Arcane Arts Acropolis for Plundered Power Patron Plane - Vidolia | swap | -1.16 ± 0.2 (n 100) | 7 |
+
