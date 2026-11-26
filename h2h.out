@@ -1,0 +1,86 @@
+h2h: 1536 opponent turns, helper slots 76
+progress 25/1536
+progress 50/1536
+progress 75/1536
+progress 100/1536
+progress 125/1536
+progress 150/1536
+progress 175/1536
+progress 200/1536
+progress 225/1536
+progress 250/1536
+progress 275/1536
+progress 300/1536
+progress 325/1536
+progress 350/1536
+progress 375/1536
+progress 400/1536
+progress 425/1536
+progress 450/1536
+progress 475/1536
+progress 500/1536
+progress 525/1536
+progress 550/1536
+progress 575/1536
+progress 600/1536
+progress 625/1536
+progress 650/1536
+progress 675/1536
+progress 700/1536
+progress 725/1536
+progress 750/1536
+progress 775/1536
+progress 800/1536
+progress 825/1536
+progress 850/1536
+progress 875/1536
+progress 900/1536
+progress 925/1536
+progress 950/1536
+progress 975/1536
+progress 1000/1536
+progress 1025/1536
+progress 1050/1536
+progress 1075/1536
+progress 1100/1536
+progress 1125/1536
+progress 1150/1536
+progress 1175/1536
+progress 1200/1536
+progress 1225/1536
+progress 1250/1536
+progress 1275/1536
+progress 1300/1536
+progress 1325/1536
+progress 1350/1536
+progress 1375/1536
+progress 1400/1536
+progress 1425/1536
+progress 1450/1536
+progress 1475/1536
+progress 1500/1536
+progress 1525/1536
+# Head-to-head after their turn: v8 lines (survival search) vs board search
+2026-11-26T00:36:50.445Z
+
+Same hands, same deck orders, same fresh opponent hands (o_ss_panama, o_elfnote, o_despia, o_angelechy; seeds 5001, 5002, 5003). Margin = what you keep minus what they build (−10 more if they OTK). Diff = board search − v8 lines (survival search), paired.
+
+| hand | v8 lines (survival search) | board search | diff (± se) | board search better / worse | OTKs v8 lines (survival search) / board search |
+|---|---|---|---|---|---|
+| medius | 5.07 | 4.26 | -0.47 ± 0.40 (n 56) | 16 / 26 | 0 / 0 |
+| terminus | 3.59 | 3.93 | 0.65 ± 0.53 (n 56) | 32 / 19 | 0 / 0 |
+| engmed | 4.36 | 3.77 | -0.69 ± 0.61 (n 43) | 17 / 25 | 0 / 0 |
+| bcmed | 6.47 | 5.20 | -0.79 ± 0.51 (n 57) | 30 / 24 | 0 / 0 |
+| infinity | 4.24 | 5.29 | 1.57 ± 0.59 (n 43) | 22 / 11 | 0 / 0 |
+| smallworld | 3.92 | 3.71 | -0.40 ± 0.47 (n 36) | 13 / 17 | 0 / 0 |
+| citrinitas | 3.67 | 3.77 | 0.24 ± 0.48 (n 35) | 22 / 13 | 0 / 0 |
+| treasure | 3.43 | 3.94 | -0.03 ± 0.55 (n 34) | 15 / 16 | 0 / 0 |
+| **all** | | | **-0.01 ± 0.19** (n 360) | 167 / 151 | |
+
+By opponent deck (diff board search − v8 lines (survival search)):
+
+- o_ss_panama: -0.07 ± 0.43 (n 103)
+- o_elfnote: -0.09 ± 0.51 (n 44)
+- o_despia: -0.19 ± 0.38 (n 90)
+- o_angelechy: 0.19 ± 0.25 (n 123)
+
