@@ -1,0 +1,73 @@
+evolve lk-rand6: 0 seed lines, 8 deck orders, 4 mutation rounds, 20 min searches, 3 hands x 4 decks per line
+helper slots now 6
+helper slots now 1
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 0
+helper slots now 2
+helper slots now 5
+helper slots now 1
+helper slots now 2
+helper slots now 3
+helper slots now 2
+progress 5 pieces
+helper slots now 3
+helper slots now 0
+progress 10 pieces
+helper slots now 1
+helper slots now 2
+helper slots now 4
+helper slots now 3
+helper slots now 0
+progress 15 pieces
+helper slots now 1
+helper slots now 2
+helper slots now 4
+helper slots now 2
+progress 20 pieces
+helper slots now 1
+progress 25 pieces
+helper slots now 4
+helper slots now 3
+order 4: best 6.3 (opening lanes)
+helper slots now 2
+helper slots now 1
+helper slots now 0
+helper slots now 1
+progress 30 pieces
+order 1: best 7.25 (tries Activate Junoldo the Shadespirit Power Patron)
+helper slots now 3
+helper slots now 4
+helper slots now 3
+helper slots now 5
+helper slots now 2
+helper slots now 0
+helper slots now 2
+progress 35 pieces
+helper slots now 4
+helper slots now 3
+helper slots now 1
+helper slots now 0
+helper slots now 3
+helper slots now 2
+helper slots now 1
+helper slots now 3
+helper slots now 2
+helper slots now 1
+helper slots now 0
+helper slots now 3
+helper slots now 2
+helper slots now 1
+progress 40 pieces
+helper slots now 3
+helper slots now 5
+order 3: best 8.2 (tries Activate Artmage Vandalism -Assault-)
+helper slots now 3
+helper slots now 1
+helper slots now 0
+helper slots now 1
+helper slots now 2
+helper slots now 5
+order 2: best 9.2 (search → new ending → new ending → new early order)
+done -> reports/evolve-lk-rand6.md
