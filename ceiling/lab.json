@@ -1,17 +1,50 @@
 {
- "id": "eb-1",
- "script": "evalboards.mjs",
+ "id": "piv-ug",
+ "script": "pivots.mjs",
  "args": {
-  "dir": "lines/evalset",
-  "opps": [
-   "o26_elfnote",
-   "o26_blitzclique",
-   "o26_typhoon",
-   "o26_ladr",
-   "o_angelechy"
+  "lines": [
+   {
+    "name": "ug-engmed",
+    "file": "lines/piv/ug-engmed.json"
+   },
+   {
+    "name": "ug-terminus",
+    "file": "lines/piv/ug-terminus.json"
+   },
+   {
+    "name": "ug-bcmed",
+    "file": "lines/piv/ug-bcmed.json"
+   },
+   {
+    "name": "ug-treasure",
+    "file": "lines/piv/ug-treasure.json"
+   },
+   {
+    "name": "engmed",
+    "file": "lines/piv/engmed.json"
+   },
+   {
+    "name": "terminus",
+    "file": "lines/piv/terminus.json"
+   },
+   {
+    "name": "bcmed",
+    "file": "lines/piv/bcmed.json"
+   },
+   {
+    "name": "treasure",
+    "file": "lines/piv/treasure.json"
+   }
   ],
-  "seeds": 1,
-  "minutes": 1.5,
-  "list": "findlist-1100"
+  "threats": [
+   "ash",
+   "imperm",
+   "droll",
+   "nibiru",
+   "ogre",
+   "belle"
+  ],
+  "minutes": 4,
+  "maxK": 24
  }
 }
