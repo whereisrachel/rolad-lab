@@ -1,6 +1,87 @@
 {
- "hands": [],
- "deck": "decks/findlist-1100.ydk",
+ "hands": [
+  {
+   "name": "lk-bcmed",
+   "hand": [
+    "Black Chaos",
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "lk-blackchaos",
+   "hand": [
+    "Black Chaos",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "lk-citrinitas",
+   "hand": [
+    "Ars Magna - \"Citrinitas\"",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "lk-engmed",
+   "hand": [
+    "Fiendsmith Engraver",
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "lk-engraver",
+   "hand": [
+    "Fiendsmith Engraver",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "lk-infinity",
+   "hand": [
+    "Ars Magna of Infinity and Finity",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "lk-medius",
+   "hand": [
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "lk-smallworld",
+   "hand": [
+    "Small World",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Dark Magical Circle"
+   ]
+  }
+ ],
+ "deck": "decks/ed-alllinks.ydk",
  "orders": 8,
  "only": [
   1,
@@ -8,14 +89,14 @@
   3,
   4
  ],
- "minutes": 15,
+ "minutes": 20,
  "rounds": 4,
  "explore": 6,
  "hints": false,
  "seeds": [],
- "seedBase": 12000,
+ "seedBase": 13000,
  "fitness": "board",
  "judgeWinner": false,
  "share": 12,
- "note": "unguided bridging search part 3/3: 15-min searches, no hints, no seed lines, no forced tries; all guide openers + 6 random hands; looking for better engine-to-engine routes"
+ "note": "Link bridging part 1/2: Extra Deck = current 15 + all 147 summonable TCG Links; 20-min unguided searches; same hands/orders as the unguided run"
 }
