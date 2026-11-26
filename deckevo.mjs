@@ -4,7 +4,7 @@
 // and their scores firm up as they play more hands each generation. The ROLAD core, the Dark Magician package and hand-trap counts are fixed.
 // node deckevo.mjs '{"id":"de-1","deck":"decks/findlist-1100.ydk","minutes":15,"hands":16,"pop":16,"keep":4,"resume":"<previous id>"}'
 import fs from 'fs'; import os from 'os'; import path from 'path'; import crypto from 'crypto';
-import { parseYdk, findCard, name, banlist, cardDB } from './src/cards.mjs'; import { runRemote, helperSlots } from './src/remote.mjs'; import { synergyScores } from './src/synergy.mjs';
+import { parseYdk, findCard, name, banlist, cardDB } from './src/cards.mjs'; import { runRemote, helperSlots } from './src/remote.mjs'; import { synergyScores } from './src/synergy.mjs'; import { interact } from './src/interact.mjs';
 import { spawn } from 'child_process'; import * as require_cp from 'child_process';
 const t = JSON.parse(process.argv[2]); const ID = t.id || 'de'; const MIN = +(t.minutes || 15), H = +(t.hands || 16), POP = +(t.pop || 16), KEEP = +(t.keep || 4), MORE = +(t.more || 8);
 const STOP = +(t.stopMin || 320); const T0 = Date.now(); const el = () => (Date.now() - T0) / 60000;
@@ -52,13 +52,28 @@ const okDeck = (d) => { const m = size(d.main), e = size(d.extra); if (m < 40 ||
   for (const [n, k] of Object.entries(d.extra)) { if (k < 0 || k > lim(code(n))) return false; if (minOf['ED:' + n] && k < 1) return false; } return true; };
 const clone = (d) => ({ main: { ...d.main }, extra: { ...d.extra } });
 const rnd = (a) => a[Math.floor(Math.random() * a.length)];
-function mutate(p) { for (let tries = 0; tries < 50; tries++) { const d = clone(p); const k = 2 + Math.floor(Math.random() * 5); const did = [];
+// connect: pick a card the deck relies on (weighted by how often good lines had to fetch it, and how often they used it), then add a pool card
+// that works with it by text — searches it, revives it, sends it, uses it as material, is fetched by it, or is a card that "mentions" what it
+// names — weighted by how many of the deck's cards it touches. 1 in 3 times, a second card that works with the first is added too (a 2-step
+// chain to the missing piece).
+const PALL = [...PM.map(n => [n, false]), ...PE.map(n => [n, true])].map(([n, e]) => ({ n, e, c: code(n) })).filter(x => x.c);
+function connect(d) { const inD = [...Object.keys(d.main).filter(n => d.main[n] > 0), ...Object.keys(d.extra).filter(n => d.extra[n] > 0)];
+  const aw = inD.map(n => 1 + 2 * Math.log1p(((S.need || {})[n] || 0)) + Math.log1p(((S.use || {})[n] || 0))); let tot = aw.reduce((a, b) => a + b, 0), r = Math.random() * tot, A = inD[0]; for (let i = 0; i < inD.length; i++) { r -= aw[i]; if (r <= 0) { A = inD[i]; break; } }
+  const addOne = (anchor) => { const ac = code(anchor); const cand = []; for (const x of PALL) { if (x.n === anchor) continue; const have = x.e ? (d.extra[x.n] || 0) : (d.main[x.n] || 0); if (have >= lim(x.c)) continue; const w = interact(x.c, ac); if (!w) continue;
+      let span = 0; for (const n of inD) if (n !== anchor && interact(x.c, code(n)) >= 0.6) span++; cand.push([x, w * (1 + 0.4 * Math.min(span, 8)) * (1 + 0.5 * Math.log1p((S.use || {})[x.n] || 0))]); }
+    if (!cand.length) return null; let t2 = cand.reduce((a, b) => a + b[1], 0), q = Math.random() * t2, X = cand[0][0]; for (const [x, w] of cand) { q -= w; if (q <= 0) { X = x; break; } }
+    if (X.e) { if (size(d.extra) >= 15) { const outs = Object.keys(d.extra).filter(o => d.extra[o] > 0 && !minOf['ED:' + o]); const idle = outs.filter(o => CUR_USED && !CUR_USED.has(o)); const out = (idle.length && Math.random() < 0.75 ? idle : outs).sort(() => Math.random() - 0.5)[0]; if (!out) return null; d.extra[out]--; d.extra[X.n] = (d.extra[X.n] || 0) + 1; return [`ED -1 ${out}`, `ED +1 ${X.n} (works with ${anchor})`]; } d.extra[X.n] = (d.extra[X.n] || 0) + 1; return [`ED +1 ${X.n} (works with ${anchor})`]; }
+    const k = Math.min(lim(X.c) - (d.main[X.n] || 0), 1 + Math.floor(Math.random() * 2)); d.main[X.n] = (d.main[X.n] || 0) + k; return [`+${k} ${X.n} (works with ${anchor})`]; };
+  const a1 = addOne(A); if (!a1) return null; if (Math.random() < 0.33) { const nm = /\+\d+ (.+?) \(works/.exec(a1[a1.length - 1]); if (nm) { const a2 = addOne(nm[1]); if (a2) a1.push(...a2); } } return a1; }
+let CUR_USED = null;
+function mutate(p) { CUR_USED = p._used || null; for (let tries = 0; tries < 50; tries++) { const d = clone(p); const k = 2 + Math.floor(Math.random() * 5); const did = [];
   for (let i = 0; i < k; i++) { const r = Math.random(); const inMain = Object.keys(d.main).filter(n => d.main[n] > 0);
-    if (r < 0.28) { const n = pick(PM); const c = Math.min(lim(code(n)) - (d.main[n] || 0), 1 + Math.floor(Math.random() * 3)); if (c > 0) { d.main[n] = (d.main[n] || 0) + c; did.push(`+${c} ${n}`); } }
-    else if (r < 0.40) { const f = rnd(Object.keys(fam)); for (const n of fam[f].slice().sort(() => Math.random() - 0.5).slice(0, 2 + Math.floor(Math.random() * 2))) { if ((d.main[n] || 0) < lim(code(n))) { d.main[n] = (d.main[n] || 0) + 1; did.push(`+1 ${n}`); } } }
+    if (r < 0.22) { const x = connect(d); if (x) { did.push(...x); if (process.env.DBGC) log('connect: ' + x.join(' | ')); } }
+    else if (r < 0.30) { const n = pick(PM); const c = Math.min(lim(code(n)) - (d.main[n] || 0), 1 + Math.floor(Math.random() * 3)); if (c > 0) { d.main[n] = (d.main[n] || 0) + c; did.push(`+${c} ${n}`); } }
+    else if (r < 0.33) { const f = rnd(Object.keys(fam)); for (const n of fam[f].slice().sort(() => Math.random() - 0.5).slice(0, 2 + Math.floor(Math.random() * 2))) { if ((d.main[n] || 0) < lim(code(n))) { d.main[n] = (d.main[n] || 0) + 1; did.push(`+1 ${n}`); } } }
     else if (r < 0.65) { const unused = inMain.filter(n => !isHT(code(n)) && !(minOf[n] && d.main[n] <= minOf[n]) && (p._used ? !p._used.has(n) : false)); const n = unused.length && Math.random() < 0.6 ? rnd(unused) : rnd(inMain); if (n && !(minOf[n] && d.main[n] <= minOf[n])) { d.main[n]--; did.push(`-1 ${n}`); } }
     else if (r < 0.75) { const n = rnd(inMain); if (n && d.main[n] < lim(code(n)) && !isHT(code(n))) { d.main[n]++; did.push(`+1 ${n}`); } }
-    else { const n = pick(PE); const cur = Object.keys(d.extra).filter(x => d.extra[x] > 0 && !minOf['ED:' + x]); if ((d.extra[n] || 0) >= lim(code(n))) continue;
+    else { const n = pick(PE); const cur0 = Object.keys(d.extra).filter(x => d.extra[x] > 0 && !minOf['ED:' + x]); const idle0 = cur0.filter(x => CUR_USED && !CUR_USED.has(x)); const cur = idle0.length && Math.random() < 0.75 ? idle0 : cur0; if ((d.extra[n] || 0) >= lim(code(n))) continue;
       if (size(d.extra) >= 15 || Math.random() < 0.6) { const o = rnd(cur); if (!o) continue; d.extra[o]--; did.push(`ED -1 ${o}`); } d.extra[n] = (d.extra[n] || 0) + 1; did.push(`ED +1 ${n}`); } }
   if (did.length && okDeck(d)) return d; } return null; }
 function cross(a, b) { for (let tries = 0; tries < 30; tries++) { const d = { main: {}, extra: {} };
@@ -88,7 +103,9 @@ async function runAll(jobs) { const q = jobs.slice(); let live = 0, hs = await h
 
 // cards named in a line that beat the start list's result on the same hand slot gain sampling weight
 const credit = (k, hi) => { const r = S.res[k][hi], b = (S.res[S.baseKey] || {})[hi]; if (!r || r.v == null || !r.line || k === S.baseKey) return; if (b && b.v != null && r.v <= b.v) return;
-  S.use ||= {}; const names = new Set(); for (const l of r.line) { const m = /^(?:Activate|Normal Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Ritual Summon|Special Summon \(procedure\)|Set Spell\/Trap|Selected) (.+?) \(/.exec(l); if (m) names.add(m[1]); } for (const n of names) S.use[n] = (S.use[n] || 0) + 1; };
+  S.use ||= {}; const names = new Set(); for (const l of r.line) { const m = /^(?:Activate|Normal Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Ritual Summon|Special Summon \(procedure\)|Set Spell\/Trap|Selected) (.+?) \(/.exec(l); if (m) names.add(m[1]); } for (const n of names) S.use[n] = (S.use[n] || 0) + 1;
+  // pieces the line had to go and get (searched, revived, summoned from the Deck/GY/banishment): more ways to reach them = more ways through a hand trap
+  S.need ||= {}; S.link ||= {}; let by = null; for (const l of r.line) { const a = /^(?:Activate|Trigger: activate) (.+?) \(/.exec(l); if (a) { by = a[1]; continue; } const m = /^Selected (.+?) \((Deck|GY|banished|Extra Deck)/.exec(l); if (m) { S.need[m[1]] = (S.need[m[1]] || 0) + 1; if (by) S.link[by + ' > ' + m[1]] = (S.link[by + ' > ' + m[1]] || 0) + 1; } } };
 const usedIn = (k) => { const u = new Set(); for (const r of Object.values(S.res[k] || {})) for (const l of r.line || []) { const m = /^(?:Activate|Normal Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Ritual Summon|Special Summon \(procedure\)|Set Spell\/Trap|Selected|Tribute Summon) (.+?) \(/.exec(l); if (m) u.add(m[1]); } return u; };
 // ---------- state ----------
 let S = { id: ID, decks: {}, res: {}, gens: [] };
