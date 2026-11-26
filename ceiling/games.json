@@ -1,8 +1,11 @@
 {
- "id": "2101",
- "title": "Full games vs current tournament lists (Nov 2026: Elfnote UK Open winner, Blitzclique, Radiant Typhoon, LADR; Angelechy = old lab list), opponent 3x thinking time, both sides",
+ "id": "2102",
+ "title": "Elfnote rerun after the BigInt fix (UK Open winner list), opponent 3x time, both sides",
  "decks": "decks/findlist-1100.ydk",
- "opps": "o26_elfnote,o26_blitzclique,o26_typhoon,o26_ladr,o_angelechy",
+ "opps": "o26_elfnote",
  "sides": "first,second",
- "n": 24, "min": 0.75, "omin": 2.25, "turns": 10
+ "n": 24,
+ "min": 0.75,
+ "omin": 2.25,
+ "turns": 10
 }
