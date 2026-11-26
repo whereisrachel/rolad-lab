@@ -1,102 +1,17 @@
 {
- "id": "br-1",
- "script": "cardtest.mjs",
+ "id": "eb-1",
+ "script": "evalboards.mjs",
  "args": {
-  "deck": "decks/findlist-1100.ydk",
-  "hands": {
-   "medius": [
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Dark Magical Circle"
-   ],
-   "terminus": [
-    "Prohibited Power Patron Portal - Terminus",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Dark Magical Circle"
-   ],
-   "citrinitas": [
-    "Ars Magna - \"Citrinitas\"",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Dark Magical Circle"
-   ],
-   "treasure": [
-    "Pendulum Treasure",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Dark Magical Circle"
-   ],
-   "engraver": [
-    "Fiendsmith Engraver",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Dark Magical Circle"
-   ],
-   "blackchaos": [
-    "Black Chaos",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Infinite Impermanence",
-    "Dark Magical Circle"
-   ]
-  },
-  "inDeck": true,
-  "lean": true,
-  "orders": 4,
-  "minutes": 3,
-  "main": [
-   "Theorealize",
-   "Prohibitive Power Patron Purview - Vilaea",
-   "Theorealize Overdrive",
-   "Kuriphoton",
-   "Artmage Power Patron",
-   "Jupredo the Shademachine Power Patron",
-   "Celtic Mystic"
+  "dir": "lines/evalset",
+  "opps": [
+   "o26_elfnote",
+   "o26_blitzclique",
+   "o26_typhoon",
+   "o26_ladr",
+   "o_angelechy"
   ],
-  "extra": [
-   "Evilswarm Exciton Knight",
-   "Berfomet the Mythical King of Phantom Beasts"
-  ],
-  "edOut": "Chaos Angel",
-  "packages": [
-   {
-    "name": "bridge package (Theorealize, Vilaea, Exciton, Berfomet)",
-    "add": [
-     "Theorealize",
-     "Prohibitive Power Patron Purview - Vilaea"
-    ],
-    "extraIn": [
-     "Evilswarm Exciton Knight",
-     "Berfomet the Mythical King of Phantom Beasts"
-    ],
-    "extraOut": [
-     "Chaos Angel",
-     "Medicurius the Power Patron of Illusions"
-    ]
-   },
-   {
-    "name": "bridge package + Theorealize Overdrive",
-    "add": [
-     "Theorealize",
-     "Prohibitive Power Patron Purview - Vilaea",
-     "Theorealize Overdrive"
-    ],
-    "extraIn": [
-     "Evilswarm Exciton Knight",
-     "Berfomet the Mythical King of Phantom Beasts"
-    ],
-    "extraOut": [
-     "Chaos Angel",
-     "Medicurius the Power Patron of Illusions"
-    ]
-   }
-  ]
+  "seeds": 1,
+  "minutes": 1.5,
+  "list": "findlist-1100"
  }
 }
