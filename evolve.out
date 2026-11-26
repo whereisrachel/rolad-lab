@@ -1,0 +1,56 @@
+evolve c2-t15-infinity: 2 seed lines, 8 deck orders, 4 mutation rounds, 15 min searches, 3 hands x 4 decks per line
+helper slots now 7
+helper slots now 3
+helper slots now 5
+helper slots now 6
+helper slots now 4
+helper slots now 5
+progress 5 pieces
+helper slots now 6
+progress 10 pieces
+helper slots now 4
+helper slots now 5
+progress 15 pieces
+helper slots now 7
+helper slots now 5
+helper slots now 7
+helper slots now 6
+progress 20 pieces
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+helper slots now 4
+helper slots now 6
+progress 25 pieces
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+helper slots now 7
+helper slots now 6
+helper slots now 7
+progress 30 pieces
+helper slots now 5
+helper slots now 4
+helper slots now 5
+progress 35 pieces
+helper slots now 4
+progress 40 pieces
+progress 45 pieces
+helper slots now 5
+order 4: best 13.3 (tries Activate Junoldo the Shadespirit Power Patron)
+progress 50 pieces
+helper slots now 3
+progress 55 pieces
+progress 60 pieces
+progress 65 pieces
+order 3: best 11.65 (inf1 → new early order)
+progress 70 pieces
+helper slots now 5
+order 1: best 13.3 (search)
+progress 75 pieces
+progress 80 pieces
+progress 85 pieces
+order 2: best 13.3 (tries Activate Fiendsmith Engraver)
+done -> reports/evolve-c2-t15-infinity.md
