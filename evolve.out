@@ -1,0 +1,51 @@
+evolve ug-rand2: 0 seed lines, 8 deck orders, 4 mutation rounds, 15 min searches, 3 hands x 4 decks per line
+helper slots now 4
+helper slots now 3
+helper slots now 2
+helper slots now 4
+helper slots now 5
+helper slots now 4
+helper slots now 3
+helper slots now 4
+helper slots now 3
+progress 5 pieces
+helper slots now 4
+progress 10 pieces
+helper slots now 2
+helper slots now 3
+progress 15 pieces
+helper slots now 6
+helper slots now 3
+helper slots now 5
+helper slots now 2
+progress 20 pieces
+helper slots now 5
+helper slots now 1
+helper slots now 3
+helper slots now 6
+helper slots now 2
+progress 25 pieces
+helper slots now 4
+helper slots now 3
+helper slots now 2
+progress 30 pieces
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 2
+helper slots now 1
+progress 35 pieces
+helper slots now 2
+helper slots now 1
+progress 40 pieces
+order 2: best 3.61 (search)
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 4
+helper slots now 3
+progress 45 pieces
+order 3: best 3.61 (search)
+order 1: best 3.61 (search)
+order 4: best 3.61 (search)
+done -> reports/evolve-ug-rand2.md
