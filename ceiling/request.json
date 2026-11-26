@@ -1,86 +1,5 @@
 {
- "hands": [
-  {
-   "name": "ug-terminus",
-   "hand": [
-    "Prohibited Power Patron Portal - Terminus",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "ug-treasure",
-   "hand": [
-    "Pendulum Treasure",
-    "Ash Blossom & Joyous Spring",
-    "Ash Blossom & Joyous Spring",
-    "Droll & Lock Bird",
-    "Ghost Ogre & Snow Rabbit"
-   ]
-  },
-  {
-   "name": "ug-rand1",
-   "hand": [
-    "Prohibited Power Patron Portal - Terminus",
-    "Ash Blossom & Joyous Spring",
-    "Nervedo the Shadebeast Power Patron",
-    "Artmage Graflare",
-    "Lacrima the Crimson Tears"
-   ]
-  },
-  {
-   "name": "ug-rand2",
-   "hand": [
-    "Black Luster Soldier - Soldier of Light and Darkness",
-    "Fiendsmith's Tract",
-    "Theorealize Past Lull",
-    "Dark Magical Circle",
-    "Fiendsmith Engraver"
-   ]
-  },
-  {
-   "name": "ug-rand3",
-   "hand": [
-    "Mind Shuffle",
-    "Medius the Pure",
-    "Ash Blossom & Joyous Spring",
-    "Prohibited Power Patron Portal - Terminus",
-    "Ars Magna of Purification and Corruption"
-   ]
-  },
-  {
-   "name": "ug-rand4",
-   "hand": [
-    "Artmage Vandalism -Assault-",
-    "Medius the Pure",
-    "Prohibited Power Patron Portal - Terminus",
-    "Light and Darkness Ritual",
-    "Apprentice Illusion Magician"
-   ]
-  },
-  {
-   "name": "ug-rand5",
-   "hand": [
-    "Infinite Impermanence",
-    "Small World",
-    "Medius the Pure",
-    "Artmage Graflare",
-    "Dark Magical Circle"
-   ]
-  },
-  {
-   "name": "ug-rand6",
-   "hand": [
-    "Artmage Vandalism -Assault-",
-    "Plundered Power Patron Plane - Vidolia",
-    "Fiendsmith's Tract",
-    "Magician of Dark Chaos - Black Chaos",
-    "Artmage Impasto -Recapture-"
-   ]
-  }
- ],
+ "hands": [],
  "deck": "decks/findlist-1100.ydk",
  "orders": 8,
  "only": [
@@ -98,5 +17,5 @@
  "fitness": "board",
  "judgeWinner": false,
  "share": 12,
- "note": "unguided bridging search part 2/3: 15-min searches, no hints, no seed lines, no forced tries; all guide openers + 6 random hands; looking for better engine-to-engine routes"
+ "note": "unguided bridging search part 3/3: 15-min searches, no hints, no seed lines, no forced tries; all guide openers + 6 random hands; looking for better engine-to-engine routes"
 }
