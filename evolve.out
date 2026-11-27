@@ -1,0 +1,80 @@
+evolve lk-blackchaos: 0 seed lines, 8 deck orders, 4 mutation rounds, 20 min searches, 3 hands x 4 decks per line
+helper slots now 6
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 0
+helper slots now 2
+helper slots now 5
+helper slots now 1
+helper slots now 2
+helper slots now 3
+helper slots now 2
+helper slots now 3
+progress 5 pieces
+helper slots now 4
+helper slots now 0
+progress 10 pieces
+helper slots now 1
+helper slots now 2
+helper slots now 4
+helper slots now 3
+helper slots now 0
+helper slots now 1
+helper slots now 4
+helper slots now 2
+helper slots now 1
+progress 15 pieces
+helper slots now 4
+helper slots now 3
+helper slots now 1
+helper slots now 3
+progress 20 pieces
+helper slots now 1
+helper slots now 3
+helper slots now 4
+helper slots now 3
+helper slots now 4
+progress 25 pieces
+helper slots now 0
+helper slots now 1
+helper slots now 2
+helper slots now 4
+helper slots now 3
+progress 30 pieces
+helper slots now 2
+helper slots now 1
+helper slots now 0
+helper slots now 3
+helper slots now 2
+helper slots now 1
+progress 35 pieces
+helper slots now 3
+helper slots now 1
+helper slots now 0
+helper slots now 2
+helper slots now 1
+helper slots now 0
+helper slots now 3
+helper slots now 2
+helper slots now 1
+helper slots now 2
+progress 40 pieces
+helper slots now 3
+helper slots now 4
+helper slots now 2
+helper slots now 1
+helper slots now 0
+helper slots now 1
+helper slots now 2
+helper slots now 5
+order 2: best 6.25 (search → new ending → new early order)
+helper slots now 4
+progress 45 pieces
+order 3: best 6.45 (search → new early order)
+helper slots now 2
+helper slots now 6
+order 4: best 6.25 (search)
+helper slots now 2
+order 1: best 6.25 (search)
+done -> reports/evolve-lk-blackchaos.md
