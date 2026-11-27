@@ -93,6 +93,11 @@ export function policyAnswer(S, seat, pol) {
     if (bot) { const a = find(/^Attack with/); if (a && !(G.botCount['b' + key] > 40)) { G.botCount['b' + key] = (G.botCount['b' + key] || 0) + 1; return a; } }
     return find(/End Phase/) || find(/Main Phase 2/) || String(opts.length);
   }
+  // scripted hand traps (fix Nov 27): Imperm and other targeted traps hit the card whose effect is on the chain, not the first option.
+  // Before this, Imperm on the opponent's turn-1 line often hit an idle monster, so a hit looked like it cost nothing.
+  if ((pol.script || []).length && !pol.defense && (d.kind === 'single' || T === M.SELECT_CARD) && S.chain && S.chain.length) {
+    const opp = (G.responses || []).filter(r => r.seat !== seat && !r.auto && /^Activate /.test(r.label || '')); const last = opp.length ? opp[opp.length - 1].label : '';
+    const X = (/^Activate (.+?) \(/.exec(last) || [])[1]; if (X) { const i = opts.findIndex(o => o.label.includes(X)); if (i >= 0) return String(i + 1); } }
   if (pol.defense && (d.kind === 'multi' || d.kind === 'single' || T === M.SELECT_CARD)) { const idx = opts.map((o, i) => [/\(opp /.test(o.label) ? 0 : 1, i]).sort((p, q) => p[0] - q[0] || p[1] - q[1]).map(x => x[1] + 1); const n = Math.max(1, d.min || 1); if (idx.length >= n) return idx.slice(0, n).join(' '); }
   if (d.kind === 'multi' || d.kind === 'sum') return Array.from({ length: Math.max(1, d.min) }, (_, i) => i + 1).join(' ');
   if (d.kind === 'unselect') return find(/^Finish/) || '1';
