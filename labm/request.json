@@ -1,79 +1,13 @@
 {
  "runs": [
   {
-   "id": "p10-bcmed",
-   "script": "pivots.mjs",
-   "args": {
-    "lines": [
-     {
-      "name": "bcmed",
-      "file": "lines/cands/bcmed/c2-o5.json"
-     }
-    ],
-    "threats": [
-     "ash",
-     "imperm",
-     "droll",
-     "nibiru",
-     "ogre",
-     "belle"
-    ],
-    "minutes": 1.5,
-    "maxK": 24
-   }
-  },
-  {
-   "id": "p10-citrinitas",
-   "script": "pivots.mjs",
-   "args": {
-    "lines": [
-     {
-      "name": "citrinitas",
-      "file": "lines/cands/citrinitas/deep-o4.json"
-     }
-    ],
-    "threats": [
-     "ash",
-     "imperm",
-     "droll",
-     "nibiru",
-     "ogre",
-     "belle"
-    ],
-    "minutes": 1.5,
-    "maxK": 24
-   }
-  },
-  {
-   "id": "p10-engmed",
-   "script": "pivots.mjs",
-   "args": {
-    "lines": [
-     {
-      "name": "engmed",
-      "file": "lines/cands/engmed/ug-o1.json"
-     }
-    ],
-    "threats": [
-     "ash",
-     "imperm",
-     "droll",
-     "nibiru",
-     "ogre",
-     "belle"
-    ],
-    "minutes": 1.5,
-    "maxK": 24
-   }
-  },
-  {
-   "id": "p10-infinity",
+   "id": "p11-infinity",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
       "name": "infinity",
-      "file": "lines/cands/infinity/c2-o6.json"
+      "file": "lines/cands/infinity/deep-o3.json"
      }
     ],
     "threats": [
@@ -89,35 +23,13 @@
    }
   },
   {
-   "id": "p10-medius",
+   "id": "p11-citrinitas",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "medius",
-      "file": "lines/cands/medius/deep-o5.json"
-     }
-    ],
-    "threats": [
-     "ash",
-     "imperm",
-     "droll",
-     "nibiru",
-     "ogre",
-     "belle"
-    ],
-    "minutes": 1.5,
-    "maxK": 24
-   }
-  },
-  {
-   "id": "p10-terminus",
-   "script": "pivots.mjs",
-   "args": {
-    "lines": [
-     {
-      "name": "terminus",
-      "file": "lines/cands/terminus/c2-o6.json"
+      "name": "citrinitas",
+      "file": "lines/cands/citrinitas/c2-o1.json"
      }
     ],
     "threats": [
