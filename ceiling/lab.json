@@ -1,38 +1,14 @@
 {
- "id": "piv-g9",
- "script": "pivots.mjs",
+ "id": "de-6",
+ "script": "deckevo.mjs",
  "args": {
-  "lines": [
-   {
-    "name": "new-infinity",
-    "file": "lines/piv/g9-infinity.json"
-   },
-   {
-    "name": "new-treasure",
-    "file": "lines/piv/g9-treasure.json"
-   },
-   {
-    "name": "new-citrinitas",
-    "file": "lines/piv/g9-citrinitas.json"
-   },
-   {
-    "name": "new-terminus",
-    "file": "lines/piv/g9-terminus.json"
-   },
-   {
-    "name": "new-medius",
-    "file": "lines/piv/g9-medius.json"
-   }
-  ],
-  "threats": [
-   "ash",
-   "imperm",
-   "droll",
-   "nibiru",
-   "ogre",
-   "belle"
-  ],
-  "minutes": 2,
-  "maxK": 24
+  "deck": "decks/findlist-1100.ydk",
+  "minutes": 15,
+  "hands": 16,
+  "pop": 16,
+  "keep": 4,
+  "more": 8,
+  "stopMin": 300,
+  "resume": "de-5"
  }
 }
