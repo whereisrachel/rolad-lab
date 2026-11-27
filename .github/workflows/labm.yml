@@ -1,0 +1,57 @@
+name: labm
+# Lab scripts on GitHub machines only (no hub, no helper PCs): one machine per entry, each pushes reports/<id>.* to branch labm-<id>.
+# Start: push labm/request.json {"runs":[{"id","script","args":{...}}]}  (scripts: pivots.mjs, banpiv.mjs, ordsearch.mjs)
+on:
+  push:
+    branches: [main]
+    paths: ['labm/request.json']
+permissions:
+  contents: write
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: m
+        run: |
+          python3 - >> "$GITHUB_OUTPUT" <<'PY'
+          import json
+          r=json.load(open('labm/request.json'))['runs']; assert 1<=len(r)<=12
+          for x in r: assert x['script'] in ('pivots.mjs','banpiv.mjs','ordsearch.mjs')
+          print('matrix='+json.dumps({'r':r}))
+          PY
+  run:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: vm }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: npm ci --no-audit --no-fund
+      - name: run
+        env:
+          R: ${{ toJson(matrix.r) }}
+        run: |
+          rm -f data/hub.json
+          S=$(python3 -c "import json,os;print(json.loads(os.environ['R'])['script'])")
+          A=$(python3 -c "import json,os;r=json.loads(os.environ['R']);print(json.dumps({'id':r['id'],**r['args']}))")
+          node --no-warnings $S "$A" 2>&1 | tee run.out
+      - name: push results to branch labm-${{ matrix.r.id }}
+        if: always()
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          N: ${{ matrix.r.id }}
+        run: |
+          mkdir -p /tmp/res/reports && cd /tmp/res
+          cp "$GITHUB_WORKSPACE"/reports/*$N* reports/ || true
+          cp "$GITHUB_WORKSPACE"/run.out . || true
+          git init -q . && git config user.name rolad-labm && git config user.email noreply@github.com
+          git add -A && git commit -qm "labm $N" && git push -q -f "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" HEAD:refs/heads/labm-$N
