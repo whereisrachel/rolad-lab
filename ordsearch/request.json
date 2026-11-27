@@ -1,0 +1,89 @@
+{
+ "hands": [
+  {
+   "name": "bcmed",
+   "hand": [
+    "Black Chaos",
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "citrinitas",
+   "hand": [
+    "Ars Magna - \"Citrinitas\"",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "engmed",
+   "hand": [
+    "Fiendsmith Engraver",
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "infinity",
+   "hand": [
+    "Ars Magna of Infinity and Finity",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "medius",
+   "hand": [
+    "Medius the Pure",
+    "Ash Blossom & Joyous Spring",
+    "Infinite Impermanence",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "smallworld",
+   "hand": [
+    "Small World",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "terminus",
+   "hand": [
+    "Prohibited Power Patron Portal - Terminus",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  },
+  {
+   "name": "treasure",
+   "hand": [
+    "Pendulum Treasure",
+    "Ash Blossom & Joyous Spring",
+    "Ash Blossom & Joyous Spring",
+    "Droll & Lock Bird",
+    "Ghost Ogre & Snow Rabbit"
+   ]
+  }
+ ],
+ "minutes": 15,
+ "ppm": 3945,
+ "hard": 6,
+ "normal": 2,
+ "deck": "decks/findlist-1100.ydk"
+}

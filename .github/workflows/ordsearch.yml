@@ -1,0 +1,58 @@
+name: ordsearch
+# Shuffle-proof opener lines (Nov 27): one GitHub machine per opener runs ordsearch.mjs (local cores only, no hub) and pushes
+# reports/ordsearch-<name>.* and lines/robust/<name>.json to branch ordsearch-<name>. Start: push ordsearch/request.json
+# {"hands":[{"name","hand":[...]}], "minutes":15, "ppm":3945, "hard":6, "normal":2}
+on:
+  push:
+    branches: [main]
+    paths: ['ordsearch/request.json']
+permissions:
+  contents: write
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.m.outputs.matrix }}
+      cfg: ${{ steps.m.outputs.cfg }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: m
+        run: |
+          python3 - >> "$GITHUB_OUTPUT" <<'PY'
+          import json
+          c=json.load(open('ordsearch/request.json')); h=c.pop('hands'); assert 1<=len(h)<=10
+          print('matrix='+json.dumps({'h':h})); print('cfg='+json.dumps(c))
+          PY
+  search:
+    needs: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { ref: vm }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24 }
+      - run: npm ci --no-audit --no-fund
+      - name: ordsearch
+        env:
+          H: ${{ toJson(matrix.h) }}
+          CFG: ${{ needs.plan.outputs.cfg }}
+        run: |
+          T=$(python3 -c "import json,os,glob;h=json.loads(os.environ['H']);c=json.loads(os.environ['CFG']);n=h['name'];print(json.dumps({**c,'name':n,'hand':h['hand'],'also':sorted(glob.glob('lines/cands/'+n+'/*.json'))}))")
+          node --no-warnings ordsearch.mjs "$T" 2>&1 | tee ordsearch.out
+      - name: push results to branch ordsearch-${{ matrix.h.name }}
+        if: always()
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          N: ${{ matrix.h.name }}
+        run: |
+          mkdir -p /tmp/res/reports /tmp/res/lines/robust && cd /tmp/res
+          cp "$GITHUB_WORKSPACE"/reports/ordsearch-$N.* reports/ || true
+          cp "$GITHUB_WORKSPACE"/lines/robust/$N.json lines/robust/ || true
+          cp "$GITHUB_WORKSPACE"/ordsearch.out . || true
+          git init -q . && git config user.name rolad-ordsearch && git config user.email noreply@github.com
+          git add -A && git commit -qm "ordsearch $N" && git push -q -f "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" HEAD:refs/heads/ordsearch-$N
