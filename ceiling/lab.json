@@ -1,5 +1,5 @@
 {
- "id": "de-4",
+ "id": "de-5",
  "script": "deckevo.mjs",
  "args": {
   "deck": "decks/findlist-1100.ydk",
@@ -8,7 +8,7 @@
   "pop": 16,
   "keep": 4,
   "more": 8,
-  "stopMin": 325,
-  "resume": "de-3"
+  "stopMin": 300,
+  "resume": "de-4"
  }
 }
