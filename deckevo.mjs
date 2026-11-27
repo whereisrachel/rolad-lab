@@ -69,7 +69,7 @@ let CUR_USED = null;
 // bridge: "X would work with Y if a card that did Z existed" — X = a card that keeps showing up in hands that went nowhere, Y = a piece good
 // lines had to fetch. Look through the whole pool for Z that works with X AND with Y (1 card), or Z1 that works with X and Z2 that works
 // with Z1 and Y (2 cards). The engine then decides whether the route is real.
-function bridge(d) { const st = Object.entries(S.strand || {}).filter(([n]) => (d.main[n] || 0) > 0); const nd = Object.entries(S.need || {}); if (!st.length || !nd.length) return null;
+function bridge(d) { const st = Object.entries(S.strand || {}).filter(([n]) => (d.main[n] || 0) > 0 && (S.seen?.[n] || 0) >= 8).map(([n, c]) => [n, 20 * c / S.seen[n]]).filter(([, w]) => w > 0); const nd = Object.entries(S.need || {}); if (!st.length || !nd.length) return null;
   const wpick = (arr) => { let t = arr.reduce((a, b) => a + Math.log1p(b[1]), 0), r = Math.random() * t; for (const [n, w] of arr) { r -= Math.log1p(w); if (r <= 0) return n; } return arr[0][0]; };
   const X = wpick(st); let Y = wpick(nd); for (let i = 0; i < 5 && Y === X; i++) Y = wpick(nd); if (Y === X) return null; const xc = code(X), yc = code(Y); if (!xc || !yc) return null;
   const room = (x) => (x.e ? (d.extra[x.n] || 0) : (d.main[x.n] || 0)) < lim(x.c);
@@ -126,7 +126,7 @@ const credit = (k, hi) => { const r = S.res[k][hi], b = (S.res[S.baseKey] || {})
   S.need ||= {}; S.link ||= {}; let by = null; for (const l of r.line) { const a = /^(?:Activate|Trigger: activate) (.+?) \(/.exec(l); if (a) { by = a[1]; continue; } const m = /^Selected (.+?) \((Deck|GY|banished|Extra Deck)/.exec(l); if (m) { S.need[m[1]] = (S.need[m[1]] || 0) + 1; if (by) S.link[by + ' > ' + m[1]] = (S.link[by + ' > ' + m[1]] || 0) + 1; } } };
 const usedIn = (k) => { const u = new Set(); for (const r of Object.values(S.res[k] || {})) for (const l of r.line || []) { const m = /^(?:Activate|Normal Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Ritual Summon|Special Summon \(procedure\)|Set Spell\/Trap|Selected|Tribute Summon) (.+?) \(/.exec(l); if (m) u.add(m[1]); } return u; };
 // stranded cards: in hands that ended well below the start list's typical board, which cards were there (nothing reached the rest of the deck)
-const strand = (r) => { if (!r || r.v == null || !r.hand) return; const bv = Object.values(S.res[S.baseKey] || {}).map(x => x.v).filter(x => x != null).sort((a, b) => a - b); const med = bv.length ? bv[bv.length >> 1] : 10;
+const strand = (r) => { if (!r || r.v == null || !r.hand) return; S.seen ||= {}; for (const n of new Set(r.hand)) S.seen[n] = (S.seen[n] || 0) + 1; const bv = Object.values(S.res[S.baseKey] || {}).map(x => x.v).filter(x => x != null).sort((a, b) => a - b); const med = bv.length ? bv[bv.length >> 1] : 10;
   if (r.v >= med * 0.7) return; S.strand ||= {}; for (const n of new Set(r.hand)) if (!isHT(code(n))) S.strand[n] = (S.strand[n] || 0) + 1; };
 // ---------- state ----------
 let S = { id: ID, decks: {}, res: {}, gens: [] };
