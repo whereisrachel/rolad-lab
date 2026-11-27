@@ -20,7 +20,7 @@ jobs:
           python3 - >> "$GITHUB_OUTPUT" <<'PY'
           import json
           r=json.load(open('labm/request.json'))['runs']; assert 1<=len(r)<=12
-          for x in r: assert x['script'] in ('pivots.mjs','banpiv.mjs','ordsearch.mjs')
+          for x in r: assert x['script'] in ('pivots.mjs','banpiv.mjs','ordsearch.mjs','cmp.mjs')
           print('matrix='+json.dumps({'r':r}))
           PY
   run:
@@ -51,7 +51,7 @@ jobs:
           N: ${{ matrix.r.id }}
         run: |
           mkdir -p /tmp/res/reports && cd /tmp/res
-          cp "$GITHUB_WORKSPACE"/reports/*$N* reports/ || true
+          cp "$GITHUB_WORKSPACE"/reports/*$N* reports/ || true; cp "$GITHUB_WORKSPACE"/results/*$N* reports/ 2>/dev/null || true
           cp "$GITHUB_WORKSPACE"/run.out . || true
           git init -q . && git config user.name rolad-labm && git config user.email noreply@github.com
           git add -A && git commit -qm "labm $N" && git push -q -f "https://x-access-token:${TOKEN}@github.com/${{ github.repository }}.git" HEAD:refs/heads/labm-$N
