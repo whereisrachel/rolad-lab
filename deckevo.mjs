@@ -83,15 +83,15 @@ function bridge(d) { const st = Object.entries(S.strand || {}).filter(([n]) => (
   if (one.length) { const a = put(rnd(one), `bridge ${X} → ${Y}`); return a ? [a] : null; } return null; }
 function mutate(p) { CUR_USED = p._used || null; for (let tries = 0; tries < 50; tries++) { const d = clone(p); const k = 2 + Math.floor(Math.random() * 5); const did = [];
   for (let i = 0; i < k; i++) { const r = Math.random(); const inMain = Object.keys(d.main).filter(n => d.main[n] > 0);
-    if (r < 0.12) { const x = bridge(d); if (x) { did.push(...x); if (process.env.DBGC) log('bridge: ' + x.join(' | ')); } }
-    else if (r < 0.26) { const x = connect(d); if (x) { did.push(...x); if (process.env.DBGC) log('connect: ' + x.join(' | ')); } }
-    else if (r < 0.32) { const n = pick(PM); const c = Math.min(lim(code(n)) - (d.main[n] || 0), 1 + Math.floor(Math.random() * 3)); if (c > 0) { d.main[n] = (d.main[n] || 0) + c; did.push(`+${c} ${n}`); } }
-    else if (r < 0.35) { const f = rnd(Object.keys(fam)); for (const n of fam[f].slice().sort(() => Math.random() - 0.5).slice(0, 2 + Math.floor(Math.random() * 2))) { if ((d.main[n] || 0) < lim(code(n))) { d.main[n] = (d.main[n] || 0) + 1; did.push(`+1 ${n}`); } } }
-    else if (r < 0.65) { const unused = inMain.filter(n => !isHT(code(n)) && !(minOf[n] && d.main[n] <= minOf[n]) && (p._used ? !p._used.has(n) : false)); const n = unused.length && Math.random() < 0.6 ? rnd(unused) : rnd(inMain); if (n && !(minOf[n] && d.main[n] <= minOf[n])) { d.main[n]--; did.push(`-1 ${n}`); } }
-    else if (r < 0.75) { const n = rnd(inMain); if (n && d.main[n] < lim(code(n)) && !isHT(code(n))) { d.main[n]++; did.push(`+1 ${n}`); } }
+    if (r < 0.22) { const x = bridge(d); if (x) { did.push(...x); if (process.env.DBGC) log('bridge: ' + x.join(' | ')); } }
+    else if (r < 0.44) { const x = connect(d); if (x) { did.push(...x); if (process.env.DBGC) log('connect: ' + x.join(' | ')); } }
+    else if (r < 0.50) { const n = pick(PM); const c = Math.min(lim(code(n)) - (d.main[n] || 0), 1 + Math.floor(Math.random() * 3)); if (c > 0) { d.main[n] = (d.main[n] || 0) + c; did.push(`+${c} ${n}`); } }
+    else if (r < 0.52) { const f = rnd(Object.keys(fam)); for (const n of fam[f].slice().sort(() => Math.random() - 0.5).slice(0, 2 + Math.floor(Math.random() * 2))) { if ((d.main[n] || 0) < lim(code(n))) { d.main[n] = (d.main[n] || 0) + 1; did.push(`+1 ${n}`); } } }
+    else if (r < 0.70) { const unused = inMain.filter(n => !isHT(code(n)) && !(minOf[n] && d.main[n] <= minOf[n]) && (p._used ? !p._used.has(n) : false)); const n = unused.length && Math.random() < 0.6 ? rnd(unused) : rnd(inMain); if (n && !(minOf[n] && d.main[n] <= minOf[n])) { d.main[n]--; did.push(`-1 ${n}`); } }
+    else if (r < 0.78) { const n = rnd(inMain); if (n && d.main[n] < lim(code(n)) && !isHT(code(n))) { d.main[n]++; did.push(`+1 ${n}`); } }
     else { const n = pick(PE); const cur0 = Object.keys(d.extra).filter(x => d.extra[x] > 0 && !minOf['ED:' + x]); const idle0 = cur0.filter(x => CUR_USED && !CUR_USED.has(x)); const cur = idle0.length && Math.random() < 0.75 ? idle0 : cur0; if ((d.extra[n] || 0) >= lim(code(n))) continue;
       if (size(d.extra) >= 15 || Math.random() < 0.6) { const o = rnd(cur); if (!o) continue; d.extra[o]--; did.push(`ED -1 ${o}`); } d.extra[n] = (d.extra[n] || 0) + 1; did.push(`ED +1 ${n}`); } }
-  if (did.length && okDeck(d)) return d; } return null; }
+  if (did.length && okDeck(d) && (Math.random() < 0.5 || did.some(x => !x.startsWith('ED ')))) return d; } return null; }
 function cross(a, b) { for (let tries = 0; tries < 30; tries++) { const d = { main: {}, extra: {} };
   for (const n of new Set([...Object.keys(a.main), ...Object.keys(b.main)])) d.main[n] = Math.random() < 0.5 ? (a.main[n] || 0) : (b.main[n] || 0);
   const eds = [...new Set([...Object.keys(a.extra), ...Object.keys(b.extra)])].sort(() => Math.random() - 0.5); for (const n of eds) { const k = Math.random() < 0.5 ? (a.extra[n] || 0) : (b.extra[n] || 0); if (k && size(d.extra) + k <= 15) d.extra[n] = k; }
@@ -141,7 +141,12 @@ function save() { fs.writeFileSync(`results/${ID}.json`, JSON.stringify(S)); }
 const stat = (k) => { const v = Object.values(S.res[k] || {}).map(r => r.v).filter(x => x != null); const n = v.length, m = n ? v.reduce((a, b) => a + b, 0) / n : 0; const sd = n > 1 ? Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / (n - 1)) : 0; return { n, m, se: n ? sd / Math.sqrt(n) : 9 }; };
 // paired vs the start list on the hand slots both played
 const vsBase = (k) => { const b = S.res[S.baseKey] || {}, x = S.res[k] || {}; const d = Object.keys(x).filter(h => b[h] && b[h].v != null && x[h].v != null).map(h => x[h].v - b[h].v); const n = d.length, m = n ? d.reduce((a, c) => a + c, 0) / n : 0; const sd = n > 1 ? Math.sqrt(d.reduce((a, c) => a + (c - m) ** 2, 0) / (n - 1)) : 0; return { n, m, se: n ? sd / Math.sqrt(n) : 9 }; };
-const rank = () => Object.keys(S.decks).filter(k => stat(k).n >= H * 0.75).sort((p, q) => (stat(q).m - stat(q).se) - (stat(p).m - stat(p).se));
+const nChg = (k) => { const d = S.decks[k]; let n = 0; for (const x of new Set([...Object.keys(base.main), ...Object.keys(d.main)])) n += Math.abs((d.main[x] || 0) - (base.main[x] || 0)); for (const x of new Set([...Object.keys(base.extra), ...Object.keys(d.extra)])) n += Math.abs((d.extra[x] || 0) - (base.extra[x] || 0)); return n; };
+// ties go to the deck with fewer changes (a change that scores the same as not making it is not a find)
+const rank = () => Object.keys(S.decks).filter(k => stat(k).n >= H * 0.75).sort((p, q) => (stat(q).m - stat(q).se - 0.03 * nChg(q)) - (stat(p).m - stat(p).se - 0.03 * nChg(p)));
+// parents: the best deck, then the best deck of each different Main Deck (so the search doesn't circle Extra Deck swaps that change nothing)
+const pickElite = () => { const r = rank(); const out = [], seenM = new Set(); for (const k of r) { const m = JSON.stringify(Object.entries(S.decks[k].main).filter(x => x[1]).sort()); if (out.length && seenM.has(m)) continue; seenM.add(m); out.push(k); if (out.length >= KEEP) break; }
+  for (const k of r) { if (out.length >= KEEP) break; if (!out.includes(k)) out.push(k); } return out; };
 function report() { const rows = rank().slice(0, 20).map((k, i) => { const s = stat(k), b = vsBase(k); return `| ${i + 1} | ${s.m.toFixed(2)} ± ${s.se.toFixed(2)} (n ${s.n}) | ${k === S.baseKey ? '—' : `${b.m >= 0 ? '+' : ''}${b.m.toFixed(2)} ± ${b.se.toFixed(2)}`} | ${size(S.decks[k].main)}/${size(S.decks[k].extra)} | ${diff(S.decks[k])} |`; });
   const top = rank()[0]; let md = `# Whole-deck search ${ID}\n${new Date().toISOString()} · ${S.gens.length} generations · ${Object.keys(S.decks).length} decks · ${MIN}-min unguided searches · opponent hand traps rotate none/Ash/Imperm/Droll\n\nPool: ${PM.length} Main Deck + ${PE.length} Extra Deck cards. Locked: ${[...LOCK].join(', ')}; hand-trap counts fixed.\n\n| # | average board | vs start list (same hands) | Main/Extra | changes from the start list |\n|---|---|---|---|---|\n${rows.join('\n')}\n`;
   if (top) md += `\n## Best deck so far\n${diff(S.decks[top])}\n\nMain: ${Object.entries(S.decks[top].main).filter(x => x[1]).map(([n, k]) => `${k} ${n}`).join(', ')}\n\nExtra: ${Object.entries(S.decks[top].extra).filter(x => x[1]).map(([n, k]) => `${k} ${n}`).join(', ')}\n`;
@@ -161,7 +166,7 @@ if (!S.ppm && t.fixed !== false) { const cal = []; for (let i = 0; i < 4; i++) {
 let gen = S.gens.length; let genMin = 0;
 while (true) { const g0 = Date.now(); gen++;
   // every deck that is still a candidate plays MORE new hand slots (so lucky early scores get tested), new decks play H slots
-  const elite = rank().slice(0, KEEP); const kids = [];
+  const elite = pickElite(); const kids = [];
   if (!elite.length) kids.push(S.baseKey); else { const seen = new Set(Object.keys(S.decks)); let guard = 0;
     while (kids.length < POP && guard++ < 500) { for (const e of elite) Object.defineProperty(S.decks[e], '_used', { value: usedIn(e), enumerable: false, configurable: true }); let pa; const d = Math.random() < 0.2 && elite.length > 1 ? (pa = [rnd(elite), rnd(elite)], cross(S.decks[pa[0]], S.decks[pa[1]])) : (pa = [rnd(elite.concat(elite.slice(0, 1)))], mutate(S.decks[pa[0]])); if (!d) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [...new Set(pa)]; kids.push(k); } }
   if (!elite.length && gen === 1) { /* first generation: the start list, imported best decks, then children of the start list */ const seen = new Set([S.baseKey]); for (const d of (S.seedDecks || [])) { if (!okDeck(d)) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [S.baseKey]; kids.push(k); } delete S.seedDecks; let guard = 0; while (kids.length < POP && guard++ < 500) { const d = mutate(base); if (!d) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [S.baseKey]; kids.push(k); } }
