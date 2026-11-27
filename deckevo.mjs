@@ -109,8 +109,8 @@ const deal = (d, hi) => { const r = rngOf(1000 + hi * 7919); const p = toCodes(d
 const runLocal = (args) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify(args)], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = ''; p.stdout.on('data', b => o += b);
   const tm = setTimeout(() => { try { p.kill(); } catch {} }, (MIN * 1.6 + 10) * 60000); p.on('close', () => { clearTimeout(tm); ok(o); }); });
 // also = lines (own steps) other decks found on this same hand slot: replayed after the search, the bigger result counts (never steers the search)
-async function play(d, hi, remote, also, mins) { const perm = deal(d, hi); const M = mins ?? MIN; const args = { deck: fileOf(d), main: perm, hand: perm.slice(0, 5).map(name), minutes: M, seed: 7 + hi, sseed: 20000 + hi, scn: SCN[hi % 4], hints: false, cardv: false, learn: false, wantRaw: true, ...(also && also.length ? { alsoTry: also } : {}) };
-  let out = null; if (remote) { const r = await runRemote('deepw.mjs', args, { files: [args.deck], est: M * 1.1 + 0.5 }); out = r && r.stdout; } if (!out || !/RESULT/.test(out)) out = await runLocal(args);
+async function play(d, hi, remote, also, mins) { const perm = deal(d, hi); const M = mins ?? MIN; const args = { deck: fileOf(d), main: perm, hand: perm.slice(0, 5).map(name), minutes: M, seed: 7 + hi, sseed: 20000 + hi, scn: SCN[hi % 4], hints: false, cardv: false, learn: false, wantRaw: true, ...(S.ppm && M >= 1 ? { ppm: S.ppm } : {}), ...(also && also.length ? { alsoTry: also } : {}) };
+  let out = null; if (remote) { const r = await runRemote('deepw.mjs', args, { files: [args.deck], est: M * (S.ppm && M >= 1 ? 1.6 : 1.1) + 0.5 }); out = r && r.stdout; } if (!out || !/RESULT/.test(out)) out = await runLocal(args);
   const m = /RESULT (.*)/.exec(out || ''); if (!m) return { v: null }; const x = JSON.parse(m[1]); return { v: x.v, hand: args.hand, scn: args.scn, line: (x.line || []).slice(0, 80), raw: x.raw || null, fp: !!x.fromParent }; }
 const alsoFor = (k, hi) => (S.parent?.[k] || []).map(p => S.res[p]?.[hi]?.raw).filter(Boolean);
 const PAR = Math.max(1, Math.min(os.cpus().length - 1, Math.floor(os.freemem() / 1.3e9)));
@@ -131,6 +131,12 @@ const strand = (r) => { if (!r || r.v == null || !r.hand) return; const bv = Obj
 // ---------- state ----------
 let S = { id: ID, decks: {}, res: {}, gens: [] };
 if (t.resume) { try { const r = await fetch(`https://raw.githubusercontent.com/whereisrachel/rolad-lab/lab-${t.resume}/results/${t.resume}.json`); if (r.ok) { const p = await r.json(); S = { ...p, id: ID }; log(`resumed from ${t.resume}: ${Object.keys(S.decks).length} decks, ${S.gens.length} generations`); } } catch (e) { log('resume failed: ' + e.message); } }
+// import: start fresh scores (old ones came from wall-clock searches whose result depended on which machine ran them), but keep what
+// another run learned (cards used, pieces needed, stranded cards) and its best decks as the first parents
+if (t.import && !S.baseKey) { try { const r = await fetch(`https://raw.githubusercontent.com/whereisrachel/rolad-lab/lab-${t.import}/results/${t.import}.json`); if (r.ok) { const p = await r.json();
+  const st2 = (k) => { const v = Object.values(p.res[k] || {}).map(x => x.v).filter(x => x != null); return v.length >= 12 ? v.reduce((a, b) => a + b, 0) / v.length : -1; };
+  S.use = p.use || {}; S.need = p.need || {}; S.link = p.link || {}; S.strand = p.strand || {}; S.seedDecks = Object.keys(p.decks).filter(k => k !== p.baseKey).sort((a, b) => st2(b) - st2(a)).slice(0, +(t.importTop || 6)).map(k => p.decks[k]);
+  log(`imported from ${t.import}: learned card data + ${S.seedDecks.length} best decks (to be re-scored)`); } } catch (e) { log('import failed: ' + e.message); } }
 function save() { fs.writeFileSync(`results/${ID}.json`, JSON.stringify(S)); }
 const stat = (k) => { const v = Object.values(S.res[k] || {}).map(r => r.v).filter(x => x != null); const n = v.length, m = n ? v.reduce((a, b) => a + b, 0) / n : 0; const sd = n > 1 ? Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / (n - 1)) : 0; return { n, m, se: n ? sd / Math.sqrt(n) : 9 }; };
 // paired vs the start list on the hand slots both played
@@ -148,13 +154,17 @@ function live() { if (!process.env.LIVE_TOKEN || !process.env.LIVE_REPO) return;
 
 // ---------- run ----------
 if (!S.baseKey) { S.baseKey = key(base); S.decks[S.baseKey] = base; }
+// fixed work budget: searches get a fixed number of playouts (calibrated once on this runner = what ${MIN} minutes buys here), not a clock,
+// so the same deck on the same hand scores the same whatever machine runs it and however loaded it is
+if (!S.ppm && t.fixed !== false) { const cal = []; for (let i = 0; i < 4; i++) { const perm = deal(base, 900 + i); const o = await runLocal({ deck: t.deck || 'decks/findlist-1100.ydk', main: perm, hand: perm.slice(0, 5).map(name), minutes: 1, seed: 7, hints: false, cardv: false, learn: false });
+    const m = /RESULT (.*)/.exec(o || ''); if (m) { const x = JSON.parse(m[1]); if (x.ppm1) cal.push(x.ppm1); } } cal.sort((a, b) => a - b); if (cal.length) { S.ppm = Math.round(cal[cal.length >> 1]); log(`fixed budget: ${S.ppm} playouts per search-minute (median of ${cal.join(', ')})`); } else log('calibration failed; using the clock'); }
 let gen = S.gens.length; let genMin = 0;
 while (true) { const g0 = Date.now(); gen++;
   // every deck that is still a candidate plays MORE new hand slots (so lucky early scores get tested), new decks play H slots
   const elite = rank().slice(0, KEEP); const kids = [];
   if (!elite.length) kids.push(S.baseKey); else { const seen = new Set(Object.keys(S.decks)); let guard = 0;
     while (kids.length < POP && guard++ < 500) { for (const e of elite) Object.defineProperty(S.decks[e], '_used', { value: usedIn(e), enumerable: false, configurable: true }); let pa; const d = Math.random() < 0.2 && elite.length > 1 ? (pa = [rnd(elite), rnd(elite)], cross(S.decks[pa[0]], S.decks[pa[1]])) : (pa = [rnd(elite.concat(elite.slice(0, 1)))], mutate(S.decks[pa[0]])); if (!d) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [...new Set(pa)]; kids.push(k); } }
-  if (!elite.length && gen === 1) { /* first generation: the start list plus POP-1 children of it */ const seen = new Set([S.baseKey]); let guard = 0; while (kids.length < POP && guard++ < 500) { const d = mutate(base); if (!d) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [S.baseKey]; kids.push(k); } }
+  if (!elite.length && gen === 1) { /* first generation: the start list, imported best decks, then children of the start list */ const seen = new Set([S.baseKey]); for (const d of (S.seedDecks || [])) { if (!okDeck(d)) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [S.baseKey]; kids.push(k); } delete S.seedDecks; let guard = 0; while (kids.length < POP && guard++ < 500) { const d = mutate(base); if (!d) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [S.baseKey]; kids.push(k); } }
   const jobs = []; for (const k of kids) for (let hi = 0; hi < H; hi++) jobs.push({ k, d: S.decks[k], hi });
   S.next ??= H; const extra = Array.from({ length: MORE }, (_, i) => S.next + i); S.next += MORE;
   for (const k of [...new Set([...elite, S.baseKey])]) for (const hi of extra) jobs.push({ k, d: S.decks[k], hi });
