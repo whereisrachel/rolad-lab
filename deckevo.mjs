@@ -69,19 +69,23 @@ let CUR_USED = null;
 // bridge: "X would work with Y if a card that did Z existed" — X = a card that keeps showing up in hands that went nowhere, Y = a piece good
 // lines had to fetch. Look through the whole pool for Z that works with X AND with Y (1 card), or Z1 that works with X and Z2 that works
 // with Z1 and Y (2 cards). The engine then decides whether the route is real.
-function bridge(d) { const st = Object.entries(S.strand || {}).filter(([n]) => (d.main[n] || 0) > 0 && (S.seen?.[n] || 0) >= 8).map(([n, c]) => [n, 20 * c / S.seen[n]]).filter(([, w]) => w > 0); const nd = Object.entries(S.need || {}); if (!st.length || !nd.length) return null;
+function bridge(d) { const st = Object.entries(S.strand || {}).filter(([n]) => (d.main[n] || 0) > 0 && (S.seen?.[n] || 0) >= 8).map(([n, c]) => [n, 20 * c / S.seen[n]]).filter(([n]) => !isHT(code(n))).filter(([, w]) => w > 0); const nd = Object.entries(S.need || {}); if (!st.length || !nd.length) return null;
   const wpick = (arr) => { let t = arr.reduce((a, b) => a + Math.log1p(b[1]), 0), r = Math.random() * t; for (const [n, w] of arr) { r -= Math.log1p(w); if (r <= 0) return n; } return arr[0][0]; };
   const X = wpick(st); let Y = wpick(nd); for (let i = 0; i < 5 && Y === X; i++) Y = wpick(nd); if (Y === X) return null; const xc = code(X), yc = code(Y); if (!xc || !yc) return null;
   const room = (x) => (x.e ? (d.extra[x.n] || 0) : (d.main[x.n] || 0)) < lim(x.c);
   const one = PALL.filter(x => room(x) && x.n !== X && x.n !== Y && flows(xc, x.c) >= 0.6 && flows(x.c, yc) >= 0.6);
   const put = (x, why) => { if (x.e) { const outs = Object.keys(d.extra).filter(o => d.extra[o] > 0 && !minOf['ED:' + o]); const idle = outs.filter(o => CUR_USED && !CUR_USED.has(o)); if (size(d.extra) >= 15) { const o = (idle.length ? idle : outs).sort(() => Math.random() - 0.5)[0]; if (!o) return null; d.extra[o]--; } d.extra[x.n] = (d.extra[x.n] || 0) + 1; return `ED +1 ${x.n} (${why})`; }
     const k = Math.min(lim(x.c) - (d.main[x.n] || 0), 1 + Math.floor(Math.random() * 2)); d.main[x.n] = (d.main[x.n] || 0) + k; return `+${k} ${x.n} (${why})`; };
-  if (one.length && Math.random() < 0.7) { const z = rnd(one); const a = put(z, `bridge ${X} → ${Y}`); return a ? [a] : null; }
+  const triedZ = (n) => Object.values(S.decks).some(d => (d.main[n] || 0) > (base.main[n] || 0) || (d.extra[n] || 0) > (base.extra[n] || 0)); const fresh = one.filter(x => !triedZ(x.n));
+  if (one.length && Math.random() < 0.7) { const z = rnd(fresh.length && Math.random() < 0.8 ? fresh : one); /* untried links first: each real link gets a fair test */ const a = put(z, `bridge ${X} → ${Y}`); return a ? [a] : null; }
   const n1 = PALL.filter(x => room(x) && x.n !== X && flows(xc, x.c) >= 0.6).sort(() => Math.random() - 0.5).slice(0, 40);
   for (const z1 of n1) { const z2s = PALL.filter(x => room(x) && x.n !== z1.n && x.n !== X && x.n !== Y && flows(z1.c, x.c) >= 0.6 && flows(x.c, yc) >= 0.6); if (!z2s.length) continue; const z2 = rnd(z2s);
     const a = put(z1, `bridge ${X} → ${z2.n} → ${Y}`), b = put(z2, `bridge ${X} → ${z1.n} → ${Y}`); return [a, b].filter(Boolean); }
   if (one.length) { const a = put(rnd(one), `bridge ${X} → ${Y}`); return a ? [a] : null; } return null; }
-function mutate(p) { CUR_USED = p._used || null; for (let tries = 0; tries < 50; tries++) { const d = clone(p); const k = 2 + Math.floor(Math.random() * 5); const did = [];
+function mutate(p) { CUR_USED = p._used || null;
+  // pure link test (Nov 27): 1 in 3 children change only the missing link (plus its Extra Deck slot), so its effect isn't hidden by other changes
+  if (Math.random() < +(t.pure ?? 0)) for (let tries = 0; tries < 20; tries++) { const d = clone(p); const x = bridge(d); if (x && okDeck(d)) { if (process.env.DBGC) log('pure bridge: ' + x.join(' | ')); return d; } }
+  for (let tries = 0; tries < 50; tries++) { const d = clone(p); const k = 2 + Math.floor(Math.random() * 5); const did = [];
   for (let i = 0; i < k; i++) { const r = Math.random(); const inMain = Object.keys(d.main).filter(n => d.main[n] > 0);
     if (r < 0.22) { const x = bridge(d); if (x) { did.push(...x); if (process.env.DBGC) log('bridge: ' + x.join(' | ')); } }
     else if (r < 0.44) { const x = connect(d); if (x) { did.push(...x); if (process.env.DBGC) log('connect: ' + x.join(' | ')); } }
@@ -125,9 +129,14 @@ const credit = (k, hi) => { const r = S.res[k][hi], b = (S.res[S.baseKey] || {})
   // pieces the line had to go and get (searched, revived, summoned from the Deck/GY/banishment): more ways to reach them = more ways through a hand trap
   S.need ||= {}; S.link ||= {}; let by = null; for (const l of r.line) { const a = /^(?:Activate|Trigger: activate) (.+?) \(/.exec(l); if (a) { by = a[1]; continue; } const m = /^Selected (.+?) \((Deck|GY|banished|Extra Deck)/.exec(l); if (m) { S.need[m[1]] = (S.need[m[1]] || 0) + 1; if (by) S.link[by + ' > ' + m[1]] = (S.link[by + ' > ' + m[1]] || 0) + 1; } } };
 const usedIn = (k) => { const u = new Set(); for (const r of Object.values(S.res[k] || {})) for (const l of r.line || []) { const m = /^(?:Activate|Normal Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Ritual Summon|Special Summon \(procedure\)|Set Spell\/Trap|Selected|Tribute Summon) (.+?) \(/.exec(l); if (m) u.add(m[1]); } return u; };
-// stranded cards: in hands that ended well below the start list's typical board, which cards were there (nothing reached the rest of the deck)
-const strand = (r) => { if (!r || r.v == null || !r.hand) return; S.seen ||= {}; for (const n of new Set(r.hand)) S.seen[n] = (S.seen[n] || 0) + 1; const bv = Object.values(S.res[S.baseKey] || {}).map(x => x.v).filter(x => x != null).sort((a, b) => a - b); const med = bv.length ? bv[bv.length >> 1] : 10;
-  if (r.v >= med * 0.7) return; S.strand ||= {}; for (const n of new Set(r.hand)) if (!isHT(code(n))) S.strand[n] = (S.strand[n] || 0) + 1; };
+// stuck cards (fixed Nov 27): a card is stuck in a hand when it was in the opening hand and the best line found never used it (it sat there
+// dead). share = stuck hands / hands it was in, counted over every deck's results, rebuilt from scratch each time (old runs had counted the
+// same hand more than once, giving shares over 100%). These are the X cards the bridge op looks for a missing link for.
+const lineUses = (r) => { const u = new Set(); for (const l of r.line || []) { const m = /^(?:Activate|Trigger: activate|Normal Summon|Link Summon|Synchro Summon|Xyz Summon|Fusion Summon|Ritual Summon|Special Summon \(procedure\)|Set Spell\/Trap|Selected|Tribute Summon|Set) (.+?) \(/.exec(l); if (m) u.add(m[1]); } return u; };
+const stuckOf = (res) => { const seen = {}, st = {}; for (const per of Object.values(res || {})) for (const r of Object.values(per || {})) { if (!r || r.v == null || !r.hand || !r.line) continue; const u = lineUses(r);
+  for (const n of new Set(r.hand)) { const c = code(n); if (!c || isHT(c) || ((data.get(c) || {}).type & 0x4)) continue; /* Traps in hand are Set at the end of the line, which the line log leaves out: never counted as stuck */ seen[n] = (seen[n] || 0) + 1; if (!u.has(n)) st[n] = (st[n] || 0) + 1; } } return { seen, st }; };
+const rebuildStrand = () => { const { seen, st } = stuckOf(S.res); S.seen = seen; S.strand = st; };
+const strand = () => {};
 // ---------- state ----------
 let S = { id: ID, decks: {}, res: {}, gens: [] };
 if (t.resume) { try { const r = await fetch(`https://raw.githubusercontent.com/whereisrachel/rolad-lab/lab-${t.resume}/results/${t.resume}.json`); if (r.ok) { const p = await r.json(); S = { ...p, id: ID }; log(`resumed from ${t.resume}: ${Object.keys(S.decks).length} decks, ${S.gens.length} generations`); } } catch (e) { log('resume failed: ' + e.message); } }
@@ -135,7 +144,7 @@ if (t.resume) { try { const r = await fetch(`https://raw.githubusercontent.com/w
 // another run learned (cards used, pieces needed, stranded cards) and its best decks as the first parents
 if (t.import && !S.baseKey) { try { const r = await fetch(`https://raw.githubusercontent.com/whereisrachel/rolad-lab/lab-${t.import}/results/${t.import}.json`); if (r.ok) { const p = await r.json();
   const st2 = (k) => { const v = Object.values(p.res[k] || {}).map(x => x.v).filter(x => x != null); return v.length >= 12 ? v.reduce((a, b) => a + b, 0) / v.length : -1; };
-  S.use = p.use || {}; S.need = p.need || {}; S.link = p.link || {}; S.strand = p.strand || {}; S.seedDecks = Object.keys(p.decks).filter(k => k !== p.baseKey).sort((a, b) => st2(b) - st2(a)).slice(0, +(t.importTop || 6)).map(k => p.decks[k]);
+  S.use = p.use || {}; S.need = p.need || {}; S.link = p.link || {}; S.strand = {}; S.seedDecks = Object.keys(p.decks).filter(k => k !== p.baseKey).sort((a, b) => st2(b) - st2(a)).slice(0, +(t.importTop || 6)).map(k => p.decks[k]);
   log(`imported from ${t.import}: learned card data + ${S.seedDecks.length} best decks (to be re-scored)`); } } catch (e) { log('import failed: ' + e.message); } }
 function save() { fs.writeFileSync(`results/${ID}.json`, JSON.stringify(S)); }
 const stat = (k) => { const v = Object.values(S.res[k] || {}).map(r => r.v).filter(x => x != null); const n = v.length, m = n ? v.reduce((a, b) => a + b, 0) / n : 0; const sd = n > 1 ? Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / (n - 1)) : 0; return { n, m, se: n ? sd / Math.sqrt(n) : 9 }; };
@@ -168,6 +177,7 @@ while (true) { const g0 = Date.now(); gen++;
   // every deck that is still a candidate plays MORE new hand slots (so lucky early scores get tested), new decks play H slots
   const elite = pickElite(); const kids = [];
   if (!elite.length) kids.push(S.baseKey); else { const seen = new Set(Object.keys(S.decks)); let guard = 0;
+    rebuildStrand(); log('stuck cards: ' + Object.entries(S.strand).filter(([n]) => S.seen[n] >= 8).map(([n, c]) => [n, c / S.seen[n]]).sort((x, y) => y[1] - x[1]).slice(0, 6).map(([n, f]) => `${n} ${(100 * f) | 0}%`).join(', '));
     while (kids.length < POP && guard++ < 500) { for (const e of elite) Object.defineProperty(S.decks[e], '_used', { value: usedIn(e), enumerable: false, configurable: true }); let pa; const d = Math.random() < 0.2 && elite.length > 1 ? (pa = [rnd(elite), rnd(elite)], cross(S.decks[pa[0]], S.decks[pa[1]])) : (pa = [rnd(elite.concat(elite.slice(0, 1)))], mutate(S.decks[pa[0]])); if (!d) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [...new Set(pa)]; kids.push(k); } }
   if (!elite.length && gen === 1) { /* first generation: the start list, imported best decks, then children of the start list */ const seen = new Set([S.baseKey]); for (const d of (S.seedDecks || [])) { if (!okDeck(d)) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [S.baseKey]; kids.push(k); } delete S.seedDecks; let guard = 0; while (kids.length < POP && guard++ < 500) { const d = mutate(base); if (!d) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [S.baseKey]; kids.push(k); } }
   const jobs = []; for (const k of kids) for (let hi = 0; hi < H; hi++) jobs.push({ k, d: S.decks[k], hi });
