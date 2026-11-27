@@ -119,7 +119,7 @@ async function play(d, hi, remote, also, mins) { const perm = deal(d, hi); const
 const alsoFor = (k, hi) => (S.parent?.[k] || []).map(p => S.res[p]?.[hi]?.raw).filter(Boolean);
 const PAR = Math.max(1, Math.min(os.cpus().length - 1, Math.floor(os.freemem() / 1.3e9)));
 async function runAll(jobs) { const q = jobs.slice(); let live = 0, hs = await helperSlots(); let done = 0;
-  const work = async (remote) => { while (q.length) { if (remote && live > hs) return; const j = q.shift(); const r = await play(j.d, j.hi, remote, j.also || alsoFor(j.k, j.hi), j.mins); if (j.xr) { const o = S.res[j.k][j.hi]; if (r.v != null && o && r.v > (o.v ?? -1)) { S.res[j.k][j.hi] = { ...r, xr: true }; } } else { (S.res[j.k] ||= {})[j.hi] = r; credit(j.k, j.hi); strand(r); } done++; if (done % 10 === 0) { log(`  ${done}/${jobs.length} games`); save(); } } };
+  const work = async (remote) => { while (q.length) { if (remote && live > hs) return; const j = q.shift(); const r = await play(j.d, j.hi, remote, j.also || alsoFor(j.k, j.hi), j.mins); if (j.xr) { const o = S.res[j.k][j.hi]; if (r.v != null && o && r.v > (o.v ?? -1)) { S.res[j.k][j.hi] = { ...r, xr: true, own: o.own ?? o.v }; } } else { (S.res[j.k] ||= {})[j.hi] = r; credit(j.k, j.hi); strand(r); } done++; if (done % 10 === 0) { log(`  ${done}/${jobs.length} games`); save(); } } };
   const ws = []; const grow = () => { while (live < hs && q.length) { live++; ws.push(work(true).finally(() => live--)); } }; grow(); const tm = setInterval(async () => { try { hs = await helperSlots(); } catch {} grow(); }, 60000);
   await Promise.all(Array.from({ length: PAR }, () => work(false))); while (ws.length) await ws.shift(); clearInterval(tm); save(); }
 
@@ -140,6 +140,7 @@ const strand = () => {};
 // ---------- state ----------
 let S = { id: ID, decks: {}, res: {}, gens: [] };
 if (t.resume) { try { const r = await fetch(`https://raw.githubusercontent.com/whereisrachel/rolad-lab/lab-${t.resume}/results/${t.resume}.json`); if (r.ok) { const p = await r.json(); S = { ...p, id: ID }; log(`resumed from ${t.resume}: ${Object.keys(S.decks).length} decks, ${S.gens.length} generations`); } } catch (e) { log('resume failed: ' + e.message); } }
+if (t.resume) { let n = 0; for (const per of Object.values(S.res || {})) for (const h of Object.keys(per || {})) if (per[h] && per[h].xr && per[h].own == null) { delete per[h]; n++; } if (n) log(`dropped ${n} results scored with borrowed lines (own search not kept): they are searched again`); }
 // import: start fresh scores (old ones came from wall-clock searches whose result depended on which machine ran them), but keep what
 // another run learned (cards used, pieces needed, stranded cards) and its best decks as the first parents
 if (t.import && !S.baseKey) { try { const r = await fetch(`https://raw.githubusercontent.com/whereisrachel/rolad-lab/lab-${t.import}/results/${t.import}.json`); if (r.ok) { const p = await r.json();
@@ -147,9 +148,12 @@ if (t.import && !S.baseKey) { try { const r = await fetch(`https://raw.githubuse
   S.use = p.use || {}; S.need = p.need || {}; S.link = p.link || {}; S.strand = {}; S.seedDecks = Object.keys(p.decks).filter(k => k !== p.baseKey).sort((a, b) => st2(b) - st2(a)).slice(0, +(t.importTop || 6)).map(k => p.decks[k]);
   log(`imported from ${t.import}: learned card data + ${S.seedDecks.length} best decks (to be re-scored)`); } } catch (e) { log('import failed: ' + e.message); } }
 function save() { fs.writeFileSync(`results/${ID}.json`, JSON.stringify(S)); }
-const stat = (k) => { const v = Object.values(S.res[k] || {}).map(r => r.v).filter(x => x != null); const n = v.length, m = n ? v.reduce((a, b) => a + b, 0) / n : 0; const sd = n > 1 ? Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / (n - 1)) : 0; return { n, m, se: n ? sd / Math.sqrt(n) : 9 }; };
+// rankings use each deck's OWN search (Nov 27 fix): lines borrowed from sibling decks lifted only decks sharing the start list's Main Deck
+// (the start list got best-of-many on half its hands, Main Deck changes got one search) — a ~0.5 head start for the start list
+const val = (r) => r ? (r.own ?? r.v) : null;
+const stat = (k) => { const v = Object.values(S.res[k] || {}).map(r => val(r)).filter(x => x != null); const n = v.length, m = n ? v.reduce((a, b) => a + b, 0) / n : 0; const sd = n > 1 ? Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / (n - 1)) : 0; return { n, m, se: n ? sd / Math.sqrt(n) : 9 }; };
 // paired vs the start list on the hand slots both played
-const vsBase = (k) => { const b = S.res[S.baseKey] || {}, x = S.res[k] || {}; const d = Object.keys(x).filter(h => b[h] && b[h].v != null && x[h].v != null).map(h => x[h].v - b[h].v); const n = d.length, m = n ? d.reduce((a, c) => a + c, 0) / n : 0; const sd = n > 1 ? Math.sqrt(d.reduce((a, c) => a + (c - m) ** 2, 0) / (n - 1)) : 0; return { n, m, se: n ? sd / Math.sqrt(n) : 9 }; };
+const vsBase = (k) => { const b = S.res[S.baseKey] || {}, x = S.res[k] || {}; const d = Object.keys(x).filter(h => b[h] && val(b[h]) != null && val(x[h]) != null).map(h => val(x[h]) - val(b[h])); const n = d.length, m = n ? d.reduce((a, c) => a + c, 0) / n : 0; const sd = n > 1 ? Math.sqrt(d.reduce((a, c) => a + (c - m) ** 2, 0) / (n - 1)) : 0; return { n, m, se: n ? sd / Math.sqrt(n) : 9 }; };
 const nChg = (k) => { const d = S.decks[k]; let n = 0; for (const x of new Set([...Object.keys(base.main), ...Object.keys(d.main)])) n += Math.abs((d.main[x] || 0) - (base.main[x] || 0)); for (const x of new Set([...Object.keys(base.extra), ...Object.keys(d.extra)])) n += Math.abs((d.extra[x] || 0) - (base.extra[x] || 0)); return n; };
 // ties go to the deck with fewer changes (a change that scores the same as not making it is not a find)
 const rank = () => Object.keys(S.decks).filter(k => stat(k).n >= H * 0.75).sort((p, q) => (stat(q).m - stat(q).se - 0.03 * nChg(q)) - (stat(p).m - stat(p).se - 0.03 * nChg(p)));

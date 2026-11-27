@@ -17,7 +17,7 @@ const X = Object.keys(st).filter(n => seen[n] >= 8 && inBase.has(n)).map(n => [n
 const need = Object.entries(R.need || {}).sort((a, b) => b[1] - a[1]).slice(0, 15).map(x => x[0]);
 // how each candidate did in the search: decks that added it, their average vs the start list on the same hands
 const avg = (k) => { const v = Object.values(R.res[k] || {}).map(x => x.v).filter(x => x != null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
-const vsBase = (k) => { const b = R.res[R.baseKey] || {}, r = R.res[k] || {}; const d = Object.keys(r).filter(h => b[h] && r[h].v != null && b[h].v != null).map(h => r[h].v - b[h].v); return d.length ? [d.reduce((a, c) => a + c, 0) / d.length, d.length] : null; };
+const vv = (x) => x ? (x.own ?? x.v) : null; const vsBase = (k) => { const b = R.res[R.baseKey] || {}, r = R.res[k] || {}; const d = Object.keys(r).filter(h => b[h] && vv(r[h]) != null && vv(b[h]) != null).map(h => vv(r[h]) - vv(b[h])); return d.length ? [d.reduce((a, c) => a + c, 0) / d.length, d.length] : null; };
 const tried = {}; for (const [k, d] of Object.entries(R.decks)) for (const [n, c] of [...Object.entries(d.main), ...Object.entries(d.extra).map(([n, c]) => [n, c])]) if (c > ((base.main[n] || 0) + (base.extra[n] || 0)) && !inBase.has(n)) (tried[n] ||= []).push(k);
 const pool = []; for (const [c] of data) { if (!legal(c) || isHT(c)) continue; pool.push(c); }
 let md = `# Missing links — from ${R.id}\n${new Date().toISOString().slice(0, 16)}Z · ${Object.keys(R.decks).length} decks · ${Object.values(R.res).reduce((a, p) => a + Object.keys(p || {}).length, 0)} hands played\n\n`;
