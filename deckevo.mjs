@@ -108,12 +108,14 @@ const rngOf = (s) => { let x = s >>> 0 || 1; return () => (x = (x * 1664525 + 10
 const deal = (d, hi) => { const r = rngOf(1000 + hi * 7919); const p = toCodes(d.main); for (let k = p.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [p[k], p[j]] = [p[j], p[k]]; } return p; };
 const runLocal = (args) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'deepw.mjs', JSON.stringify(args)], { stdio: ['ignore', 'pipe', 'ignore'] }); let o = ''; p.stdout.on('data', b => o += b);
   const tm = setTimeout(() => { try { p.kill(); } catch {} }, (MIN * 1.6 + 10) * 60000); p.on('close', () => { clearTimeout(tm); ok(o); }); });
-async function play(d, hi, remote) { const perm = deal(d, hi); const args = { deck: fileOf(d), main: perm, hand: perm.slice(0, 5).map(name), minutes: MIN, seed: 7 + hi, sseed: 20000 + hi, scn: SCN[hi % 4], hints: false, cardv: false };
-  let out = null; if (remote) { const r = await runRemote('deepw.mjs', args, { files: [args.deck], est: MIN * 1.1 }); out = r && r.stdout; } if (!out || !/RESULT/.test(out)) out = await runLocal(args);
-  const m = /RESULT (.*)/.exec(out || ''); if (!m) return { v: null }; const x = JSON.parse(m[1]); return { v: x.v, hand: args.hand, scn: args.scn, line: (x.line || []).slice(0, 80) }; }
+// also = lines (own steps) other decks found on this same hand slot: replayed after the search, the bigger result counts (never steers the search)
+async function play(d, hi, remote, also, mins) { const perm = deal(d, hi); const M = mins ?? MIN; const args = { deck: fileOf(d), main: perm, hand: perm.slice(0, 5).map(name), minutes: M, seed: 7 + hi, sseed: 20000 + hi, scn: SCN[hi % 4], hints: false, cardv: false, learn: false, wantRaw: true, ...(also && also.length ? { alsoTry: also } : {}) };
+  let out = null; if (remote) { const r = await runRemote('deepw.mjs', args, { files: [args.deck], est: M * 1.1 + 0.5 }); out = r && r.stdout; } if (!out || !/RESULT/.test(out)) out = await runLocal(args);
+  const m = /RESULT (.*)/.exec(out || ''); if (!m) return { v: null }; const x = JSON.parse(m[1]); return { v: x.v, hand: args.hand, scn: args.scn, line: (x.line || []).slice(0, 80), raw: x.raw || null, fp: !!x.fromParent }; }
+const alsoFor = (k, hi) => (S.parent?.[k] || []).map(p => S.res[p]?.[hi]?.raw).filter(Boolean);
 const PAR = Math.max(1, Math.min(os.cpus().length - 1, Math.floor(os.freemem() / 1.3e9)));
 async function runAll(jobs) { const q = jobs.slice(); let live = 0, hs = await helperSlots(); let done = 0;
-  const work = async (remote) => { while (q.length) { if (remote && live > hs) return; const j = q.shift(); const r = await play(j.d, j.hi, remote); (S.res[j.k] ||= {})[j.hi] = r; credit(j.k, j.hi); strand(r); done++; if (done % 10 === 0) { log(`  ${done}/${jobs.length} games`); save(); } } };
+  const work = async (remote) => { while (q.length) { if (remote && live > hs) return; const j = q.shift(); const r = await play(j.d, j.hi, remote, j.also || alsoFor(j.k, j.hi), j.mins); if (j.xr) { const o = S.res[j.k][j.hi]; if (r.v != null && o && r.v > (o.v ?? -1)) { S.res[j.k][j.hi] = { ...r, xr: true }; } } else { (S.res[j.k] ||= {})[j.hi] = r; credit(j.k, j.hi); strand(r); } done++; if (done % 10 === 0) { log(`  ${done}/${jobs.length} games`); save(); } } };
   const ws = []; const grow = () => { while (live < hs && q.length) { live++; ws.push(work(true).finally(() => live--)); } }; grow(); const tm = setInterval(async () => { try { hs = await helperSlots(); } catch {} grow(); }, 60000);
   await Promise.all(Array.from({ length: PAR }, () => work(false))); while (ws.length) await ws.shift(); clearInterval(tm); save(); }
 
@@ -151,8 +153,8 @@ while (true) { const g0 = Date.now(); gen++;
   // every deck that is still a candidate plays MORE new hand slots (so lucky early scores get tested), new decks play H slots
   const elite = rank().slice(0, KEEP); const kids = [];
   if (!elite.length) kids.push(S.baseKey); else { const seen = new Set(Object.keys(S.decks)); let guard = 0;
-    while (kids.length < POP && guard++ < 500) { for (const e of elite) Object.defineProperty(S.decks[e], '_used', { value: usedIn(e), enumerable: false, configurable: true }); const d = Math.random() < 0.2 && elite.length > 1 ? cross(S.decks[rnd(elite)], S.decks[rnd(elite)]) : mutate(S.decks[rnd(elite.concat(elite.slice(0, 1)))]); if (!d) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; kids.push(k); } }
-  if (!elite.length && gen === 1) { /* first generation: the start list plus POP-1 children of it */ const seen = new Set([S.baseKey]); let guard = 0; while (kids.length < POP && guard++ < 500) { const d = mutate(base); if (!d) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; kids.push(k); } }
+    while (kids.length < POP && guard++ < 500) { for (const e of elite) Object.defineProperty(S.decks[e], '_used', { value: usedIn(e), enumerable: false, configurable: true }); let pa; const d = Math.random() < 0.2 && elite.length > 1 ? (pa = [rnd(elite), rnd(elite)], cross(S.decks[pa[0]], S.decks[pa[1]])) : (pa = [rnd(elite.concat(elite.slice(0, 1)))], mutate(S.decks[pa[0]])); if (!d) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [...new Set(pa)]; kids.push(k); } }
+  if (!elite.length && gen === 1) { /* first generation: the start list plus POP-1 children of it */ const seen = new Set([S.baseKey]); let guard = 0; while (kids.length < POP && guard++ < 500) { const d = mutate(base); if (!d) continue; const k = key(d); if (seen.has(k)) continue; seen.add(k); S.decks[k] = d; (S.parent ||= {})[k] = [S.baseKey]; kids.push(k); } }
   const jobs = []; for (const k of kids) for (let hi = 0; hi < H; hi++) jobs.push({ k, d: S.decks[k], hi });
   S.next ??= H; const extra = Array.from({ length: MORE }, (_, i) => S.next + i); S.next += MORE;
   for (const k of [...new Set([...elite, S.baseKey])]) for (const hi of extra) jobs.push({ k, d: S.decks[k], hi });
@@ -160,6 +162,17 @@ while (true) { const g0 = Date.now(); gen++;
   if (genMin && el() + genMin * 1.1 > STOP) { log(`stopping before generation ${gen}: ${el().toFixed(0)} min used, a generation takes ~${genMin.toFixed(0)} min`); gen--; break; }
   log(`generation ${gen}: ${kids.length} new decks x ${H} hands + ${MORE} more hands for ${elite.length} best and the start list = ${jobs.length} games (${MIN}-min searches)`);
   await runAll(jobs.filter(j => !(S.res[j.k] && S.res[j.k][j.hi])));
+  // cross-replay: on every hand slot, the best lines any deck found there are replayed in every other deck that played the slot (works only
+  // where the hand is the same, i.e. same Main Deck). Score = best known line for that hand in that deck, so search luck and the cost of having
+  // more options to search don't decide the ranking.
+  { const pool = [...new Set([...kids, ...elite, S.baseKey])]; const xj = []; const slots = new Set(); for (const k of pool) for (const h of Object.keys(S.res[k] || {})) slots.add(h);
+    for (const h of slots) { const all = Object.keys(S.res).map(k => ({ k, r: S.res[k][h] })).filter(x => x.r && x.r.v != null && x.r.raw).sort((a, b) => b.r.v - a.r.v);
+      for (const k of pool) { const r = S.res[k]?.[h]; if (!r || r.v == null) continue; const mainKey = JSON.stringify(Object.entries(S.decks[k].main).filter(x => x[1]).sort());
+        const lines = all.filter(x => x.k !== k && x.r.v > r.v + 0.05 && JSON.stringify(Object.entries(S.decks[x.k].main).filter(y => y[1]).sort()) === mainKey).slice(0, 4).map(x => x.r.raw);
+        if (lines.length) xj.push({ k, d: S.decks[k], hi: +h, also: lines, mins: 0.05, xr: true }); } }
+    if (xj.length) { log(`cross-replay: ${xj.length} hand slots where another deck with the same Main Deck found a bigger line`); await runAll(xj); } }
+  // keep full lines only for the decks that can still be parents (state size)
+  { const keepRaw = new Set([...rank().slice(0, 8), S.baseKey]); for (const k of Object.keys(S.res)) if (!keepRaw.has(k)) for (const r of Object.values(S.res[k])) delete r.raw; }
   const b = rank()[0]; genMin = (Date.now() - g0) / 60000; S.gens.push({ g: gen, n: kids.length, best: b ? `${stat(b).m.toFixed(2)} (${diff(S.decks[b]).slice(0, 120)})` : '-', min: Math.round(genMin) }); report();
   log(`generation ${gen} done in ${genMin.toFixed(0)} min; best ${b ? stat(b).m.toFixed(2) + ' ± ' + stat(b).se.toFixed(2) : '-'}; start list ${stat(S.baseKey).m.toFixed(2)}`);
   if (t.gens && gen >= +t.gens) break; if (el() + genMin * 1.1 > STOP) break; }
