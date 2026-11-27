@@ -1,0 +1,38 @@
+{
+ "hands": [
+  {
+   "name": "terminus",
+   "file": "lines/cands/terminus/c2-o6.json"
+  },
+  {
+   "name": "engmed",
+   "file": "lines/cands/engmed/ug-o1.json"
+  },
+  {
+   "name": "medius",
+   "file": "lines/cands/medius/deep-o5.json"
+  },
+  {
+   "name": "citrinitas",
+   "file": "lines/cands/citrinitas/deep-o4.json"
+  },
+  {
+   "name": "infinity",
+   "file": "lines/cands/infinity/c2-o6.json"
+  },
+  {
+   "name": "bcmed",
+   "file": "lines/cands/bcmed/c2-o6.json"
+  },
+  {
+   "name": "treasure",
+   "file": "lines/cands/treasure/ug-o4.json"
+  },
+  {
+   "name": "smallworld",
+   "file": "lines/cands/smallworld/ug-o4.json"
+  }
+ ],
+ "minutes": 4,
+ "seeds": 400
+}
