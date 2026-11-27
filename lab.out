@@ -1,0 +1,70 @@
+13:46:28 pool: 1189 Main Deck cards, 538 Extra Deck cards (legal TCG, no hand traps, no banned)
+13:46:30 resumed from de-4: 80 decks, 5 generations
+13:46:36 generation 6: 16 new decks x 16 hands + 8 more hands for 4 best and the start list = 296 games (15-min searches)
+14:00:39   10/296 games
+14:06:18   20/296 games
+14:11:10   30/296 games
+14:16:22   40/296 games
+14:20:36   50/296 games
+14:25:04   60/296 games
+14:26:00   70/296 games
+14:29:19   80/296 games
+14:32:49   90/296 games
+14:35:04   100/296 games
+14:39:52   110/296 games
+14:42:59   120/296 games
+14:47:14   130/296 games
+14:48:16   140/296 games
+14:48:35   150/296 games
+14:50:29   160/296 games
+14:54:36   170/296 games
+14:56:20   180/296 games
+14:57:07   190/296 games
+14:59:29   200/296 games
+15:03:50   210/296 games
+15:06:26   220/296 games
+15:10:47   230/296 games
+15:13:14   240/296 games
+15:18:42   250/296 games
+15:25:08   260/296 games
+15:27:02   270/296 games
+15:28:37   280/296 games
+15:34:08   290/296 games
+15:37:14 cross-replay: 25 hand slots where another deck with the same Main Deck found a bigger line
+15:37:24   10/25 games
+15:37:27   20/25 games
+15:37:30 generation 6 done in 111 min; best 12.51 ± 0.45; start list 11.82
+15:37:33 generation 7: 16 new decks x 16 hands + 8 more hands for 4 best and the start list = 296 games (15-min searches)
+15:45:25   10/296 games
+15:48:25   20/296 games
+15:52:43   30/296 games
+15:55:19   40/296 games
+15:59:43   50/296 games
+16:05:07   60/296 games
+16:07:37   70/296 games
+16:12:02   80/296 games
+16:15:16   90/296 games
+16:19:35   100/296 games
+16:24:44   110/296 games
+16:28:19   120/296 games
+16:31:44   130/296 games
+16:34:35   140/296 games
+16:37:11   150/296 games
+16:39:35   160/296 games
+16:41:12   170/296 games
+16:44:29   180/296 games
+16:46:02   190/296 games
+16:48:02   200/296 games
+16:49:26   210/296 games
+16:49:38   220/296 games
+16:53:36   230/296 games
+16:55:45   240/296 games
+16:58:57   250/296 games
+16:59:36   260/296 games
+17:03:03   270/296 games
+17:08:33   280/296 games
+17:14:51   290/296 games
+17:27:18 cross-replay: 13 hand slots where another deck with the same Main Deck found a bigger line
+17:27:36   10/13 games
+17:27:39 generation 7 done in 110 min; best 12.23 ± 0.29; start list 11.72
+17:27:40 done
