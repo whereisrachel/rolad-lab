@@ -1,0 +1,78 @@
+evolve lk-smallworld: 0 seed lines, 8 deck orders, 4 mutation rounds, 20 min searches, 3 hands x 4 decks per line
+helper slots now 6
+helper slots now 3
+helper slots now 2
+helper slots now 3
+helper slots now 0
+helper slots now 2
+helper slots now 5
+helper slots now 1
+helper slots now 2
+helper slots now 3
+helper slots now 2
+helper slots now 3
+progress 5 pieces
+helper slots now 4
+helper slots now 0
+progress 10 pieces
+helper slots now 1
+helper slots now 2
+helper slots now 4
+helper slots now 3
+helper slots now 0
+progress 15 pieces
+helper slots now 1
+helper slots now 4
+helper slots now 2
+helper slots now 1
+progress 20 pieces
+helper slots now 4
+helper slots now 3
+helper slots now 1
+helper slots now 3
+helper slots now 1
+progress 25 pieces
+helper slots now 3
+helper slots now 4
+helper slots now 3
+helper slots now 4
+helper slots now 3
+helper slots now 0
+helper slots now 2
+progress 30 pieces
+helper slots now 4
+helper slots now 3
+progress 35 pieces
+helper slots now 2
+helper slots now 1
+helper slots now 0
+helper slots now 3
+helper slots now 2
+helper slots now 1
+helper slots now 3
+order 1: best 9.15 (search → new early order)
+helper slots now 1
+helper slots now 0
+helper slots now 2
+helper slots now 1
+progress 40 pieces
+helper slots now 0
+helper slots now 3
+helper slots now 2
+helper slots now 1
+helper slots now 2
+helper slots now 3
+helper slots now 4
+helper slots now 2
+helper slots now 1
+helper slots now 0
+progress 45 pieces
+helper slots now 1
+helper slots now 2
+helper slots now 5
+helper slots now 4
+order 2: best 5.65 (search)
+helper slots now 2
+order 3: best 5.7 (tries Activate Fiendsmith's Tract)
+order 4: best 5.8 (opening lanes)
+done -> reports/evolve-lk-smallworld.md
