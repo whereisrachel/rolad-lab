@@ -1,0 +1,14 @@
+name: hubstat
+# Prints who is helping on the hub (names, cores, busy) without the hub address.
+on: { workflow_dispatch: {} }
+jobs:
+  s:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - env: { HUB_URL: "${{ secrets.HUB_URL }}" }
+        run: |
+          curl -s -m 20 "$HUB_URL/status" | python3 -c "
+          import sys,json; d=json.load(sys.stdin)
+          print('waiting',d.get('waiting'),'running',d.get('running'))
+          for w in d.get('workers',[]): print({k:v for k,v in w.items() if k not in ('url','token','ip')})"
