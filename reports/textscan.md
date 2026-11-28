@@ -1,0 +1,32 @@
+# Text scan (Nov 28): cards whose text works with the deck generically (e.g. "Ritual Spell", "Ritual Monster") that the name-based synergy scan missed
+- 1x Djinn Prognosticator of Rituals |
+- 1x Ritual Sealing |
+- 1x Shinobird Power Spot |
+- 1x Contact with the Aquamirror |
+- 1x Forbidden Ritual Art |
+- 1x Branded in Central Dogmatika |
+- 1x Stars Align across the Milky Way |
+- 1x Emperor Tanuki's Critter Count |
+- 1x Ragged Records of Rites |
+- 1x Ritual Cage |
+- 1x Djinn Disserere of Rituals |
+- 1x Prediction Princess Arrowsylph |
+- 1x Djinn Demolisher of Rituals |
+- 1x Sphere Kuriboh |
+- 1x Ritual Raven |
+- 1x Djinn Presider of Rituals |
+- 1x Urgent Ritual Art |
+- 1x Cyber Tutubon |
+- 1x Samsara |
+- 1x Fulfillment of the Contract |
+- 1x Ritual Buster |
+- 1x Ritual Weapon |
+- 1x Execution of the Contract |
+- 1x Ritual Foregone |
+- 1x Gishki Chain |
+- 1x Prediction Princess Crystaldine |
+- 1x D.D.D. - Different Dimension Derby |
+- 1x Djinn Cursenchanter of Rituals |
+- 1x Renewal of the World |
+- 1x Sauravis, Dragon Sage of the Voiceless Voice |
+- 1x Ascending Soul |

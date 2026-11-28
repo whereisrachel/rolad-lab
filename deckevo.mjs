@@ -31,7 +31,7 @@ for (const [n] of Object.entries(base.extra)) if (LOCK.has(n)) minOf['ED:' + n] 
 const scanNames = (f, re) => { try { return [...fs.readFileSync(f, 'utf8').matchAll(re)].map(m => m[1]); } catch { return []; } };
 const poolMain = new Set(), poolED = new Set();
 for (const x of synergyScores(B, LIM)) { if (!legal(x.code) || isHT(x.code) || JUNK.test(x.name)) continue; (isED(x.code) ? poolED : poolMain).add(x.name); }
-for (const n of scanNames('reports/mainscan.md', /^- \dx (.+?) \|/gm)) { const c = code(n); if (c && legal(c) && !isHT(c) && !isED(c) && !JUNK.test(n)) poolMain.add(n); }
+for (const n of [...scanNames('reports/mainscan.md', /^- \dx (.+?) \|/gm), ...scanNames('reports/textscan.md', /^- \dx (.+?) \|/gm)]) { const c = code(n); if (c && legal(c) && !isHT(c) && !isED(c) && !JUNK.test(n)) poolMain.add(n); }
 for (const n of scanNames('reports/edscan.md', /^- \*\*(.+?)\*\*/gm)) { const c = code(n); if (c && legal(c) && isED(c)) poolED.add(n); }
 for (const n of Object.keys(base.main)) if (!isHT(code(n))) poolMain.add(n); for (const n of Object.keys(base.extra)) poolED.add(n);
 const PM = [...poolMain], PE = [...poolED];
