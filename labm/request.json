@@ -1,47 +1,213 @@
 {
  "runs": [
   {
-   "id": "choke-o_elfnote_am",
+   "id": "g6-angelechy-first",
    "script": "cmp.mjs",
    "args": {
-    "mode": "choke",
-    "opp": "o_elfnote_am",
-    "line": "lines/cands/medius/deep-o5.json",
-    "hands": 8,
-    "minutes": 0.75
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_angelechy"
+    ],
+    "sides": "first",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
    }
   },
   {
-   "id": "choke-o_typhoon",
+   "id": "g6-angelechy-second",
    "script": "cmp.mjs",
    "args": {
-    "mode": "choke",
-    "opp": "o_typhoon",
-    "line": "lines/cands/medius/deep-o5.json",
-    "hands": 8,
-    "minutes": 0.75
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_angelechy"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
    }
   },
   {
-   "id": "choke-o_toon",
+   "id": "g6-elfnote-first",
    "script": "cmp.mjs",
    "args": {
-    "mode": "choke",
-    "opp": "o_toon",
-    "line": "lines/cands/medius/deep-o5.json",
-    "hands": 8,
-    "minutes": 0.75
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_elfnote"
+    ],
+    "sides": "first",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
    }
   },
   {
-   "id": "choke-o_artmage",
+   "id": "g6-elfnote-second",
    "script": "cmp.mjs",
    "args": {
-    "mode": "choke",
-    "opp": "o_artmage",
-    "line": "lines/cands/medius/deep-o5.json",
-    "hands": 8,
-    "minutes": 0.75
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_elfnote"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g6-elfnote_am-first",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_elfnote_am"
+    ],
+    "sides": "first",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g6-elfnote_am-second",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_elfnote_am"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g6-typhoon-first",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_typhoon"
+    ],
+    "sides": "first",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g6-typhoon-second",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_typhoon"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g6-toon-first",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_toon"
+    ],
+    "sides": "first",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g6-toon-second",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_toon"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
    }
   }
  ]
