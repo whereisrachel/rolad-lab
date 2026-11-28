@@ -1,0 +1,30 @@
+1/24 decks/yacine-60.ydk hand 1 ash: 4.8
+2/24 decks/yacine-60.ydk hand 0 none: 9.89
+3/24 decks/yacine-60.ydk hand 2 imperm: 4.8
+4/24 decks/findlist-1100.ydk hand 2 imperm: 12.75
+5/24 decks/findlist-1100.ydk hand 3 droll: 9.05
+6/24 decks/findlist-1100.ydk hand 0 none: 14.05
+7/24 decks/findlist-1100.ydk hand 1 ash: 12.95
+8/24 decks/yacine-60.ydk hand 3 droll: 2.2
+9/24 decks/yacine-60.ydk hand 4 none: 7.55
+10/24 decks/yacine-60.ydk hand 5 ash: 6.29
+11/24 decks/findlist-1100.ydk hand 4 none: 12.950000000000001
+12/24 decks/findlist-1100.ydk hand 5 ash: 11.3
+13/24 decks/findlist-1100.ydk hand 6 imperm: 12.3
+14/24 decks/yacine-60.ydk hand 7 droll: 4.199999999999999
+15/24 decks/findlist-1100.ydk hand 7 droll: 10.25
+16/24 decks/yacine-60.ydk hand 6 imperm: 12.5
+17/24 decks/findlist-1100.ydk hand 9 ash: 6.45
+18/24 decks/findlist-1100.ydk hand 8 none: 13.75
+19/24 decks/yacine-60.ydk hand 8 none: 13.8
+20/24 decks/yacine-60.ydk hand 9 ash: 9.9
+21/24 decks/findlist-1100.ydk hand 11 droll: 9.95
+22/24 decks/yacine-60.ydk hand 10 imperm: 9.690000000000001
+23/24 decks/yacine-60.ydk hand 11 droll: 2.325
+24/24 decks/findlist-1100.ydk hand 10 imperm: 12.25
+# h2h-t1-0
+6-min unguided searches, hands 0-11, traps rotate none/Ash/Imperm/Droll
+
+- decks/yacine-60.ydk: 7.33 avg board over 12 hands
+- decks/findlist-1100.ydk: 11.50 avg board over 12 hands
+
