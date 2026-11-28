@@ -4,9 +4,9 @@
 import fs from 'fs'; import os from 'os'; import path from 'path'; import { spawn } from 'child_process';
 const a = process.argv.slice(2); const f = (k, d) => { const i = a.indexOf('--' + k); return i >= 0 ? a[i + 1] : d; };
 const DECKS = f('decks', 'decks/L2-vand3.ydk').split(';').filter(Boolean); const OPPS = f('opps', 'o_ss_panama,o_elfnote,o_despia,o_angelechy').split(',').filter(o => fs.existsSync(`decks/${o}.ydk`));
-const N = +f('n', 24), MIN = +f('min', 1), OMIN = +f('omin', 1), ID = f('id', String(Date.now() % 100000)); const PAR = Math.max(1, Math.min(os.cpus().length - 1, Math.floor(os.freemem() / 1.5e9)));
+const H0 = +f('h0', 0), N = +f('n', 24), MIN = +f('min', 1), OMIN = +f('omin', 1), ID = f('id', String(Date.now() % 100000)); const PAR = Math.max(1, Math.min(os.cpus().length - 1, Math.floor(os.freemem() / 1.5e9)));
 const log = (s) => console.log(`[${new Date().toLocaleTimeString()}] ${s}`);
-const jobs = []; for (const d of DECKS) for (const o of OPPS) for (let h = 0; h < N; h++) jobs.push({ deck: d, opp: o, seed: 100 + h, oppSeed: 500 + h * 7 + OPPS.indexOf(o) * 1000 });
+const jobs = []; for (const d of DECKS) for (const o of OPPS) for (let h = H0; h < H0 + N; h++) jobs.push({ deck: d, opp: o, seed: 100 + h, oppSeed: 500 + h * 7 + OPPS.indexOf(o) * 1000 });
 log(`going second: ${DECKS.length} deck(s) x ${OPPS.length} opponents (${OPPS.join(', ')}) x ${N} hands = ${jobs.length} games, ${OMIN} min for their turn, ${MIN} min for yours, ${PAR} at a time`);
 const res = []; let k = 0, done = 0; fs.mkdirSync('results', { recursive: true });
 const one = (j) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'secondturn.mjs', JSON.stringify({ deck: j.deck, opp: `decks/${j.opp}.ydk`, seed: j.seed, oppSeed: j.oppSeed, minutes: MIN, oppMinutes: OMIN })], { stdio: ['ignore', 'pipe', 'ignore'] });
