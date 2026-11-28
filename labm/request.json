@@ -1,13 +1,13 @@
 {
  "runs": [
   {
-   "id": "p13-medius-ash",
+   "id": "p13-infsafe-ash",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "medius",
-      "file": "lines/cands/medius/deep-o5.json"
+      "name": "infsafe",
+      "file": "lines/cands/infinity/deep-o3.json"
      }
     ],
     "threats": [
@@ -18,13 +18,13 @@
    }
   },
   {
-   "id": "p13-medius-imperm",
+   "id": "p13-infsafe-imperm",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "medius",
-      "file": "lines/cands/medius/deep-o5.json"
+      "name": "infsafe",
+      "file": "lines/cands/infinity/deep-o3.json"
      }
     ],
     "threats": [
@@ -35,13 +35,13 @@
    }
   },
   {
-   "id": "p13-medius-droll",
+   "id": "p13-infsafe-droll",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "medius",
-      "file": "lines/cands/medius/deep-o5.json"
+      "name": "infsafe",
+      "file": "lines/cands/infinity/deep-o3.json"
      }
     ],
     "threats": [
@@ -52,13 +52,13 @@
    }
   },
   {
-   "id": "p13-medius-nibiru",
+   "id": "p13-infsafe-nibiru",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "medius",
-      "file": "lines/cands/medius/deep-o5.json"
+      "name": "infsafe",
+      "file": "lines/cands/infinity/deep-o3.json"
      }
     ],
     "threats": [
@@ -69,13 +69,13 @@
    }
   },
   {
-   "id": "p13-medius-ogre",
+   "id": "p13-infsafe-ogre",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "medius",
-      "file": "lines/cands/medius/deep-o5.json"
+      "name": "infsafe",
+      "file": "lines/cands/infinity/deep-o3.json"
      }
     ],
     "threats": [
@@ -86,13 +86,13 @@
    }
   },
   {
-   "id": "p13-medius-belle",
+   "id": "p13-infsafe-belle",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "medius",
-      "file": "lines/cands/medius/deep-o5.json"
+      "name": "infsafe",
+      "file": "lines/cands/infinity/deep-o3.json"
      }
     ],
     "threats": [
@@ -103,13 +103,13 @@
    }
   },
   {
-   "id": "p13-terminus-ash",
+   "id": "p13-citsafe-ash",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "terminus",
-      "file": "lines/cands/terminus/c2-o6.json"
+      "name": "citsafe",
+      "file": "lines/cands/citrinitas/c2-o1.json"
      }
     ],
     "threats": [
@@ -120,13 +120,13 @@
    }
   },
   {
-   "id": "p13-terminus-imperm",
+   "id": "p13-citsafe-imperm",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "terminus",
-      "file": "lines/cands/terminus/c2-o6.json"
+      "name": "citsafe",
+      "file": "lines/cands/citrinitas/c2-o1.json"
      }
     ],
     "threats": [
@@ -137,13 +137,13 @@
    }
   },
   {
-   "id": "p13-terminus-droll",
+   "id": "p13-citsafe-droll",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "terminus",
-      "file": "lines/cands/terminus/c2-o6.json"
+      "name": "citsafe",
+      "file": "lines/cands/citrinitas/c2-o1.json"
      }
     ],
     "threats": [
@@ -154,13 +154,13 @@
    }
   },
   {
-   "id": "p13-terminus-nibiru",
+   "id": "p13-citsafe-nibiru",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "terminus",
-      "file": "lines/cands/terminus/c2-o6.json"
+      "name": "citsafe",
+      "file": "lines/cands/citrinitas/c2-o1.json"
      }
     ],
     "threats": [
@@ -171,13 +171,13 @@
    }
   },
   {
-   "id": "p13-terminus-ogre",
+   "id": "p13-citsafe-ogre",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "terminus",
-      "file": "lines/cands/terminus/c2-o6.json"
+      "name": "citsafe",
+      "file": "lines/cands/citrinitas/c2-o1.json"
      }
     ],
     "threats": [
@@ -188,13 +188,13 @@
    }
   },
   {
-   "id": "p13-terminus-belle",
+   "id": "p13-citsafe-belle",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "terminus",
-      "file": "lines/cands/terminus/c2-o6.json"
+      "name": "citsafe",
+      "file": "lines/cands/citrinitas/c2-o1.json"
      }
     ],
     "threats": [
