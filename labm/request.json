@@ -1,13 +1,13 @@
 {
  "runs": [
   {
-   "id": "p13-engmed-ash",
+   "id": "p13-medius-ash",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "engmed",
-      "file": "lines/cands/engmed/ug-o1.json"
+      "name": "medius",
+      "file": "lines/cands/medius/deep-o5.json"
      }
     ],
     "threats": [
@@ -18,13 +18,13 @@
    }
   },
   {
-   "id": "p13-engmed-imperm",
+   "id": "p13-medius-imperm",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "engmed",
-      "file": "lines/cands/engmed/ug-o1.json"
+      "name": "medius",
+      "file": "lines/cands/medius/deep-o5.json"
      }
     ],
     "threats": [
@@ -35,13 +35,13 @@
    }
   },
   {
-   "id": "p13-engmed-droll",
+   "id": "p13-medius-droll",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "engmed",
-      "file": "lines/cands/engmed/ug-o1.json"
+      "name": "medius",
+      "file": "lines/cands/medius/deep-o5.json"
      }
     ],
     "threats": [
@@ -52,13 +52,13 @@
    }
   },
   {
-   "id": "p13-engmed-nibiru",
+   "id": "p13-medius-nibiru",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "engmed",
-      "file": "lines/cands/engmed/ug-o1.json"
+      "name": "medius",
+      "file": "lines/cands/medius/deep-o5.json"
      }
     ],
     "threats": [
@@ -69,13 +69,13 @@
    }
   },
   {
-   "id": "p13-engmed-ogre",
+   "id": "p13-medius-ogre",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "engmed",
-      "file": "lines/cands/engmed/ug-o1.json"
+      "name": "medius",
+      "file": "lines/cands/medius/deep-o5.json"
      }
     ],
     "threats": [
@@ -86,13 +86,13 @@
    }
   },
   {
-   "id": "p13-engmed-belle",
+   "id": "p13-medius-belle",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "engmed",
-      "file": "lines/cands/engmed/ug-o1.json"
+      "name": "medius",
+      "file": "lines/cands/medius/deep-o5.json"
      }
     ],
     "threats": [
@@ -103,13 +103,13 @@
    }
   },
   {
-   "id": "p13-infinity-ash",
+   "id": "p13-terminus-ash",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infinity",
-      "file": "lines/cands/infinity/c2-o6.json"
+      "name": "terminus",
+      "file": "lines/cands/terminus/c2-o6.json"
      }
     ],
     "threats": [
@@ -120,13 +120,13 @@
    }
   },
   {
-   "id": "p13-infinity-imperm",
+   "id": "p13-terminus-imperm",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infinity",
-      "file": "lines/cands/infinity/c2-o6.json"
+      "name": "terminus",
+      "file": "lines/cands/terminus/c2-o6.json"
      }
     ],
     "threats": [
@@ -137,13 +137,13 @@
    }
   },
   {
-   "id": "p13-infinity-droll",
+   "id": "p13-terminus-droll",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infinity",
-      "file": "lines/cands/infinity/c2-o6.json"
+      "name": "terminus",
+      "file": "lines/cands/terminus/c2-o6.json"
      }
     ],
     "threats": [
@@ -154,13 +154,13 @@
    }
   },
   {
-   "id": "p13-infinity-nibiru",
+   "id": "p13-terminus-nibiru",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infinity",
-      "file": "lines/cands/infinity/c2-o6.json"
+      "name": "terminus",
+      "file": "lines/cands/terminus/c2-o6.json"
      }
     ],
     "threats": [
@@ -171,13 +171,13 @@
    }
   },
   {
-   "id": "p13-infinity-ogre",
+   "id": "p13-terminus-ogre",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infinity",
-      "file": "lines/cands/infinity/c2-o6.json"
+      "name": "terminus",
+      "file": "lines/cands/terminus/c2-o6.json"
      }
     ],
     "threats": [
@@ -188,13 +188,13 @@
    }
   },
   {
-   "id": "p13-infinity-belle",
+   "id": "p13-terminus-belle",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infinity",
-      "file": "lines/cands/infinity/c2-o6.json"
+      "name": "terminus",
+      "file": "lines/cands/terminus/c2-o6.json"
      }
     ],
     "threats": [
