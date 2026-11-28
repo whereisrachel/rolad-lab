@@ -1,87 +1,243 @@
 {
  "runs": [
   {
-   "id": "g6b-angelechy-first",
+   "id": "ot-elfnote_am-medius",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/medius/deep-o5.json"
     ],
-    "opps": [
-     "o_angelechy"
+    "opp": "decks/o_elfnote_am.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
     ],
-    "sides": "first",
-    "n": 12,
-    "h0": 0,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "minutes": 3
    }
   },
   {
-   "id": "g6b-angelechy-second",
+   "id": "ot-elfnote_am-bcmed",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/bcmed/c2-o5.json"
     ],
-    "opps": [
-     "o_angelechy"
+    "opp": "decks/o_elfnote_am.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
     ],
-    "sides": "second",
-    "n": 12,
-    "h0": 0,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "minutes": 3
    }
   },
   {
-   "id": "g6-artmage-first",
+   "id": "ot-elfnote_am-engmed",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/engmed/ug-o1.json"
     ],
-    "opps": [
-     "o_artmage"
+    "opp": "decks/o_elfnote_am.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
     ],
-    "sides": "first",
-    "n": 12,
-    "h0": 0,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "minutes": 3
    }
   },
   {
-   "id": "g6-artmage-second",
+   "id": "ot-elfnote_am-terminus",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/terminus/c2-o6.json"
     ],
-    "opps": [
-     "o_artmage"
+    "opp": "decks/o_elfnote_am.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
     ],
-    "sides": "second",
-    "n": 12,
-    "h0": 0,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "minutes": 3
+   }
+  },
+  {
+   "id": "ot-artmage-medius",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/medius/deep-o5.json"
+    ],
+    "opp": "decks/o_artmage.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "minutes": 3
+   }
+  },
+  {
+   "id": "ot-artmage-bcmed",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/bcmed/c2-o5.json"
+    ],
+    "opp": "decks/o_artmage.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "minutes": 3
+   }
+  },
+  {
+   "id": "ot-artmage-engmed",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/engmed/ug-o1.json"
+    ],
+    "opp": "decks/o_artmage.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "minutes": 3
+   }
+  },
+  {
+   "id": "ot-artmage-terminus",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/terminus/c2-o6.json"
+    ],
+    "opp": "decks/o_artmage.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "minutes": 3
+   }
+  },
+  {
+   "id": "ot-elfnote-medius",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/medius/deep-o5.json"
+    ],
+    "opp": "decks/o_elfnote.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "minutes": 3
+   }
+  },
+  {
+   "id": "ot-elfnote-bcmed",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/bcmed/c2-o5.json"
+    ],
+    "opp": "decks/o_elfnote.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "minutes": 3
+   }
+  },
+  {
+   "id": "ot-elfnote-engmed",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/engmed/ug-o1.json"
+    ],
+    "opp": "decks/o_elfnote.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "minutes": 3
+   }
+  },
+  {
+   "id": "ot-elfnote-terminus",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "oppturn",
+    "lines": [
+     "lines/cands/terminus/c2-o6.json"
+    ],
+    "opp": "decks/o_elfnote.ydk",
+    "seeds": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6
+    ],
+    "minutes": 3
    }
   }
  ]
