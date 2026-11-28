@@ -1,36 +1,155 @@
 {
  "runs": [
   {
-   "id": "choke-o_elfnote",
+   "id": "g4-ss_panama-second",
    "script": "cmp.mjs",
    "args": {
-    "mode": "choke",
-    "opp": "o_elfnote",
-    "line": "lines/cands/medius/deep-o5.json",
-    "hands": 8,
-    "minutes": 0.75
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_ss_panama"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5
    }
   },
   {
-   "id": "choke-o_angelechy",
+   "id": "g4-ss_panama-second-b",
    "script": "cmp.mjs",
    "args": {
-    "mode": "choke",
-    "opp": "o_angelechy",
-    "line": "lines/cands/medius/deep-o5.json",
-    "hands": 8,
-    "minutes": 0.75
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_ss_panama"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 12,
+    "min": 2.5,
+    "omin": 2.5
    }
   },
   {
-   "id": "choke-o_ss_panama",
+   "id": "g4-elfnote-second",
    "script": "cmp.mjs",
    "args": {
-    "mode": "choke",
-    "opp": "o_ss_panama",
-    "line": "lines/cands/medius/deep-o5.json",
-    "hands": 8,
-    "minutes": 0.75
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_elfnote"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5
+   }
+  },
+  {
+   "id": "g4-elfnote-second-b",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_elfnote"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 12,
+    "min": 2.5,
+    "omin": 2.5
+   }
+  },
+  {
+   "id": "g4-despia-second",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_despia"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5
+   }
+  },
+  {
+   "id": "g4-despia-second-b",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_despia"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 12,
+    "min": 2.5,
+    "omin": 2.5
+   }
+  },
+  {
+   "id": "g4-angelechy-second",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_angelechy"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5
+   }
+  },
+  {
+   "id": "g4-angelechy-second-b",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_angelechy"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 12,
+    "min": 2.5,
+    "omin": 2.5
    }
   }
  ]
