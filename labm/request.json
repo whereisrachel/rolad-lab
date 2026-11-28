@@ -1,7 +1,7 @@
 {
  "runs": [
   {
-   "id": "lv-elfnote_am-first-0",
+   "id": "lv-toon-first-0",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -13,7 +13,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_elfnote_am"
+     "o_toon"
     ],
     "sides": "first",
     "n": 4,
@@ -25,7 +25,7 @@
    }
   },
   {
-   "id": "lv-elfnote_am-first-4",
+   "id": "lv-toon-first-4",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -37,7 +37,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_elfnote_am"
+     "o_toon"
     ],
     "sides": "first",
     "n": 4,
@@ -49,7 +49,7 @@
    }
   },
   {
-   "id": "lv-elfnote_am-first-8",
+   "id": "lv-toon-first-8",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -61,7 +61,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_elfnote_am"
+     "o_toon"
     ],
     "sides": "first",
     "n": 4,
@@ -73,7 +73,7 @@
    }
   },
   {
-   "id": "lv-elfnote_am-second-0",
+   "id": "lv-toon-second-0",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -85,7 +85,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_elfnote_am"
+     "o_toon"
     ],
     "sides": "second",
     "n": 4,
@@ -97,7 +97,7 @@
    }
   },
   {
-   "id": "lv-elfnote_am-second-4",
+   "id": "lv-toon-second-4",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -109,7 +109,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_elfnote_am"
+     "o_toon"
     ],
     "sides": "second",
     "n": 4,
@@ -121,7 +121,7 @@
    }
   },
   {
-   "id": "lv-elfnote_am-second-8",
+   "id": "lv-toon-second-8",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -133,7 +133,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_elfnote_am"
+     "o_toon"
     ],
     "sides": "second",
     "n": 4,
@@ -145,7 +145,7 @@
    }
   },
   {
-   "id": "lv-typhoon-first-0",
+   "id": "lv-artmage-first-0",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -157,7 +157,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_typhoon"
+     "o_artmage"
     ],
     "sides": "first",
     "n": 4,
@@ -169,7 +169,7 @@
    }
   },
   {
-   "id": "lv-typhoon-first-4",
+   "id": "lv-artmage-first-4",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -181,7 +181,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_typhoon"
+     "o_artmage"
     ],
     "sides": "first",
     "n": 4,
@@ -193,7 +193,7 @@
    }
   },
   {
-   "id": "lv-typhoon-first-8",
+   "id": "lv-artmage-first-8",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -205,7 +205,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_typhoon"
+     "o_artmage"
     ],
     "sides": "first",
     "n": 4,
@@ -217,7 +217,7 @@
    }
   },
   {
-   "id": "lv-typhoon-second-0",
+   "id": "lv-artmage-second-0",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -229,7 +229,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_typhoon"
+     "o_artmage"
     ],
     "sides": "second",
     "n": 4,
@@ -241,7 +241,7 @@
    }
   },
   {
-   "id": "lv-typhoon-second-4",
+   "id": "lv-artmage-second-4",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -253,7 +253,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_typhoon"
+     "o_artmage"
     ],
     "sides": "second",
     "n": 4,
@@ -265,7 +265,7 @@
    }
   },
   {
-   "id": "lv-typhoon-second-8",
+   "id": "lv-artmage-second-8",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -277,7 +277,7 @@
      "decks/v-witch.ydk"
     ],
     "opps": [
-     "o_typhoon"
+     "o_artmage"
     ],
     "sides": "second",
     "n": 4,
