@@ -1,13 +1,13 @@
 {
  "runs": [
   {
-   "id": "p13-treasure-ash",
+   "id": "p13-smallworld-ash",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "treasure",
-      "file": "lines/cands/treasure/ug-o4.json"
+      "name": "smallworld",
+      "file": "lines/cands/smallworld/guide.json"
      }
     ],
     "threats": [
@@ -18,13 +18,13 @@
    }
   },
   {
-   "id": "p13-treasure-imperm",
+   "id": "p13-smallworld-imperm",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "treasure",
-      "file": "lines/cands/treasure/ug-o4.json"
+      "name": "smallworld",
+      "file": "lines/cands/smallworld/guide.json"
      }
     ],
     "threats": [
@@ -35,13 +35,13 @@
    }
   },
   {
-   "id": "p13-treasure-droll",
+   "id": "p13-smallworld-droll",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "treasure",
-      "file": "lines/cands/treasure/ug-o4.json"
+      "name": "smallworld",
+      "file": "lines/cands/smallworld/guide.json"
      }
     ],
     "threats": [
@@ -52,13 +52,13 @@
    }
   },
   {
-   "id": "p13-treasure-nibiru",
+   "id": "p13-smallworld-nibiru",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "treasure",
-      "file": "lines/cands/treasure/ug-o4.json"
+      "name": "smallworld",
+      "file": "lines/cands/smallworld/guide.json"
      }
     ],
     "threats": [
@@ -69,13 +69,13 @@
    }
   },
   {
-   "id": "p13-treasure-ogre",
+   "id": "p13-smallworld-ogre",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "treasure",
-      "file": "lines/cands/treasure/ug-o4.json"
+      "name": "smallworld",
+      "file": "lines/cands/smallworld/guide.json"
      }
     ],
     "threats": [
@@ -86,13 +86,13 @@
    }
   },
   {
-   "id": "p13-treasure-belle",
+   "id": "p13-smallworld-belle",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "treasure",
-      "file": "lines/cands/treasure/ug-o4.json"
+      "name": "smallworld",
+      "file": "lines/cands/smallworld/guide.json"
      }
     ],
     "threats": [
