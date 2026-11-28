@@ -15,6 +15,8 @@ const shuf = (arr, r) => { const a = arr.slice(); for (let k = a.length - 1; k >
 let mine = shuf(ME.main, rng(1000 + (t.seed ?? 7)));
 if (t.hand) { const h = []; for (const n of t.hand) { const c = findCard(n); const code = Array.isArray(c) ? c[0] : c; const i = mine.findIndex(k => name(k) === name(code)); if (i >= 0) h.push(mine.splice(i, 1)[0]); else h.push(code); } mine = [...h, ...mine]; }
 const theirs = shuf(OPP.main, rng(t.oppSeed ?? 1));
+// stronger openings (Nov 27): each player's FIRST turn (the combo turn) can get more search time than later turns: t1Minutes {0: me, 1: opp}
+const mins = (A, T) => (T <= 2 && t.t1Minutes && t.t1Minutes[A] != null) ? Math.max(t.t1Minutes[A], (A ? t.oppMinutes : t.minutes) ?? 1) : ((A ? t.oppMinutes : t.minutes) ?? 1);
 const FIRST = t.first === 'me' ? 0 : 1, MAXT = t.maxTurns ?? 10, MIN = { 0: t.minutes ?? 1, 1: t.oppMinutes ?? 1 };
 const game = { id: 'fg', seed: String(t.seed ?? 7), first: FIRST, lab: true,
   seats: { 0: { name: 'A', deck: { main: mine, extra: ME.extra.slice(), side: [] }, hand: mine.slice(0, 5) }, 1: { name: 'o', deck: { ...OPP, main: theirs }, hand: theirs.slice(0, 5) } },
@@ -64,14 +66,14 @@ for (let guard = 0; guard < 60 && !over(S) && S.turn <= MAXT; guard++) {
       const pz = d.options.findIndex(o => /^Pass\b/i.test(o.label)); if (pz >= 0) { if (!take(pz)) break; continue; }
       if (process.env.DBGT1) { const dd = E.decision(S0, A); console.error('T1 stop at', k, JSON.stringify(t.t1steps[k]), dd && dd.prompt, JSON.stringify((dd && dd.options || []).map(o => o.label)).slice(0, 800)); } break; }
     gq = clone(g0); gq.responses = S0.game.responses.map(e => ({ ...e })); scripted = true; log.push(`T1 guide line: ${k}/${t.t1steps.length} steps as written, then the search`); } catch (e) { log.push('T1 guide line failed: ' + String(e).slice(0, 100)); } }
-  let plan = null; if (!scripted) try { const gp = clone(g0); gp.noHand = { [B]: true }; const rp = await search(gp, MIN[A] * 0.4); plan = (rp.raw || []).slice(pre.length).filter(e => e.seat === A && !e.auto); } catch {}
+  let plan = null; if (!scripted) try { const gp = clone(g0); gp.noHand = { [B]: true }; const rp = await search(gp, mins(A, T) * 0.4); plan = (rp.raw || []).slice(pre.length).filter(e => e.seat === A && !e.auto); } catch {}
 
   if (plan && plan.length) { const S0 = await sim(g0); let k = 0; const hit = () => S0.game.responses.slice(pre.length).some(e => e.seat === B && /^Activate .*\(hand\)/.test(e.label || ''));
     for (let i = 0; i < 5000 && S0.pending && !over(S0) && S0.turn === T && k < plan.length && !hit(); i++) { autoAdvance(S0); if (!S0.pending || over(S0) || hit()) break; if (pseat(S0) !== A) break; const e = plan[k]; let ok = false;
       try { if (e.label) { const d = E.decision(S0, A); const o = d && d.options.find(x => x.label === e.label); if (o && o.resp) ok = E.push(S0, { seat: A, resp: o.resp, label: o.label }); else ok = E.push(S0, { seat: A, resp: e.resp, label: e.label }); } else ok = E.push(S0, { seat: A, resp: e.resp }); } catch { ok = false; }
       if (!ok) break; k++; }
     gq = clone(g0); gq.responses = S0.game.responses.map(e => ({ ...e })); }
-  let r; try { r = await search(gq, MIN[A]); } catch { r = { raw: gq.responses }; }
+  let r; try { r = await search(gq, mins(A, T)); } catch { r = { raw: gq.responses }; }
   const g1 = clone(g0); g1.responses = (r.raw || gq.responses).map(e => ({ ...e })); S = await sim(g1); S.game.goldfish = [B]; S.game.script = { [B]: ['any'] }; S.game.gfTurn = T;
   const bMain = disruption(S, B), aMain = disruption(S, A);
   // 3) battle (not on the first turn of the game): every monster that can attack does; then end the turn

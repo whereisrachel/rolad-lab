@@ -9,8 +9,8 @@ const N = +f('n', 24), MIN = +f('min', 0.75), OMIN = +f('omin', 0.75), TURNS = +
 const log = (s) => console.log(`[${new Date().toLocaleTimeString()}] ${s}`);
 const jobs = []; const H0 = +f('h0', 0); for (let h = H0; h < H0 + N; h++) for (const o of OPPS) for (const side of SIDES) for (const d of DECKS) jobs.push({ deck: d, opp: o, side, seed: 100 + h, oppSeed: 500 + h * 7 + OPPS.indexOf(o) * 1000 });
 log(`full games: ${DECKS.length} deck(s) x ${OPPS.length} opponents x ${SIDES.join('/')} x ${N} = ${jobs.length} games, up to ${TURNS} turns, ${MIN} / ${OMIN} min per turn, ${PAR} at a time`);
-const args = (j) => ({ deck: j.deck, opp: `decks/${j.opp}.ydk`, seed: j.seed, oppSeed: j.oppSeed, first: j.side === 'first' ? 'me' : 'opp', minutes: MIN, oppMinutes: OMIN, maxTurns: TURNS });
-const LIM = (Math.max(MIN, OMIN) * 1.5 * TURNS + 6) * 60000;
+const args = (j) => ({ deck: j.deck, opp: `decks/${j.opp}.ydk`, seed: j.seed, oppSeed: j.oppSeed, first: j.side === 'first' ? 'me' : 'opp', minutes: MIN, oppMinutes: OMIN, maxTurns: TURNS, t1Minutes: { 0: +f('t1', 0) || null, 1: +f('ot1', 0) || null } });
+const LIM = (Math.max(MIN, OMIN) * 1.5 * TURNS + 1.5 * Math.max(+f('t1', 0), +f('ot1', 0)) + 6) * 60000;
 const one = (j) => new Promise(ok => { const p = spawn(process.execPath, ['--no-warnings', '--max-old-space-size=2500', 'fullgame.mjs', JSON.stringify(args(j))], { stdio: ['ignore', 'pipe', 'ignore'] });
   let o = ''; p.stdout.on('data', b => o += b); const tm = setTimeout(() => { try { p.kill(); } catch {} }, LIM); p.on('close', () => { clearTimeout(tm); const m = /GAME (.*)/.exec(o); ok(m ? { ...j, ...JSON.parse(m[1]) } : { ...j, failed: true }); }); });
 const { runRemote, helperSlots } = await import('./src/remote.mjs'); let HS = a.includes('--nohelpers') ? 0 : await helperSlots(), hsAt = Date.now(); if (HS) log(`helper PCs add ${HS} cores`);
