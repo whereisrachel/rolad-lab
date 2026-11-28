@@ -1,243 +1,207 @@
 {
  "runs": [
   {
-   "id": "ot-elfnote_am-medius",
-   "script": "cmp.mjs",
+   "id": "p13-bcmed-ash",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/medius/deep-o5.json"
+     {
+      "name": "bcmed",
+      "file": "lines/cands/bcmed/c2-o5.json"
+     }
     ],
-    "opp": "decks/o_elfnote_am.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "ash"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   },
   {
-   "id": "ot-elfnote_am-bcmed",
-   "script": "cmp.mjs",
+   "id": "p13-bcmed-imperm",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/bcmed/c2-o5.json"
+     {
+      "name": "bcmed",
+      "file": "lines/cands/bcmed/c2-o5.json"
+     }
     ],
-    "opp": "decks/o_elfnote_am.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "imperm"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   },
   {
-   "id": "ot-elfnote_am-engmed",
-   "script": "cmp.mjs",
+   "id": "p13-bcmed-droll",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/engmed/ug-o1.json"
+     {
+      "name": "bcmed",
+      "file": "lines/cands/bcmed/c2-o5.json"
+     }
     ],
-    "opp": "decks/o_elfnote_am.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "droll"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   },
   {
-   "id": "ot-elfnote_am-terminus",
-   "script": "cmp.mjs",
+   "id": "p13-bcmed-nibiru",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/terminus/c2-o6.json"
+     {
+      "name": "bcmed",
+      "file": "lines/cands/bcmed/c2-o5.json"
+     }
     ],
-    "opp": "decks/o_elfnote_am.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "nibiru"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   },
   {
-   "id": "ot-artmage-medius",
-   "script": "cmp.mjs",
+   "id": "p13-bcmed-ogre",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/medius/deep-o5.json"
+     {
+      "name": "bcmed",
+      "file": "lines/cands/bcmed/c2-o5.json"
+     }
     ],
-    "opp": "decks/o_artmage.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "ogre"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   },
   {
-   "id": "ot-artmage-bcmed",
-   "script": "cmp.mjs",
+   "id": "p13-bcmed-belle",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/bcmed/c2-o5.json"
+     {
+      "name": "bcmed",
+      "file": "lines/cands/bcmed/c2-o5.json"
+     }
     ],
-    "opp": "decks/o_artmage.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "belle"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   },
   {
-   "id": "ot-artmage-engmed",
-   "script": "cmp.mjs",
+   "id": "p13-citrinitas-ash",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/engmed/ug-o1.json"
+     {
+      "name": "citrinitas",
+      "file": "lines/cands/citrinitas/deep-o4.json"
+     }
     ],
-    "opp": "decks/o_artmage.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "ash"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   },
   {
-   "id": "ot-artmage-terminus",
-   "script": "cmp.mjs",
+   "id": "p13-citrinitas-imperm",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/terminus/c2-o6.json"
+     {
+      "name": "citrinitas",
+      "file": "lines/cands/citrinitas/deep-o4.json"
+     }
     ],
-    "opp": "decks/o_artmage.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "imperm"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   },
   {
-   "id": "ot-elfnote-medius",
-   "script": "cmp.mjs",
+   "id": "p13-citrinitas-droll",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/medius/deep-o5.json"
+     {
+      "name": "citrinitas",
+      "file": "lines/cands/citrinitas/deep-o4.json"
+     }
     ],
-    "opp": "decks/o_elfnote.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "droll"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   },
   {
-   "id": "ot-elfnote-bcmed",
-   "script": "cmp.mjs",
+   "id": "p13-citrinitas-nibiru",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/bcmed/c2-o5.json"
+     {
+      "name": "citrinitas",
+      "file": "lines/cands/citrinitas/deep-o4.json"
+     }
     ],
-    "opp": "decks/o_elfnote.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "nibiru"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   },
   {
-   "id": "ot-elfnote-engmed",
-   "script": "cmp.mjs",
+   "id": "p13-citrinitas-ogre",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/engmed/ug-o1.json"
+     {
+      "name": "citrinitas",
+      "file": "lines/cands/citrinitas/deep-o4.json"
+     }
     ],
-    "opp": "decks/o_elfnote.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "ogre"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   },
   {
-   "id": "ot-elfnote-terminus",
-   "script": "cmp.mjs",
+   "id": "p13-citrinitas-belle",
+   "script": "pivots.mjs",
    "args": {
-    "mode": "oppturn",
     "lines": [
-     "lines/cands/terminus/c2-o6.json"
+     {
+      "name": "citrinitas",
+      "file": "lines/cands/citrinitas/deep-o4.json"
+     }
     ],
-    "opp": "decks/o_elfnote.ydk",
-    "seeds": [
-     1,
-     2,
-     3,
-     4,
-     5,
-     6
+    "threats": [
+     "belle"
     ],
-    "minutes": 3
+    "minutes": 5,
+    "maxK": 24
    }
   }
  ]
