@@ -30,7 +30,7 @@ jobs:
           python3 - <<'PY'
           import json
           r = json.load(open('../req/ceiling/lab.json'))
-          assert r['script'] in ('pivots.mjs', 'games1.mjs', 'cardtest.mjs', 'evalboards.mjs', 'deckevo.mjs')
+          assert r['script'] in ('pivots.mjs', 'games1.mjs', 'cardtest.mjs', 'evalboards.mjs', 'deckevo.mjs', 'cmp.mjs')
           open('/tmp/id.txt', 'w').write(str(r['id'])); open('/tmp/script.txt', 'w').write(r['script'])
           open('/tmp/args.json', 'w').write(json.dumps({**r.get('args', {}), 'id': r['id']}))
           PY

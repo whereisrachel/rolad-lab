@@ -1,5 +1,1 @@
-{
- "id": "de-8",
- "script": "deckevo.mjs",
- "args": {"deck": "decks/findlist-1100.ydk", "minutes": 10, "hands": 12, "pop": 12, "keep": 4, "more": 6, "stopMin": 300, "resume": "de-7"}
-}
+{"id": "libh", "script": "cmp.mjs", "args": {"mode": "t1", "decks": ["decks/findlist-1100.ydk"], "h0": 5960, "h1": 6200, "minutes": 5, "ppm": 3945, "scn": "none", "raw": true, "remote": true, "par": 24}}
