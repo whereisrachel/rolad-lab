@@ -17,9 +17,9 @@ const jobs = []; if (t.mode === 'hands') t.hands.forEach((h, i) => jobs.push({ h
 const res = []; const NP = Math.max(1, Math.min(os.cpus().length, Math.floor(os.freemem() / 2.2e9)));
 await poolDyn(jobs, NP, async (j) => { const main = parseYdk(fs.readFileSync(j.deck, 'utf8')).main; let perm = deal(main, j.hi);
   if (j.hand) { const rest = perm.slice(); const hc = []; for (const n of j.hand) { const i = rest.findIndex(c => name(c) === n); if (i < 0) throw new Error('not in deck: ' + n); hc.push(rest.splice(i, 1)[0]); } perm = [...hc, ...rest]; }
-  const args = { deck: j.deck, main: perm, hand: perm.slice(0, 5).map(name), minutes: t.minutes ?? 6, seed: 7 + j.hi, sseed: 20000 + j.hi, scn: j.scn || SCN[j.hi % 4], hints: false, cardv: false, learn: false, ...(t.ppm ? { ppm: t.ppm } : {}) };
+  const args = { deck: j.deck, main: perm, hand: perm.slice(0, 5).map(name), minutes: t.minutes ?? 6, seed: 7 + j.hi, sseed: 20000 + j.hi, scn: j.scn || t.scn || SCN[j.hi % 4], hints: false, cardv: false, learn: false, ...(t.ppm ? { ppm: t.ppm } : {}), ...(t.raw ? { wantRaw: true } : {}) };
   const out = await runNode('deepw.mjs', args, { remote: false, heap: 2500, timeoutMin: (t.minutes ?? 6) * 3 + 5 }); const m = /RESULT (.*)/.exec(out || ''); const x = m ? JSON.parse(m[1]) : {};
-  res.push({ hi: j.hi, deck: j.deck, scn: args.scn, hand: args.hand, v: x.v ?? null, line: (x.line || []).slice(0, 120), board: x.board || null }); console.log(`${res.length}/${jobs.length} ${j.deck} hand ${j.hi} ${args.scn}: ${x.v}`);
+  res.push({ hi: j.hi, deck: j.deck, scn: args.scn, hand: args.hand, v: x.v ?? null, line: (x.line || []).slice(0, 120), board: x.board || null, ...(t.raw ? { raw: x.raw || null, order: perm, extra: parseYdk(fs.readFileSync(j.deck, 'utf8')).extra, seed: args.seed } : {}) }); console.log(`${res.length}/${jobs.length} ${j.deck} hand ${j.hi} ${args.scn}: ${x.v}`);
   fs.writeFileSync(`reports/${ID}.json`, JSON.stringify(res)); });
 const by = {}; for (const r of res) (by[r.deck] ||= []).push(r.v ?? 0); let md = `# ${ID}\n${t.minutes ?? 6}-min unguided searches, hands ${t.h0}-${t.h1 - 1}, traps rotate none/Ash/Imperm/Droll\n\n`;
 for (const [d, v] of Object.entries(by)) md += `- ${d}: ${(v.reduce((a, b) => a + b, 0) / v.length).toFixed(2)} avg board over ${v.length} hands\n`;
