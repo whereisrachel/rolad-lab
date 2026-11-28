@@ -1,14 +1,87 @@
 {
  "runs": [
   {
-   "id": "choke2-o_angelechy",
+   "id": "g6b-angelechy-first",
    "script": "cmp.mjs",
    "args": {
-    "mode": "choke",
-    "opp": "o_angelechy",
-    "line": "lines/cands/medius/deep-o5.json",
-    "hands": 8,
-    "minutes": 0.75
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_angelechy"
+    ],
+    "sides": "first",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g6b-angelechy-second",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_angelechy"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g6-artmage-first",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_artmage"
+    ],
+    "sides": "first",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g6-artmage-second",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_artmage"
+    ],
+    "sides": "second",
+    "n": 12,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
    }
   }
  ]
