@@ -1,13 +1,13 @@
 {
  "runs": [
   {
-   "id": "p13-infsafe-ash",
+   "id": "p13-treasure-ash",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infsafe",
-      "file": "lines/cands/infinity/deep-o3.json"
+      "name": "treasure",
+      "file": "lines/cands/treasure/ug-o4.json"
      }
     ],
     "threats": [
@@ -18,13 +18,13 @@
    }
   },
   {
-   "id": "p13-infsafe-imperm",
+   "id": "p13-treasure-imperm",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infsafe",
-      "file": "lines/cands/infinity/deep-o3.json"
+      "name": "treasure",
+      "file": "lines/cands/treasure/ug-o4.json"
      }
     ],
     "threats": [
@@ -35,13 +35,13 @@
    }
   },
   {
-   "id": "p13-infsafe-droll",
+   "id": "p13-treasure-droll",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infsafe",
-      "file": "lines/cands/infinity/deep-o3.json"
+      "name": "treasure",
+      "file": "lines/cands/treasure/ug-o4.json"
      }
     ],
     "threats": [
@@ -52,13 +52,13 @@
    }
   },
   {
-   "id": "p13-infsafe-nibiru",
+   "id": "p13-treasure-nibiru",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infsafe",
-      "file": "lines/cands/infinity/deep-o3.json"
+      "name": "treasure",
+      "file": "lines/cands/treasure/ug-o4.json"
      }
     ],
     "threats": [
@@ -69,13 +69,13 @@
    }
   },
   {
-   "id": "p13-infsafe-ogre",
+   "id": "p13-treasure-ogre",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infsafe",
-      "file": "lines/cands/infinity/deep-o3.json"
+      "name": "treasure",
+      "file": "lines/cands/treasure/ug-o4.json"
      }
     ],
     "threats": [
@@ -86,115 +86,13 @@
    }
   },
   {
-   "id": "p13-infsafe-belle",
+   "id": "p13-treasure-belle",
    "script": "pivots.mjs",
    "args": {
     "lines": [
      {
-      "name": "infsafe",
-      "file": "lines/cands/infinity/deep-o3.json"
-     }
-    ],
-    "threats": [
-     "belle"
-    ],
-    "minutes": 5,
-    "maxK": 24
-   }
-  },
-  {
-   "id": "p13-citsafe-ash",
-   "script": "pivots.mjs",
-   "args": {
-    "lines": [
-     {
-      "name": "citsafe",
-      "file": "lines/cands/citrinitas/c2-o1.json"
-     }
-    ],
-    "threats": [
-     "ash"
-    ],
-    "minutes": 5,
-    "maxK": 24
-   }
-  },
-  {
-   "id": "p13-citsafe-imperm",
-   "script": "pivots.mjs",
-   "args": {
-    "lines": [
-     {
-      "name": "citsafe",
-      "file": "lines/cands/citrinitas/c2-o1.json"
-     }
-    ],
-    "threats": [
-     "imperm"
-    ],
-    "minutes": 5,
-    "maxK": 24
-   }
-  },
-  {
-   "id": "p13-citsafe-droll",
-   "script": "pivots.mjs",
-   "args": {
-    "lines": [
-     {
-      "name": "citsafe",
-      "file": "lines/cands/citrinitas/c2-o1.json"
-     }
-    ],
-    "threats": [
-     "droll"
-    ],
-    "minutes": 5,
-    "maxK": 24
-   }
-  },
-  {
-   "id": "p13-citsafe-nibiru",
-   "script": "pivots.mjs",
-   "args": {
-    "lines": [
-     {
-      "name": "citsafe",
-      "file": "lines/cands/citrinitas/c2-o1.json"
-     }
-    ],
-    "threats": [
-     "nibiru"
-    ],
-    "minutes": 5,
-    "maxK": 24
-   }
-  },
-  {
-   "id": "p13-citsafe-ogre",
-   "script": "pivots.mjs",
-   "args": {
-    "lines": [
-     {
-      "name": "citsafe",
-      "file": "lines/cands/citrinitas/c2-o1.json"
-     }
-    ],
-    "threats": [
-     "ogre"
-    ],
-    "minutes": 5,
-    "maxK": 24
-   }
-  },
-  {
-   "id": "p13-citsafe-belle",
-   "script": "pivots.mjs",
-   "args": {
-    "lines": [
-     {
-      "name": "citsafe",
-      "file": "lines/cands/citrinitas/c2-o1.json"
+      "name": "treasure",
+      "file": "lines/cands/treasure/ug-o4.json"
      }
     ],
     "threats": [
