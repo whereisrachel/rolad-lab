@@ -1,291 +1,195 @@
 {
  "runs": [
   {
-   "id": "lv-toon-first-0",
+   "id": "lib-0",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_toon"
-    ],
-    "sides": "first",
-    "n": 4,
-    "h0": 0,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5000,
+    "h1": 5060,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   },
   {
-   "id": "lv-toon-first-4",
+   "id": "lib-1",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_toon"
-    ],
-    "sides": "first",
-    "n": 4,
-    "h0": 4,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5060,
+    "h1": 5120,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   },
   {
-   "id": "lv-toon-first-8",
+   "id": "lib-2",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_toon"
-    ],
-    "sides": "first",
-    "n": 4,
-    "h0": 8,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5120,
+    "h1": 5180,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   },
   {
-   "id": "lv-toon-second-0",
+   "id": "lib-3",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_toon"
-    ],
-    "sides": "second",
-    "n": 4,
-    "h0": 0,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5180,
+    "h1": 5240,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   },
   {
-   "id": "lv-toon-second-4",
+   "id": "lib-4",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_toon"
-    ],
-    "sides": "second",
-    "n": 4,
-    "h0": 4,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5240,
+    "h1": 5300,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   },
   {
-   "id": "lv-toon-second-8",
+   "id": "lib-5",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_toon"
-    ],
-    "sides": "second",
-    "n": 4,
-    "h0": 8,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5300,
+    "h1": 5360,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   },
   {
-   "id": "lv-artmage-first-0",
+   "id": "lib-6",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_artmage"
-    ],
-    "sides": "first",
-    "n": 4,
-    "h0": 0,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5360,
+    "h1": 5420,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   },
   {
-   "id": "lv-artmage-first-4",
+   "id": "lib-7",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_artmage"
-    ],
-    "sides": "first",
-    "n": 4,
-    "h0": 4,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5420,
+    "h1": 5480,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   },
   {
-   "id": "lv-artmage-first-8",
+   "id": "lib-8",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_artmage"
-    ],
-    "sides": "first",
-    "n": 4,
-    "h0": 8,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5480,
+    "h1": 5540,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   },
   {
-   "id": "lv-artmage-second-0",
+   "id": "lib-9",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_artmage"
-    ],
-    "sides": "second",
-    "n": 4,
-    "h0": 0,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5540,
+    "h1": 5600,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   },
   {
-   "id": "lv-artmage-second-4",
+   "id": "lib-10",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_artmage"
-    ],
-    "sides": "second",
-    "n": 4,
-    "h0": 4,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5600,
+    "h1": 5660,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   },
   {
-   "id": "lv-artmage-second-8",
+   "id": "lib-11",
    "script": "cmp.mjs",
    "args": {
-    "mode": "games",
+    "mode": "t1",
     "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/v-ht3.ydk",
-     "decks/v-ht6.ydk",
-     "decks/v-ht3swap.ydk",
-     "decks/v-witch.ydk"
+     "decks/findlist-1100.ydk"
     ],
-    "opps": [
-     "o_artmage"
-    ],
-    "sides": "second",
-    "n": 4,
-    "h0": 8,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
+    "h0": 5660,
+    "h1": 5720,
+    "minutes": 5,
+    "ppm": 3945,
+    "scn": "none",
+    "raw": true
    }
   }
  ]
