@@ -1,0 +1,29 @@
+1/20 decks/ed-agnp.ydk hand 11036 none: 11.700000000000001
+2/20 decks/final-v8.ydk hand 11036 none: 10.8
+3/20 decks/ed-tgep.ydk hand 11036 none: 11.9
+4/20 decks/ed-ugac.ydk hand 11036 none: 11.700000000000001
+5/20 decks/final-v8.ydk hand 11037 none: 12.3
+6/20 decks/ed-ugac.ydk hand 11037 none: 12.05
+7/20 decks/ed-dikp.ydk hand 11036 none: 12.350000000000001
+8/20 decks/ed-tgep.ydk hand 11037 none: 11.45
+9/20 decks/ed-dikp.ydk hand 11037 none: 11.899999999999999
+10/20 decks/ed-agnp.ydk hand 11037 none: 12.15
+11/20 decks/final-v8.ydk hand 11038 none: 12.15
+12/20 decks/ed-ugac.ydk hand 11038 none: 10.55
+13/20 decks/ed-tgep.ydk hand 11038 none: 11.65
+14/20 decks/ed-agnp.ydk hand 11038 none: 10.25
+15/20 decks/ed-dikp.ydk hand 11038 none: 10.8
+16/20 decks/final-v8.ydk hand 11039 none: 11.7
+17/20 decks/ed-tgep.ydk hand 11039 none: 13.350000000000001
+18/20 decks/ed-ugac.ydk hand 11039 none: 13.3
+19/20 decks/ed-agnp.ydk hand 11039 none: 11.7
+20/20 decks/ed-dikp.ydk hand 11039 none: 13.350000000000001
+# edt-9
+5-min unguided searches, hands 11036-11039, traps rotate none/Ash/Imperm/Droll
+
+- decks/ed-agnp.ydk: 11.45 avg board over 4 hands
+- decks/final-v8.ydk: 11.74 avg board over 4 hands
+- decks/ed-tgep.ydk: 12.09 avg board over 4 hands
+- decks/ed-ugac.ydk: 11.90 avg board over 4 hands
+- decks/ed-dikp.ydk: 12.10 avg board over 4 hands
+
