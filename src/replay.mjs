@@ -26,6 +26,8 @@ export async function replay(game, raw, onIdle, { maxSkips = 300 } = {}) {
       for (const w of want) { const q = d.options.findIndex((o, n) => !used.has(n) && o.label === w); if (q < 0) break; used.add(q); idx.push(q + 1); }
       if (idx.length === want.length) { const r = E.answer(S, 0, idx.join(' ')); if (r && r.resps) { done = true; for (const x of r.resps) if (!E.push(S, { seat: 0, resp: x.resp, label: x.label })) { done = false; break; } } } }
     if (!done && e.label === 'Default order') { const r = E.answer(S, 0, 'd'); if (r && r.resps) { done = true; for (const x of r.resps) if (!E.push(S, { seat: 0, resp: x.resp, label: x.label })) { done = false; break; } } }
+    // labels recorded with a string id instead of text (e.g. "#573", "...(hand): #1160" — helpers without the strings file): send the recorded response as is (Nov 28)
+    if (!done && /#\d+/.test(e.label) && e.resp) { const q = d.options.findIndex(o => JSON.stringify(o.resp) === JSON.stringify(e.resp)); const o = d.options[q >= 0 ? q : (d.options.length === 1 ? 0 : -1)]; if (o) done = E.push(S, { seat: 0, resp: o.resp, label: o.label }); }
     if (done) { i++; continue; }
     // a prompt the original line had only because of the card that was swapped out (e.g. a hand trap's chain window): skip that recorded step
     if (/^Pass|do not chain|^No$/i.test(e.label) && !d.options.some(o => o.label === e.label)) { i++; continue; }
