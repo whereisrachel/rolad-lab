@@ -5,6 +5,7 @@
 // node cmp.mjs '{"id":"h2h-t1-a","mode":"t1","decks":["decks/findlist-1100.ydk","decks/yacine-60.ydk"],"h0":0,"h1":12,"minutes":6}'
 import fs from 'fs'; import os from 'os'; import { spawnSync } from 'child_process'; import { parseYdk, name } from './src/cards.mjs'; import { runNode, poolDyn } from './src/remote.mjs';
 const t = JSON.parse(process.argv[2]); const ID = t.id; fs.mkdirSync('reports', { recursive: true });
+if (t.mode === 'choke') { const r = spawnSync(process.execPath, ['--no-warnings', 'choke.mjs', t.opp, t.line, String(t.hands ?? 8), String(t.minutes ?? 0.5)], { stdio: 'inherit' }); try { fs.copyFileSync(`data/choke-${t.opp}.json`, `reports/${ID}.json`); } catch {} process.exit(r.status ?? 0); }
 if (t.mode === 'games') { const r = spawnSync(process.execPath, ['--no-warnings', 'gamestest.mjs', '--decks', t.decks.join(';'), '--opps', t.opps.join(','), '--n', String(t.n ?? 12), '--sides', t.sides ?? 'first,second', '--min', String(t.min ?? 0.75), '--omin', String(t.omin ?? 0.75), '--id', ID, '--h0', String(t.h0 ?? 0)], { stdio: 'inherit' }); process.exit(r.status ?? 0); }
 const SCN = ['none', 'ash', 'imperm', 'droll']; const rngOf = (s) => { let x = s >>> 0 || 1; return () => (x = (x * 1664525 + 1013904223) >>> 0) / 4294967296; };
 const deal = (main, hi) => { const r = rngOf(1000 + hi * 7919); const p = main.slice().sort((a, b) => a - b); for (let k = p.length - 1; k > 0; k--) { const j = Math.floor(r() * (k + 1)); [p[k], p[j]] = [p[j], p[k]]; } return p; };
