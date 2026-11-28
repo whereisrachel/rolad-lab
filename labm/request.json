@@ -1,15 +1,15 @@
 {
  "runs": [
   {
-   "id": "lib-0",
+   "id": "lib-12",
    "script": "cmp.mjs",
    "args": {
     "mode": "t1",
     "decks": [
      "decks/findlist-1100.ydk"
     ],
-    "h0": 5000,
-    "h1": 5060,
+    "h0": 5720,
+    "h1": 5780,
     "minutes": 5,
     "ppm": 3945,
     "scn": "none",
@@ -17,15 +17,15 @@
    }
   },
   {
-   "id": "lib-1",
+   "id": "lib-13",
    "script": "cmp.mjs",
    "args": {
     "mode": "t1",
     "decks": [
      "decks/findlist-1100.ydk"
     ],
-    "h0": 5060,
-    "h1": 5120,
+    "h0": 5780,
+    "h1": 5840,
     "minutes": 5,
     "ppm": 3945,
     "scn": "none",
@@ -33,15 +33,15 @@
    }
   },
   {
-   "id": "lib-2",
+   "id": "lib-14",
    "script": "cmp.mjs",
    "args": {
     "mode": "t1",
     "decks": [
      "decks/findlist-1100.ydk"
     ],
-    "h0": 5120,
-    "h1": 5180,
+    "h0": 5840,
+    "h1": 5900,
     "minutes": 5,
     "ppm": 3945,
     "scn": "none",
@@ -49,15 +49,15 @@
    }
   },
   {
-   "id": "lib-3",
+   "id": "lib-15",
    "script": "cmp.mjs",
    "args": {
     "mode": "t1",
     "decks": [
      "decks/findlist-1100.ydk"
     ],
-    "h0": 5180,
-    "h1": 5240,
+    "h0": 5900,
+    "h1": 5960,
     "minutes": 5,
     "ppm": 3945,
     "scn": "none",
@@ -65,15 +65,15 @@
    }
   },
   {
-   "id": "lib-4",
+   "id": "lib-16",
    "script": "cmp.mjs",
    "args": {
     "mode": "t1",
     "decks": [
      "decks/findlist-1100.ydk"
     ],
-    "h0": 5240,
-    "h1": 5300,
+    "h0": 5960,
+    "h1": 6020,
     "minutes": 5,
     "ppm": 3945,
     "scn": "none",
@@ -81,15 +81,15 @@
    }
   },
   {
-   "id": "lib-5",
+   "id": "lib-17",
    "script": "cmp.mjs",
    "args": {
     "mode": "t1",
     "decks": [
      "decks/findlist-1100.ydk"
     ],
-    "h0": 5300,
-    "h1": 5360,
+    "h0": 6020,
+    "h1": 6080,
     "minutes": 5,
     "ppm": 3945,
     "scn": "none",
@@ -97,15 +97,15 @@
    }
   },
   {
-   "id": "lib-6",
+   "id": "lib-18",
    "script": "cmp.mjs",
    "args": {
     "mode": "t1",
     "decks": [
      "decks/findlist-1100.ydk"
     ],
-    "h0": 5360,
-    "h1": 5420,
+    "h0": 6080,
+    "h1": 6140,
     "minutes": 5,
     "ppm": 3945,
     "scn": "none",
@@ -113,79 +113,15 @@
    }
   },
   {
-   "id": "lib-7",
+   "id": "lib-19",
    "script": "cmp.mjs",
    "args": {
     "mode": "t1",
     "decks": [
      "decks/findlist-1100.ydk"
     ],
-    "h0": 5420,
-    "h1": 5480,
-    "minutes": 5,
-    "ppm": 3945,
-    "scn": "none",
-    "raw": true
-   }
-  },
-  {
-   "id": "lib-8",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "t1",
-    "decks": [
-     "decks/findlist-1100.ydk"
-    ],
-    "h0": 5480,
-    "h1": 5540,
-    "minutes": 5,
-    "ppm": 3945,
-    "scn": "none",
-    "raw": true
-   }
-  },
-  {
-   "id": "lib-9",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "t1",
-    "decks": [
-     "decks/findlist-1100.ydk"
-    ],
-    "h0": 5540,
-    "h1": 5600,
-    "minutes": 5,
-    "ppm": 3945,
-    "scn": "none",
-    "raw": true
-   }
-  },
-  {
-   "id": "lib-10",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "t1",
-    "decks": [
-     "decks/findlist-1100.ydk"
-    ],
-    "h0": 5600,
-    "h1": 5660,
-    "minutes": 5,
-    "ppm": 3945,
-    "scn": "none",
-    "raw": true
-   }
-  },
-  {
-   "id": "lib-11",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "t1",
-    "decks": [
-     "decks/findlist-1100.ydk"
-    ],
-    "h0": 5660,
-    "h1": 5720,
+    "h0": 6140,
+    "h1": 6200,
     "minutes": 5,
     "ppm": 3945,
     "scn": "none",
