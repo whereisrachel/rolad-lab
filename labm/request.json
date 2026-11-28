@@ -1,105 +1,291 @@
 {
  "runs": [
   {
-   "id": "p13-smallworld-ash",
-   "script": "pivots.mjs",
+   "id": "lv-angelechy-first-0",
+   "script": "cmp.mjs",
    "args": {
-    "lines": [
-     {
-      "name": "smallworld",
-      "file": "lines/cands/smallworld/guide.json"
-     }
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
     ],
-    "threats": [
-     "ash"
+    "opps": [
+     "o_angelechy"
     ],
-    "minutes": 5,
-    "maxK": 24
+    "sides": "first",
+    "n": 6,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
    }
   },
   {
-   "id": "p13-smallworld-imperm",
-   "script": "pivots.mjs",
+   "id": "lv-angelechy-first-6",
+   "script": "cmp.mjs",
    "args": {
-    "lines": [
-     {
-      "name": "smallworld",
-      "file": "lines/cands/smallworld/guide.json"
-     }
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
     ],
-    "threats": [
-     "imperm"
+    "opps": [
+     "o_angelechy"
     ],
-    "minutes": 5,
-    "maxK": 24
+    "sides": "first",
+    "n": 6,
+    "h0": 6,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
    }
   },
   {
-   "id": "p13-smallworld-droll",
-   "script": "pivots.mjs",
+   "id": "lv-angelechy-second-0",
+   "script": "cmp.mjs",
    "args": {
-    "lines": [
-     {
-      "name": "smallworld",
-      "file": "lines/cands/smallworld/guide.json"
-     }
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
     ],
-    "threats": [
-     "droll"
+    "opps": [
+     "o_angelechy"
     ],
-    "minutes": 5,
-    "maxK": 24
+    "sides": "second",
+    "n": 6,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
    }
   },
   {
-   "id": "p13-smallworld-nibiru",
-   "script": "pivots.mjs",
+   "id": "lv-angelechy-second-6",
+   "script": "cmp.mjs",
    "args": {
-    "lines": [
-     {
-      "name": "smallworld",
-      "file": "lines/cands/smallworld/guide.json"
-     }
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
     ],
-    "threats": [
-     "nibiru"
+    "opps": [
+     "o_angelechy"
     ],
-    "minutes": 5,
-    "maxK": 24
+    "sides": "second",
+    "n": 6,
+    "h0": 6,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
    }
   },
   {
-   "id": "p13-smallworld-ogre",
-   "script": "pivots.mjs",
+   "id": "lv-elfnote-first-0",
+   "script": "cmp.mjs",
    "args": {
-    "lines": [
-     {
-      "name": "smallworld",
-      "file": "lines/cands/smallworld/guide.json"
-     }
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
     ],
-    "threats": [
-     "ogre"
+    "opps": [
+     "o_elfnote"
     ],
-    "minutes": 5,
-    "maxK": 24
+    "sides": "first",
+    "n": 6,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
    }
   },
   {
-   "id": "p13-smallworld-belle",
-   "script": "pivots.mjs",
+   "id": "lv-elfnote-first-6",
+   "script": "cmp.mjs",
    "args": {
-    "lines": [
-     {
-      "name": "smallworld",
-      "file": "lines/cands/smallworld/guide.json"
-     }
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
     ],
-    "threats": [
-     "belle"
+    "opps": [
+     "o_elfnote"
     ],
-    "minutes": 5,
-    "maxK": 24
+    "sides": "first",
+    "n": 6,
+    "h0": 6,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "lv-elfnote-second-0",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
+    ],
+    "opps": [
+     "o_elfnote"
+    ],
+    "sides": "second",
+    "n": 6,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "lv-elfnote-second-6",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
+    ],
+    "opps": [
+     "o_elfnote"
+    ],
+    "sides": "second",
+    "n": 6,
+    "h0": 6,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "lv-elfnote_am-first-0",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
+    ],
+    "opps": [
+     "o_elfnote_am"
+    ],
+    "sides": "first",
+    "n": 6,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "lv-elfnote_am-first-6",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
+    ],
+    "opps": [
+     "o_elfnote_am"
+    ],
+    "sides": "first",
+    "n": 6,
+    "h0": 6,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "lv-elfnote_am-second-0",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
+    ],
+    "opps": [
+     "o_elfnote_am"
+    ],
+    "sides": "second",
+    "n": 6,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "lv-elfnote_am-second-6",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/v-ht3.ydk",
+     "decks/v-ht6.ydk",
+     "decks/v-ht3swap.ydk",
+     "decks/v-witch.ydk"
+    ],
+    "opps": [
+     "o_elfnote_am"
+    ],
+    "sides": "second",
+    "n": 6,
+    "h0": 6,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
    }
   }
  ]
