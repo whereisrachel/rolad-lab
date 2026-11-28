@@ -44,6 +44,8 @@ export function scoreBoard(B, detail = false) {
     else if (/Ars Magna of Purification/.test(n)) citrinitasOn ? add(n + ' (Quick Effect banish Spells/Traps, only while Citrinitas stays face-up)', 0.45, 'banish-st') : zero(n + ' (banish is your turn only without Citrinitas)');
     else if (/Diactorus/.test(n)) threeTypes ? add(n + ' (3 Types: negate + destroy)', 1.5, 'negate') : zero(n + ' (needs 3 Monster Types)');
     else if (/Desirae/.test(n)) { const eq = st.filter(e => /Fiendsmith's (Requiem|Sequence)/.test(nm(e))).reduce((r, e) => r + (/Sequence/.test(nm(e)) ? 2 : 1), 0); eq ? add(n + ' (negates ' + eq + ')', 1 + 0.5 * (eq - 1), 'negate') : zero(n + ' (no equipped Link: negates 0)'); }
+    else if (/^Magistus Chorozo$/.test(n)) add(n + ' (negate an attack, can bounce the attacker)', 0.4, null);
+    else if (/Ars Magna of Unification and Separation/.test(n)) citrinitasOn ? add(n + ' (Quick Effect while Citrinitas stays face-up)', 0.3, null) : zero(n);
     else if (/S:P Little Knight/.test(n)) add(n + ' (Quick Effect banish 2 face-up until the End Phase)', 0.6, 'banish-monster');
     else if (/^Nerva the Power Patron/.test(n)) { const trig = has(/Non-Finito/) || (has(/Diactorus/) && threeTypes) || (has(/Artmage Finmel/) && threeTypes); trig ? add(n + ' (Artmage Quick Effect -> destroy all)', 1, 'wipe') : zero(n + ' (no Artmage Quick Effect to trigger it)'); }
     else if (/Non-Finito/.test(n)) add(n + ' (Quick Effect Fusion on their turn)', 0.5, 'extend');

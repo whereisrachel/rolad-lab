@@ -7,7 +7,7 @@ const DECKS = f('decks', 'decks/findlist-1100.ydk').split(';').filter(Boolean); 
 const SIDES = f('sides', 'first,second').split(',').filter(s => s === 'first' || s === 'second');
 const N = +f('n', 24), MIN = +f('min', 0.75), OMIN = +f('omin', 0.75), TURNS = +f('turns', 10), ID = f('id', String(Date.now() % 100000)); const PAR = Math.max(1, Math.min(os.cpus().length - 1, Math.floor(os.freemem() / 1.5e9)));
 const log = (s) => console.log(`[${new Date().toLocaleTimeString()}] ${s}`);
-const jobs = []; for (let h = 0; h < N; h++) for (const o of OPPS) for (const side of SIDES) for (const d of DECKS) jobs.push({ deck: d, opp: o, side, seed: 100 + h, oppSeed: 500 + h * 7 + OPPS.indexOf(o) * 1000 });
+const jobs = []; const H0 = +f('h0', 0); for (let h = H0; h < H0 + N; h++) for (const o of OPPS) for (const side of SIDES) for (const d of DECKS) jobs.push({ deck: d, opp: o, side, seed: 100 + h, oppSeed: 500 + h * 7 + OPPS.indexOf(o) * 1000 });
 log(`full games: ${DECKS.length} deck(s) x ${OPPS.length} opponents x ${SIDES.join('/')} x ${N} = ${jobs.length} games, up to ${TURNS} turns, ${MIN} / ${OMIN} min per turn, ${PAR} at a time`);
 const args = (j) => ({ deck: j.deck, opp: `decks/${j.opp}.ydk`, seed: j.seed, oppSeed: j.oppSeed, first: j.side === 'first' ? 'me' : 'opp', minutes: MIN, oppMinutes: OMIN, maxTurns: TURNS });
 const LIM = (Math.max(MIN, OMIN) * 1.5 * TURNS + 6) * 60000;
