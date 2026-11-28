@@ -1,14 +1,5 @@
 {
- "id": "de-7",
+ "id": "de-8",
  "script": "deckevo.mjs",
- "args": {
-  "deck": "decks/findlist-1100.ydk",
-  "minutes": 15,
-  "hands": 16,
-  "pop": 16,
-  "keep": 4,
-  "more": 8,
-  "stopMin": 300,
-  "resume": "de-6"
- }
+ "args": {"deck": "decks/findlist-1100.ydk", "minutes": 10, "hands": 12, "pop": 12, "keep": 4, "more": 6, "stopMin": 300, "resume": "de-7"}
 }
