@@ -1,175 +1,7 @@
 {
  "runs": [
   {
-   "id": "g5-elfnote-second-0",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
-    ],
-    "opps": [
-     "o_elfnote"
-    ],
-    "sides": "second",
-    "n": 6,
-    "h0": 0,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
-   }
-  },
-  {
-   "id": "g5-elfnote-second-6",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
-    ],
-    "opps": [
-     "o_elfnote"
-    ],
-    "sides": "second",
-    "n": 6,
-    "h0": 6,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
-   }
-  },
-  {
-   "id": "g5-elfnote-second-12",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
-    ],
-    "opps": [
-     "o_elfnote"
-    ],
-    "sides": "second",
-    "n": 6,
-    "h0": 12,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
-   }
-  },
-  {
-   "id": "g5-elfnote-second-18",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
-    ],
-    "opps": [
-     "o_elfnote"
-    ],
-    "sides": "second",
-    "n": 6,
-    "h0": 18,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
-   }
-  },
-  {
-   "id": "g5-despia-second-0",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
-    ],
-    "opps": [
-     "o_despia"
-    ],
-    "sides": "second",
-    "n": 6,
-    "h0": 0,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
-   }
-  },
-  {
-   "id": "g5-despia-second-6",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
-    ],
-    "opps": [
-     "o_despia"
-    ],
-    "sides": "second",
-    "n": 6,
-    "h0": 6,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
-   }
-  },
-  {
-   "id": "g5-despia-second-12",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
-    ],
-    "opps": [
-     "o_despia"
-    ],
-    "sides": "second",
-    "n": 6,
-    "h0": 12,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
-   }
-  },
-  {
-   "id": "g5-despia-second-18",
-   "script": "cmp.mjs",
-   "args": {
-    "mode": "games",
-    "decks": [
-     "decks/findlist-1100.ydk",
-     "decks/yacine-60.ydk"
-    ],
-    "opps": [
-     "o_despia"
-    ],
-    "sides": "second",
-    "n": 6,
-    "h0": 18,
-    "min": 2.5,
-    "omin": 2.5,
-    "t1": 8,
-    "ot1": 8
-   }
-  },
-  {
-   "id": "g5-ss_panama-second-0",
+   "id": "g5-ss_panama-second-12",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -182,7 +14,7 @@
     ],
     "sides": "second",
     "n": 6,
-    "h0": 0,
+    "h0": 12,
     "min": 2.5,
     "omin": 2.5,
     "t1": 8,
@@ -190,7 +22,7 @@
    }
   },
   {
-   "id": "g5-ss_panama-second-6",
+   "id": "g5-ss_panama-second-18",
    "script": "cmp.mjs",
    "args": {
     "mode": "games",
@@ -203,7 +35,91 @@
     ],
     "sides": "second",
     "n": 6,
+    "h0": 18,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g5-angelechy-second-0",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_angelechy"
+    ],
+    "sides": "second",
+    "n": 6,
+    "h0": 0,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g5-angelechy-second-6",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_angelechy"
+    ],
+    "sides": "second",
+    "n": 6,
     "h0": 6,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g5-angelechy-second-12",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_angelechy"
+    ],
+    "sides": "second",
+    "n": 6,
+    "h0": 12,
+    "min": 2.5,
+    "omin": 2.5,
+    "t1": 8,
+    "ot1": 8
+   }
+  },
+  {
+   "id": "g5-angelechy-second-18",
+   "script": "cmp.mjs",
+   "args": {
+    "mode": "games",
+    "decks": [
+     "decks/findlist-1100.ydk",
+     "decks/yacine-60.ydk"
+    ],
+    "opps": [
+     "o_angelechy"
+    ],
+    "sides": "second",
+    "n": 6,
+    "h0": 18,
     "min": 2.5,
     "omin": 2.5,
     "t1": 8,
